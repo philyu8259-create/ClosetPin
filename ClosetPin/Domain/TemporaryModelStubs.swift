@@ -1,6 +1,8 @@
 import Foundation
 import SwiftData
 
+// Task 2 must delete or replace this file before adding real model definitions
+// to avoid duplicate SwiftData model types.
 @Model
 final class ClothingItem {
     var createdAt: Date
