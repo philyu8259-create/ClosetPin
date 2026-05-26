@@ -21,4 +21,33 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
+
+    func testAddClosetItemSmokeFlow() {
+        let app = XCUIApplication()
+        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.tabBars.buttons["Closet"].tap()
+        app.buttons["addItemButton"].tap()
+
+        let colorField = app.textFields["itemColorField"]
+        XCTAssertTrue(colorField.waitForExistence(timeout: 3))
+        colorField.tap()
+        colorField.typeText("Ivory")
+
+        let storageField = app.textFields["itemStorageField"]
+        storageField.tap()
+        storageField.typeText("Main wardrobe")
+
+        app.buttons["seasonToggle_spring"].tap()
+
+        app.buttons["saveItemButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Main wardrobe"].exists)
+    }
 }

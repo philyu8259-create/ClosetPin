@@ -162,6 +162,18 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
     }
 
+    func testAddEditItemDraftRequiresColorSeasonAndStorageBeforeSaving() {
+        var draft = AddEditItemDraft()
+
+        XCTAssertFalse(draft.canSave)
+
+        draft.color = "Ivory"
+        draft.selectedSeasons = [.spring]
+        draft.storageLocation = "Main wardrobe"
+
+        XCTAssertTrue(draft.canSave)
+    }
+
     func testSwiftDataInMemoryPersistenceStoresCollectionFields() throws {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
