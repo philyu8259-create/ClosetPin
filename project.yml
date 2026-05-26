@@ -1,0 +1,47 @@
+name: ClosetPin
+options:
+  bundleIdPrefix: com.phil
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+targets:
+  ClosetPin:
+    type: application
+    platform: iOS
+    sources:
+      - ClosetPin
+    resources:
+      - Assets
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.phil.closetpin
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: ClosetPin lets you choose clothing photos to build your local wardrobe.
+        INFOPLIST_KEY_NSCameraUsageDescription: ClosetPin uses the camera so you can add clothes to your wardrobe.
+    scheme:
+      testTargets:
+        - ClosetPinTests
+        - ClosetPinUITests
+  ClosetPinTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ClosetPinTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: ClosetPin
+  ClosetPinUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ClosetPinUITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: ClosetPin
