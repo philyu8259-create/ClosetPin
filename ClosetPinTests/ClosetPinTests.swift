@@ -118,6 +118,50 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(items.allSatisfy { $0.formalityLevel >= 3 })
     }
 
+    func testWorkCapsuleSeederFirstInsertAddsExpectedCount() throws {
+        let context = try makeInMemoryModelContext()
+
+        let insertedCount = try WorkCapsuleSeeder.insertSampleCapsule(in: context)
+        let fetchedItems = try context.fetch(FetchDescriptor<ClothingItem>())
+
+        XCTAssertEqual(insertedCount, SeedData.workCapsuleItems().count)
+        XCTAssertEqual(fetchedItems.count, SeedData.workCapsuleItems().count)
+    }
+
+    func testWorkCapsuleSeederSecondInsertAddsNoDuplicates() throws {
+        let context = try makeInMemoryModelContext()
+
+        let firstInsertedCount = try WorkCapsuleSeeder.insertSampleCapsule(in: context)
+        let secondInsertedCount = try WorkCapsuleSeeder.insertSampleCapsule(in: context)
+        let fetchedItems = try context.fetch(FetchDescriptor<ClothingItem>())
+        let uniqueIDs = Set(fetchedItems.map(\.id))
+
+        XCTAssertEqual(firstInsertedCount, SeedData.workCapsuleItems().count)
+        XCTAssertEqual(secondInsertedCount, 0)
+        XCTAssertEqual(fetchedItems.count, SeedData.workCapsuleItems().count)
+        XCTAssertEqual(uniqueIDs.count, fetchedItems.count)
+    }
+
+    func testWorkCapsuleSeedDataProducesOfficeAndMeetingRecommendations() {
+        let items = SeedData.workCapsuleItems()
+        let engine = RecommendationEngine()
+
+        let dailyOfficeCandidates = engine.recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1),
+            items: items,
+            feedback: []
+        )
+        let importantMeetingCandidates = engine.recommend(
+            input: RecommendationInput(scenario: .importantMeeting, season: .spring, maximumResults: 1),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(dailyOfficeCandidates.first?.items.count, 3)
+        XCTAssertEqual(importantMeetingCandidates.first?.items.count, 4)
+        XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
+    }
+
     func testSwiftDataInMemoryPersistenceStoresCollectionFields() throws {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
@@ -181,5 +225,18 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(fetchedFeedback.first?.itemIds, [itemId])
         XCTAssertEqual(fetchedPreferences.first?.preferredColors, ["charcoal"])
         XCTAssertEqual(fetchedPreferences.first?.avoidedStyles, ["distressed"])
+    }
+
+    private func makeInMemoryModelContext() throws -> ModelContext {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: ClothingItem.self,
+            Outfit.self,
+            OutfitFeedback.self,
+            UserPreference.self,
+            configurations: configuration
+        )
+
+        return ModelContext(container)
     }
 }

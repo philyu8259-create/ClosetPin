@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 enum SeedData {
     static func workCapsuleItems() -> [ClothingItem] {
@@ -125,5 +126,33 @@ enum SeedData {
             status: .available,
             notes: notes
         )
+    }
+}
+
+enum WorkCapsuleSeeder {
+    @discardableResult
+    static func insertSampleCapsule(in modelContext: ModelContext) throws -> Int {
+        let seedItems = SeedData.workCapsuleItems()
+        let seedIDs = Set(seedItems.map(\.id))
+        let existingItems = try modelContext.fetch(FetchDescriptor<ClothingItem>())
+        let existingSeedIDs = Set(existingItems.map(\.id)).intersection(seedIDs)
+        let itemsToInsert = seedItems.filter { !existingSeedIDs.contains($0.id) }
+
+        guard !itemsToInsert.isEmpty else { return 0 }
+
+        for item in itemsToInsert {
+            modelContext.insert(item)
+        }
+
+        do {
+            try modelContext.save()
+            return itemsToInsert.count
+        } catch {
+            for item in itemsToInsert {
+                modelContext.delete(item)
+            }
+            modelContext.rollback()
+            throw error
+        }
     }
 }

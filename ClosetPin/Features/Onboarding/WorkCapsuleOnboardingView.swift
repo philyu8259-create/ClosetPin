@@ -63,11 +63,13 @@ struct WorkCapsuleOnboardingView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(DesignSystem.accent)
+                            .accessibilityHidden(true)
                         Text(item)
                             .font(.body)
                             .foregroundStyle(DesignSystem.ink)
                         Spacer()
                     }
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
@@ -87,6 +89,7 @@ struct WorkCapsuleOnboardingView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .tint(DesignSystem.accent)
+            .accessibilityIdentifier("startAddingClothesButton")
 
             Button {
                 addSampleCapsule()
@@ -96,6 +99,7 @@ struct WorkCapsuleOnboardingView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
+            .accessibilityIdentifier("useSampleCapsuleButton")
 
             if let entryMessage {
                 Text(entryMessage)
@@ -108,10 +112,7 @@ struct WorkCapsuleOnboardingView: View {
 
     private func addSampleCapsule() {
         do {
-            for item in SeedData.workCapsuleItems() {
-                modelContext.insert(item)
-            }
-            try modelContext.save()
+            try WorkCapsuleSeeder.insertSampleCapsule(in: modelContext)
         } catch {
             saveError = error.localizedDescription
         }
