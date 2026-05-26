@@ -1,7 +1,18 @@
+import SwiftData
 import SwiftUI
 
 struct AppRootView: View {
+    @Query private var clothingItems: [ClothingItem]
+
     var body: some View {
+        if clothingItems.isEmpty {
+            WorkCapsuleOnboardingView()
+        } else {
+            tabShell
+        }
+    }
+
+    private var tabShell: some View {
         TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "sparkles") }
@@ -20,4 +31,5 @@ struct AppRootView: View {
 
 #Preview {
     AppRootView()
+        .modelContainer(for: ClothingItem.self, inMemory: true)
 }

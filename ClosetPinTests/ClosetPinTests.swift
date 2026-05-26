@@ -106,6 +106,18 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.updatedAt, updatedAt)
     }
 
+    func testWorkCapsuleSeedDataProvidesOfficeRecommendationBasics() {
+        let items = SeedData.workCapsuleItems()
+        let itemTypes = Set(items.map(\.type))
+
+        XCTAssertTrue(itemTypes.isSuperset(of: [.top, .bottom, .shoes]))
+        XCTAssertTrue(itemTypes.contains(.blazer))
+        XCTAssertTrue(itemTypes.contains(.bag))
+        XCTAssertGreaterThanOrEqual(items.count, 5)
+        XCTAssertTrue(items.allSatisfy { $0.status == .available })
+        XCTAssertTrue(items.allSatisfy { $0.formalityLevel >= 3 })
+    }
+
     func testSwiftDataInMemoryPersistenceStoresCollectionFields() throws {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(

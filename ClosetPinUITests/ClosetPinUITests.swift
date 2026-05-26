@@ -6,5 +6,9 @@ final class ClosetPinUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
+        XCTAssertTrue(
+            app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3)
+                || app.staticTexts["Today"].waitForExistence(timeout: 3)
+        )
     }
 }
