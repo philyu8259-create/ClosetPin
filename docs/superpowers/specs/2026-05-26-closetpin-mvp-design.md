@@ -4,7 +4,7 @@ Date: 2026-05-26
 
 ## Summary
 
-ClosetPin is an iOS local-first AI outfit assistant for professional women. The MVP focuses on two high-frequency workplace needs:
+ClosetPin is an iOS local-first AI outfit assistant for working professionals. The first validation audience can skew toward professional women, but the product, copy, clothing categories, and recommendations must also support men. The MVP focuses on two high-frequency workplace needs:
 
 - Daily office outfits that save time and avoid repetitive dressing.
 - Important work occasions such as meetings, client visits, and business meals where the user wants a safer, more polished recommendation.
@@ -15,7 +15,7 @@ The product should open on the question users care about most: "What should I we
 
 Primary positioning:
 
-> A local-first AI outfit assistant that helps professional women choose office and meeting outfits from clothes they already own.
+> A local-first AI outfit assistant that helps working professionals choose office and meeting outfits from clothes they already own.
 
 MVP promise:
 
@@ -23,7 +23,7 @@ MVP promise:
 
 ## Target User
 
-The first target user is a professional woman who wants to dress appropriately and confidently for work without spending too much time deciding outfits. She may have enough clothes, but struggles with:
+The first target user is a working professional who wants to dress appropriately and confidently for work without spending too much time deciding outfits. Early marketing and testing may focus on professional women, but the app experience should remain useful and welcoming for men as well. The user may have enough clothes, but struggles with:
 
 - Repeating the same safe combinations.
 - Not knowing whether an outfit is formal enough for a meeting.
@@ -47,7 +47,7 @@ The user sees a short onboarding flow framed around a "10-minute work capsule."
 
 The app asks the user to add enough items to produce credible office outfits:
 
-- 3 tops, such as blouse, shirt, knit, or tee.
+- 3 tops, such as shirt, blouse, knit, polo, or tee.
 - 2 bottoms, such as pants or skirt.
 - 1 blazer or work outer layer.
 - 2 shoes.
@@ -362,4 +362,3 @@ The MVP should be considered validated if test users can:
 - Understand why an outfit was recommended.
 - Save or wear at least one recommended outfit.
 - Return to the app for another workday or meeting recommendation.
-
