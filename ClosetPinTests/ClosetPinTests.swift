@@ -309,10 +309,50 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertNotNil(UIImage(data: data))
     }
 
+    func testPhotoPersistenceAutoCropsClothingSubjectBeforeSavingDisplayJPEG() throws {
+        let sourceImage = makeImageWithCenteredSubject()
+        let sourceData = try XCTUnwrap(sourceImage.pngData())
+
+        let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
+        let displayImage = try XCTUnwrap(UIImage(data: result.displayJPEGData))
+        let originalImage = try XCTUnwrap(UIImage(data: result.originalJPEGData))
+
+        XCTAssertLessThan(displayImage.size.width, originalImage.size.width)
+        XCTAssertLessThan(displayImage.size.height, originalImage.size.height)
+        XCTAssertEqual(originalImage.cgImage?.width, sourceImage.cgImage?.width)
+        XCTAssertEqual(originalImage.cgImage?.height, sourceImage.cgImage?.height)
+    }
+
     func testPhotoPersistenceRejectsNonImageLibraryData() {
-        let data = ClosetItemPhotoPersistence.normalizedJPEGData(from: Data("not an image".utf8))
+        let data = ClosetItemPhotoPersistence.processedPhotoData(from: Data("not an image".utf8))
 
         XCTAssertNil(data)
+    }
+
+    func testPhotoPersistenceStagesDisplayAndOriginalJPEGFiles() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ClosetPinTests-\(UUID().uuidString)", isDirectory: true)
+        let imageStore = ImageStore(baseDirectory: directory)
+        let itemID = UUID()
+        let photoData = ProcessedClosetPhotoData(
+            displayJPEGData: Data("display image".utf8),
+            originalJPEGData: Data("original image".utf8)
+        )
+
+        let stagedWrite = try ClosetItemPhotoPersistence.stagePhotoData(
+            photoData,
+            id: itemID,
+            imageStore: imageStore
+        )
+
+        try stagedWrite.commit()
+
+        XCTAssertEqual(try Data(contentsOf: stagedWrite.display.finalURL), photoData.displayJPEGData)
+        XCTAssertEqual(try Data(contentsOf: stagedWrite.original.finalURL), photoData.originalJPEGData)
+        XCTAssertTrue(stagedWrite.display.finalURL.lastPathComponent.hasSuffix(".jpg"))
+        XCTAssertTrue(stagedWrite.original.finalURL.path.contains("/Originals/"))
+
+        try? FileManager.default.removeItem(at: directory)
     }
 
     func testStagedPhotoWriteDoesNotReplaceExistingImageUntilCommit() throws {
@@ -347,6 +387,7 @@ final class ClosetPinTests: XCTestCase {
         let existing = ClothingItem(
             id: UUID(),
             photoLocalPath: "/tmp/original.jpg",
+            originalPhotoLocalPath: "/tmp/source.jpg",
             type: .top,
             color: "Blue",
             seasons: [.spring],
@@ -362,6 +403,7 @@ final class ClosetPinTests: XCTestCase {
 
         XCTAssertEqual(existing.id, draft.itemID)
         XCTAssertEqual(existing.photoLocalPath, "/tmp/original.jpg")
+        XCTAssertEqual(existing.originalPhotoLocalPath, "/tmp/source.jpg")
         XCTAssertEqual(existing.color, "Ivory")
         XCTAssertEqual(existing.storageLocation, "Main wardrobe")
     }
@@ -370,6 +412,7 @@ final class ClosetPinTests: XCTestCase {
         let existing = ClothingItem(
             id: UUID(),
             photoLocalPath: "/tmp/original.jpg",
+            originalPhotoLocalPath: "/tmp/source.jpg",
             type: .top,
             color: "Blue",
             seasons: [.spring],
@@ -380,9 +423,11 @@ final class ClosetPinTests: XCTestCase {
 
         var draft = AddEditItemDraft(item: existing)
         draft.photoLocalPath = "/tmp/replacement.jpg"
+        draft.originalPhotoLocalPath = "/tmp/replacement-source.jpg"
         draft.apply(to: existing)
 
         XCTAssertEqual(existing.photoLocalPath, "/tmp/replacement.jpg")
+        XCTAssertEqual(existing.originalPhotoLocalPath, "/tmp/replacement-source.jpg")
     }
 
     func testAddEditItemDraftApplyUpdatesFieldsAndUpdatedAt() {
@@ -504,6 +549,15 @@ final class ClosetPinTests: XCTestCase {
         UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8)).image { context in
             UIColor.systemBlue.setFill()
             context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }
+    }
+
+    private func makeImageWithCenteredSubject() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100)).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
+            UIColor.systemRed.setFill()
+            context.fill(CGRect(x: 35, y: 30, width: 30, height: 40))
         }
     }
 }

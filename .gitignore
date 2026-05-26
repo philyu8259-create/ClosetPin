@@ -2,7 +2,6 @@
 .superpowers/
 DerivedData/
 build/
-*.xcodeproj/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcuserstate

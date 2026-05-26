@@ -5,6 +5,7 @@ import SwiftData
 final class ClothingItem {
     var id: UUID
     var photoLocalPath: String
+    var originalPhotoLocalPath: String = ""
     var typeRawValue: String
     var color: String
     var seasonRawValues: [String]
@@ -25,6 +26,7 @@ final class ClothingItem {
     init(
         id: UUID = UUID(),
         photoLocalPath: String,
+        originalPhotoLocalPath: String = "",
         type: ClothingType,
         color: String,
         seasons: [SeasonTag],
@@ -41,6 +43,7 @@ final class ClothingItem {
         let now = Date()
         self.id = id
         self.photoLocalPath = photoLocalPath
+        self.originalPhotoLocalPath = originalPhotoLocalPath
         self.typeRawValue = type.rawValue
         self.color = color
         self.seasonRawValues = seasons.map(\.rawValue)
