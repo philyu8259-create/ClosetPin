@@ -34,6 +34,10 @@ final class ClosetPinUITests: XCTestCase {
         app.tabBars.buttons["Closet"].tap()
         app.buttons["addItemButton"].tap()
 
+        // System PhotosPicker library selection is not reliable in UI automation, so this
+        // debug-only control persists a local test image through the same ImageStore path.
+        app.buttons["useTestPhotoButton"].tap()
+
         let colorField = app.textFields["itemColorField"]
         XCTAssertTrue(colorField.waitForExistence(timeout: 3))
         colorField.tap()

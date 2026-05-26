@@ -162,7 +162,7 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
     }
 
-    func testAddEditItemDraftRequiresColorSeasonAndStorageBeforeSaving() {
+    func testAddEditItemDraftRequiresColorSeasonStorageAndPhotoBeforeSaving() {
         var draft = AddEditItemDraft()
 
         XCTAssertFalse(draft.canSave)
@@ -170,8 +170,115 @@ final class ClosetPinTests: XCTestCase {
         draft.color = "Ivory"
         draft.selectedSeasons = [.spring]
         draft.storageLocation = "Main wardrobe"
+        XCTAssertFalse(draft.canSave)
+
+        draft.photoLocalPath = "/tmp/photo.jpg"
 
         XCTAssertTrue(draft.canSave)
+    }
+
+    func testAddEditItemDraftRejectsWhitespaceOnlyRequiredText() {
+        var draft = AddEditItemDraft()
+        draft.photoLocalPath = "/tmp/photo.jpg"
+        draft.color = "   "
+        draft.selectedSeasons = [.spring]
+        draft.storageLocation = "\n\t"
+
+        XCTAssertFalse(draft.canSave)
+        XCTAssertTrue(draft.validationMessages.contains("Color is required."))
+        XCTAssertTrue(draft.validationMessages.contains("Storage location is required."))
+    }
+
+    func testAddEditItemDraftUsesStableItemIDForCreatedItem() {
+        var draft = AddEditItemDraft()
+        draft.photoLocalPath = "/tmp/photo.jpg"
+        draft.color = "Ivory"
+        draft.selectedSeasons = [.spring]
+        draft.storageLocation = "Main wardrobe"
+
+        let item = draft.makeItem()
+
+        XCTAssertEqual(item.id, draft.itemID)
+        XCTAssertEqual(item.photoLocalPath, "/tmp/photo.jpg")
+    }
+
+    func testAddEditItemDraftPreservesExistingPhotoPathWhenEditing() {
+        let existing = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/original.jpg",
+            type: .top,
+            color: "Blue",
+            seasons: [.spring],
+            formalityLevel: 3,
+            warmthLevel: 2,
+            storageLocation: "Rack"
+        )
+
+        var draft = AddEditItemDraft(item: existing)
+        draft.color = "Ivory"
+        draft.storageLocation = "Main wardrobe"
+        draft.apply(to: existing)
+
+        XCTAssertEqual(existing.id, draft.itemID)
+        XCTAssertEqual(existing.photoLocalPath, "/tmp/original.jpg")
+        XCTAssertEqual(existing.color, "Ivory")
+        XCTAssertEqual(existing.storageLocation, "Main wardrobe")
+    }
+
+    func testAddEditItemDraftUpdatesPhotoPathWhenEditing() {
+        let existing = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/original.jpg",
+            type: .top,
+            color: "Blue",
+            seasons: [.spring],
+            formalityLevel: 3,
+            warmthLevel: 2,
+            storageLocation: "Rack"
+        )
+
+        var draft = AddEditItemDraft(item: existing)
+        draft.photoLocalPath = "/tmp/replacement.jpg"
+        draft.apply(to: existing)
+
+        XCTAssertEqual(existing.photoLocalPath, "/tmp/replacement.jpg")
+    }
+
+    func testAddEditItemDraftApplyUpdatesFieldsAndUpdatedAt() {
+        let existing = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/original.jpg",
+            type: .top,
+            color: "Blue",
+            seasons: [.spring],
+            formalityLevel: 3,
+            warmthLevel: 2,
+            storageLocation: "Rack",
+            status: .available,
+            notes: "Old"
+        )
+        let originalUpdatedAt = existing.updatedAt
+
+        var draft = AddEditItemDraft(item: existing)
+        draft.type = .blazer
+        draft.color = "Charcoal"
+        draft.selectedSeasons = [.autumn, .winter]
+        draft.formalityLevel = 5
+        draft.warmthLevel = 4
+        draft.storageLocation = "Main wardrobe"
+        draft.status = .needsRepair
+        draft.notes = "Replace button"
+        draft.apply(to: existing)
+
+        XCTAssertEqual(existing.type, .blazer)
+        XCTAssertEqual(existing.color, "Charcoal")
+        XCTAssertEqual(existing.seasons, [.autumn, .winter])
+        XCTAssertEqual(existing.formalityLevel, 5)
+        XCTAssertEqual(existing.warmthLevel, 4)
+        XCTAssertEqual(existing.storageLocation, "Main wardrobe")
+        XCTAssertEqual(existing.status, .needsRepair)
+        XCTAssertEqual(existing.notes, "Replace button")
+        XCTAssertGreaterThanOrEqual(existing.updatedAt, originalUpdatedAt)
     }
 
     func testSwiftDataInMemoryPersistenceStoresCollectionFields() throws {

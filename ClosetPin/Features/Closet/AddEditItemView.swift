@@ -3,6 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct AddEditItemDraft {
+    var itemID: UUID = UUID()
     var photoLocalPath: String = ""
     var type: ClothingType = .top
     var color: String = ""
@@ -16,6 +17,7 @@ struct AddEditItemDraft {
     init(item: ClothingItem? = nil) {
         guard let item else { return }
 
+        itemID = item.id
         photoLocalPath = item.photoLocalPath
         type = item.type
         color = item.color
@@ -31,6 +33,9 @@ struct AddEditItemDraft {
         var messages: [String] = []
         if normalized(color).isEmpty {
             messages.append("Color is required.")
+        }
+        if normalized(photoLocalPath).isEmpty {
+            messages.append("Photo is required.")
         }
         if selectedSeasons.isEmpty {
             messages.append("Select at least one season.")
@@ -55,6 +60,7 @@ struct AddEditItemDraft {
 
     func makeItem() -> ClothingItem {
         ClothingItem(
+            id: itemID,
             photoLocalPath: photoLocalPath,
             type: type,
             color: normalized(color),
@@ -94,12 +100,15 @@ struct AddEditItemView: View {
     @Environment(\.modelContext) private var modelContext
 
     private let item: ClothingItem?
+    private let imageStore: ImageStore
     @State private var draft: AddEditItemDraft
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var saveError: String?
+    @State private var photoError: String?
 
-    init(item: ClothingItem? = nil) {
+    init(item: ClothingItem? = nil, imageStore: ImageStore = ImageStore()) {
         self.item = item
+        self.imageStore = imageStore
         _draft = State(initialValue: AddEditItemDraft(item: item))
     }
 
@@ -141,6 +150,11 @@ struct AddEditItemView: View {
             } message: {
                 Text(saveError ?? "Please try again.")
             }
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                Task {
+                    await persistSelectedPhoto(newItem)
+                }
+            }
         }
     }
 
@@ -153,7 +167,7 @@ struct AddEditItemView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Choose Photo")
                             .foregroundStyle(DesignSystem.ink)
-                        Text("Photo storage will be connected later.")
+                        Text("Required for new closet items.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -161,6 +175,27 @@ struct AddEditItemView: View {
                 }
             }
             .accessibilityIdentifier("itemPhotoPicker")
+
+#if DEBUG
+            if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
+                Button("Use Test Photo") {
+                    savePhotoData(Data([0xFF, 0xD8, 0xFF, 0xD9]))
+                }
+                .accessibilityIdentifier("useTestPhotoButton")
+            }
+#endif
+
+            if !draft.photoLocalPath.isEmpty {
+                Label("Photo saved locally.", systemImage: "checkmark.circle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(DesignSystem.accent)
+            }
+
+            if let photoError {
+                Label(photoError, systemImage: "exclamationmark.circle")
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
         }
     }
 
@@ -192,11 +227,12 @@ struct AddEditItemView: View {
         Section("Seasons") {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
                 ForEach(SeasonTag.allCases) { season in
+                    let isSelected = draft.selectedSeasons.contains(season)
                     Button {
                         draft.toggleSeason(season)
                     } label: {
                         HStack {
-                            Image(systemName: draft.selectedSeasons.contains(season) ? "checkmark.circle.fill" : "circle")
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                             Text(season.displayName)
                             Spacer(minLength: 0)
                         }
@@ -204,11 +240,12 @@ struct AddEditItemView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .frame(maxWidth: .infinity)
-                        .background(draft.selectedSeasons.contains(season) ? DesignSystem.accent.opacity(0.14) : Color(.tertiarySystemGroupedBackground))
+                        .background(isSelected ? DesignSystem.accent.opacity(0.14) : Color(.tertiarySystemGroupedBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("seasonToggle_\(season.rawValue)")
+                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
                 }
             }
             .padding(.vertical, 4)
@@ -242,17 +279,93 @@ struct AddEditItemView: View {
     private func save() {
         guard draft.canSave else { return }
 
+        var insertedItem: ClothingItem?
+        let snapshot = item.map(ClothingItemSnapshot.init(item:))
+
         do {
             if let item {
                 draft.apply(to: item)
             } else {
-                modelContext.insert(draft.makeItem())
+                let newItem = draft.makeItem()
+                insertedItem = newItem
+                modelContext.insert(newItem)
             }
             try modelContext.save()
             dismiss()
         } catch {
+            if let insertedItem {
+                modelContext.delete(insertedItem)
+            }
+            if let item, let snapshot {
+                snapshot.restore(item)
+            }
+            modelContext.rollback()
             saveError = error.localizedDescription
         }
+    }
+
+    @MainActor
+    private func persistSelectedPhoto(_ item: PhotosPickerItem?) async {
+        guard let item else { return }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self) else {
+                photoError = "The selected photo could not be loaded."
+                return
+            }
+            savePhotoData(data)
+        } catch {
+            photoError = "The selected photo could not be loaded."
+        }
+    }
+
+    private func savePhotoData(_ data: Data) {
+        do {
+            let url = try imageStore.saveJPEGData(data, id: draft.itemID)
+            draft.photoLocalPath = url.path
+            photoError = nil
+        } catch {
+            photoError = "The selected photo could not be saved."
+        }
+    }
+}
+
+private struct ClothingItemSnapshot {
+    let photoLocalPath: String
+    let typeRawValue: String
+    let color: String
+    let seasonRawValues: [String]
+    let formalityLevel: Int
+    let warmthLevel: Int
+    let storageLocation: String
+    let statusRawValue: String
+    let notes: String
+    let updatedAt: Date
+
+    init(item: ClothingItem) {
+        photoLocalPath = item.photoLocalPath
+        typeRawValue = item.typeRawValue
+        color = item.color
+        seasonRawValues = item.seasonRawValues
+        formalityLevel = item.formalityLevel
+        warmthLevel = item.warmthLevel
+        storageLocation = item.storageLocation
+        statusRawValue = item.statusRawValue
+        notes = item.notes
+        updatedAt = item.updatedAt
+    }
+
+    func restore(_ item: ClothingItem) {
+        item.photoLocalPath = photoLocalPath
+        item.typeRawValue = typeRawValue
+        item.color = color
+        item.seasonRawValues = seasonRawValues
+        item.formalityLevel = formalityLevel
+        item.warmthLevel = warmthLevel
+        item.storageLocation = storageLocation
+        item.statusRawValue = statusRawValue
+        item.notes = notes
+        item.updatedAt = updatedAt
     }
 }
 
