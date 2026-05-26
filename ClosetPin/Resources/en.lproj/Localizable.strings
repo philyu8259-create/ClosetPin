@@ -134,3 +134,23 @@
 "recommendation.explanation.empty" = "No outfit items were available to explain.";
 "recommendation.explanation.daily_office.format" = "A practical, balanced office option with %@, easy to wear on a workday.";
 "recommendation.explanation.important_meeting.format" = "A more formal, polished office option with %@, suitable for a higher-stakes work moment.";
+
+"seed.work_capsule.storage_location" = "Sample work capsule";
+"seed.work_capsule.white_shirt.color" = "white";
+"seed.work_capsule.white_shirt.notes" = "White shirt";
+"seed.work_capsule.light_blue_blouse.color" = "light blue";
+"seed.work_capsule.light_blue_blouse.notes" = "Light blue blouse";
+"seed.work_capsule.charcoal_polo.color" = "charcoal";
+"seed.work_capsule.charcoal_polo.notes" = "Charcoal polo";
+"seed.work_capsule.navy_bottom.color" = "navy";
+"seed.work_capsule.navy_bottom.notes" = "Navy pants or skirt";
+"seed.work_capsule.black_bottom.color" = "black";
+"seed.work_capsule.black_bottom.notes" = "Black pants or skirt";
+"seed.work_capsule.charcoal_blazer.color" = "charcoal";
+"seed.work_capsule.charcoal_blazer.notes" = "Charcoal blazer";
+"seed.work_capsule.black_shoes.color" = "black";
+"seed.work_capsule.black_shoes.notes" = "Black shoes";
+"seed.work_capsule.brown_shoes.color" = "brown";
+"seed.work_capsule.brown_shoes.notes" = "Brown shoes";
+"seed.work_capsule.work_bag.color" = "black";
+"seed.work_capsule.work_bag.notes" = "Work bag";

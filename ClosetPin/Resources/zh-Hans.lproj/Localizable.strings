@@ -1,4 +1,4 @@
-"common.ok" = "好";
+"common.ok" = "确定";
 "common.cancel" = "取消";
 "common.save" = "保存";
 "common.try_again" = "请再试一次。";
@@ -36,7 +36,7 @@
 "closet.photo.section" = "照片";
 "closet.photo.camera_unavailable" = "此设备无法使用相机。";
 "closet.photo.take" = "拍照";
-"closet.photo.choose_library" = "从图库选择";
+"closet.photo.choose_library" = "从照片图库选择";
 "closet.photo.help" = "为这件通勤单品添加一张清晰照片。";
 "closet.photo.use_test" = "使用测试照片";
 "closet.photo.ready" = "照片已准备保存。";
@@ -119,9 +119,9 @@
 "season.autumn" = "秋季";
 "season.winter" = "冬季";
 
-"scenario.dailyOffice" = "日常办公室";
+"scenario.dailyOffice" = "日常办公";
 "scenario.importantMeeting" = "重要会议";
-"scenario.dailyOffice.short" = "办公室";
+"scenario.dailyOffice.short" = "办公";
 "scenario.importantMeeting.short" = "会议";
 
 "feedback.wore" = "已穿";
@@ -132,5 +132,25 @@
 "feedback.swapped" = "已替换";
 
 "recommendation.explanation.empty" = "没有可用于解释的穿搭单品。";
-"recommendation.explanation.daily_office.format" = "这是一套实用、平衡的办公室选择，包含%@，适合工作日轻松穿着。";
-"recommendation.explanation.important_meeting.format" = "这是一套更正式、更利落的办公室选择，包含%@，适合更重要的工作场合。";
+"recommendation.explanation.daily_office.format" = "这是一套实用、平衡的办公穿搭，包含%@，适合工作日轻松穿着。";
+"recommendation.explanation.important_meeting.format" = "这是一套更正式、更利落的办公穿搭，包含%@，适合更重要的工作场合。";
+
+"seed.work_capsule.storage_location" = "示例通勤胶囊衣橱";
+"seed.work_capsule.white_shirt.color" = "白色";
+"seed.work_capsule.white_shirt.notes" = "白色衬衫";
+"seed.work_capsule.light_blue_blouse.color" = "浅蓝色";
+"seed.work_capsule.light_blue_blouse.notes" = "浅蓝色衬衫";
+"seed.work_capsule.charcoal_polo.color" = "炭灰色";
+"seed.work_capsule.charcoal_polo.notes" = "炭灰色 Polo 衫";
+"seed.work_capsule.navy_bottom.color" = "海军蓝";
+"seed.work_capsule.navy_bottom.notes" = "海军蓝下装";
+"seed.work_capsule.black_bottom.color" = "黑色";
+"seed.work_capsule.black_bottom.notes" = "黑色下装";
+"seed.work_capsule.charcoal_blazer.color" = "炭灰色";
+"seed.work_capsule.charcoal_blazer.notes" = "炭灰色西装外套";
+"seed.work_capsule.black_shoes.color" = "黑色";
+"seed.work_capsule.black_shoes.notes" = "黑色鞋子";
+"seed.work_capsule.brown_shoes.color" = "棕色";
+"seed.work_capsule.brown_shoes.notes" = "棕色鞋子";
+"seed.work_capsule.work_bag.color" = "黑色";
+"seed.work_capsule.work_bag.notes" = "通勤包";

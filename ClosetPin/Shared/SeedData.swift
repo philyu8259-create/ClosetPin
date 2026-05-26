@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 enum SeedData {
-    static func workCapsuleItems() -> [ClothingItem] {
+    static func workCapsuleItems(bundle: Bundle = .main) -> [ClothingItem] {
         let timestamp = Date(timeIntervalSince1970: 1_767_225_600)
 
         return [
@@ -10,91 +10,100 @@ enum SeedData {
                 id: "11111111-1111-1111-1111-111111111111",
                 photoLocalPath: "seed/work-capsule/white-shirt",
                 type: .top,
-                color: "white",
+                colorKey: "seed.work_capsule.white_shirt.color",
                 styleTags: ["shirt", "office"],
                 formalityLevel: 4,
                 warmthLevel: 2,
-                notes: "White shirt"
+                notesKey: "seed.work_capsule.white_shirt.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "22222222-2222-2222-2222-222222222222",
                 photoLocalPath: "seed/work-capsule/light-blue-blouse",
                 type: .top,
-                color: "light blue",
+                colorKey: "seed.work_capsule.light_blue_blouse.color",
                 styleTags: ["blouse", "meeting"],
                 formalityLevel: 4,
                 warmthLevel: 2,
-                notes: "Light blue blouse"
+                notesKey: "seed.work_capsule.light_blue_blouse.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "33333333-3333-3333-3333-333333333333",
                 photoLocalPath: "seed/work-capsule/charcoal-polo",
                 type: .top,
-                color: "charcoal",
+                colorKey: "seed.work_capsule.charcoal_polo.color",
                 styleTags: ["polo", "office"],
                 formalityLevel: 3,
                 warmthLevel: 2,
-                notes: "Charcoal polo"
+                notesKey: "seed.work_capsule.charcoal_polo.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "44444444-4444-4444-4444-444444444444",
                 photoLocalPath: "seed/work-capsule/navy-bottom",
                 type: .bottom,
-                color: "navy",
+                colorKey: "seed.work_capsule.navy_bottom.color",
                 styleTags: ["pants/skirt", "office"],
                 formalityLevel: 4,
                 warmthLevel: 2,
-                notes: "Navy pants or skirt"
+                notesKey: "seed.work_capsule.navy_bottom.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "55555555-5555-5555-5555-555555555555",
                 photoLocalPath: "seed/work-capsule/black-bottom",
                 type: .bottom,
-                color: "black",
+                colorKey: "seed.work_capsule.black_bottom.color",
                 styleTags: ["pants/skirt", "meeting"],
                 formalityLevel: 4,
                 warmthLevel: 2,
-                notes: "Black pants or skirt"
+                notesKey: "seed.work_capsule.black_bottom.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "66666666-6666-6666-6666-666666666666",
                 photoLocalPath: "seed/work-capsule/charcoal-blazer",
                 type: .blazer,
-                color: "charcoal",
+                colorKey: "seed.work_capsule.charcoal_blazer.color",
                 styleTags: ["blazer", "work layer"],
                 formalityLevel: 5,
                 warmthLevel: 3,
-                notes: "Charcoal blazer"
+                notesKey: "seed.work_capsule.charcoal_blazer.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "77777777-7777-7777-7777-777777777777",
                 photoLocalPath: "seed/work-capsule/black-shoes",
                 type: .shoes,
-                color: "black",
+                colorKey: "seed.work_capsule.black_shoes.color",
                 styleTags: ["shoes", "office"],
                 formalityLevel: 4,
                 warmthLevel: 1,
-                notes: "Black shoes"
+                notesKey: "seed.work_capsule.black_shoes.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "88888888-8888-8888-8888-888888888888",
                 photoLocalPath: "seed/work-capsule/brown-shoes",
                 type: .shoes,
-                color: "brown",
+                colorKey: "seed.work_capsule.brown_shoes.color",
                 styleTags: ["shoes", "meeting"],
                 formalityLevel: 4,
                 warmthLevel: 1,
-                notes: "Brown shoes"
+                notesKey: "seed.work_capsule.brown_shoes.notes",
+                bundle: bundle
             ),
             workItem(
                 id: "99999999-9999-9999-9999-999999999999",
                 photoLocalPath: "seed/work-capsule/work-bag",
                 type: .bag,
-                color: "black",
+                colorKey: "seed.work_capsule.work_bag.color",
                 styleTags: ["bag", "work"],
                 formalityLevel: 4,
                 warmthLevel: 1,
-                notes: "Work bag"
+                notesKey: "seed.work_capsule.work_bag.notes",
+                bundle: bundle
             )
         ].map { item in
             item.createdAt = timestamp
@@ -107,24 +116,25 @@ enum SeedData {
         id: String,
         photoLocalPath: String,
         type: ClothingType,
-        color: String,
+        colorKey: String,
         styleTags: [String],
         formalityLevel: Int,
         warmthLevel: Int,
-        notes: String
+        notesKey: String,
+        bundle: Bundle
     ) -> ClothingItem {
         ClothingItem(
             id: UUID(uuidString: id)!,
             photoLocalPath: photoLocalPath,
             type: type,
-            color: color,
+            color: L10n.text(colorKey, bundle: bundle),
             seasons: SeasonTag.allCases,
             styleTags: styleTags,
             formalityLevel: formalityLevel,
             warmthLevel: warmthLevel,
-            storageLocation: "Sample work capsule",
+            storageLocation: L10n.text("seed.work_capsule.storage_location", bundle: bundle),
             status: .available,
-            notes: notes
+            notes: L10n.text(notesKey, bundle: bundle)
         )
     }
 }

@@ -26,9 +26,6 @@ targets:
       testTargets:
         - ClosetPinTests
         - ClosetPinUITests
-      commandLineArguments:
-        "-AppleLanguages (en)": true
-        "-AppleLocale en_US": true
   ClosetPinTests:
     type: bundle.unit-test
     platform: iOS

@@ -16,9 +16,9 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("white top"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("navy bottom"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("black shoes"))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .top, color: "white")))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .bottom, color: "navy")))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .shoes, color: "black")))
     }
 
     func testFallbackExplanationDoesNotInventMissingItems() async throws {
@@ -53,9 +53,9 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.containsWholeWord("top"))
-        XCTAssertTrue(explanation.containsWholeWord("bottom"))
-        XCTAssertTrue(explanation.containsWholeWord("shoes"))
+        XCTAssertTrue(explanation.containsType(.top))
+        XCTAssertTrue(explanation.containsType(.bottom))
+        XCTAssertTrue(explanation.containsType(.shoes))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("navy"))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("\n"))
     }
@@ -76,10 +76,10 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.containsWholeWord("top"))
-        XCTAssertTrue(explanation.containsWholeWord("bottom"))
-        XCTAssertTrue(explanation.containsWholeWord("bag"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("white shoes"))
+        XCTAssertTrue(explanation.containsType(.top))
+        XCTAssertTrue(explanation.containsType(.bottom))
+        XCTAssertTrue(explanation.containsType(.bag))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .shoes, color: "white")))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("blue shirt"))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("red skirt"))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("tan jacket"))
@@ -125,9 +125,9 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.containsWholeWord("top"))
-        XCTAssertTrue(explanation.containsWholeWord("bottom"))
-        XCTAssertTrue(explanation.containsWholeWord("shoes"))
+        XCTAssertTrue(explanation.containsType(.top))
+        XCTAssertTrue(explanation.containsType(.bottom))
+        XCTAssertTrue(explanation.containsType(.shoes))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("very formal"))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("office ready"))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("nice work"))
@@ -147,9 +147,9 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("navy top"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("light blue bottom"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("blue-green shoes"))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .top, color: "navy")))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .bottom, color: "light blue")))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .shoes, color: "blue-green")))
     }
 
     func testFallbackExplanationOmitsUnsupportedPunctuationButAllowsSupportedHyphens() async throws {
@@ -166,9 +166,9 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.containsWholeWord("top"))
-        XCTAssertTrue(explanation.containsWholeWord("bottom"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("blue-green shoes"))
+        XCTAssertTrue(explanation.containsType(.top))
+        XCTAssertTrue(explanation.containsType(.bottom))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .shoes, color: "blue-green")))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("navy."))
         XCTAssertFalse(explanation.localizedCaseInsensitiveContains("gray/blue"))
     }
@@ -189,12 +189,14 @@ final class AIStylistClientTests: XCTestCase {
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
         let absentControlledTypes = ClothingType.allCases
             .filter { !actualTypes.contains($0) }
-            .map(\.rawValue)
+            .flatMap { type in
+                type.summaryName.count > 1 ? [type.rawValue, type.summaryName] : [type.rawValue]
+            }
         let absentCommonNouns = ["dress", "tie", "suit", "watch"]
 
         for noun in absentControlledTypes + absentCommonNouns {
             XCTAssertFalse(
-                explanation.containsWholeWord(noun),
+                explanation.containsLocalizedTerm(noun),
                 "Fallback explanation should not invent absent item noun: \(noun)"
             )
         }
@@ -210,7 +212,7 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertEqual(explanation, "No outfit items were available to explain.")
+        XCTAssertEqual(explanation, L10n.text("recommendation.explanation.empty"))
     }
 
     func testDailyOfficeExplanationUsesPracticalOfficeLanguage() async throws {
@@ -227,9 +229,15 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
 
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("practical"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("balanced"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("workday"))
+        let itemSummary = [
+            itemDescription(type: .top, color: "blue"),
+            itemDescription(type: .bottom, color: "gray"),
+            itemDescription(type: .shoes, color: "black")
+        ].joined(separator: ", ")
+        XCTAssertEqual(
+            explanation,
+            L10n.string("recommendation.explanation.daily_office.format", arguments: itemSummary)
+        )
     }
 
     func testImportantMeetingExplanationUsesPolishedFormalLanguage() async throws {
@@ -247,9 +255,16 @@ final class AIStylistClientTests: XCTestCase {
 
         let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .importantMeeting)
 
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("formal"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("polished"))
-        XCTAssertTrue(explanation.localizedCaseInsensitiveContains("higher-stakes work moment"))
+        let itemSummary = [
+            itemDescription(type: .blazer, color: "charcoal"),
+            itemDescription(type: .top, color: "white"),
+            itemDescription(type: .bottom, color: "navy"),
+            itemDescription(type: .shoes, color: "black")
+        ].joined(separator: ", ")
+        XCTAssertEqual(
+            explanation,
+            L10n.string("recommendation.explanation.important_meeting.format", arguments: itemSummary)
+        )
     }
 
     func testFallbackExplanationIsInclusiveAndGenderNeutral() async throws {
@@ -288,9 +303,24 @@ private extension AIStylistClientTests {
             storageLocation: "Closet"
         )
     }
+
+    func itemDescription(type: ClothingType, color: String) -> String {
+        "\(color) \(type.summaryName)"
+    }
 }
 
 private extension String {
+    func containsType(_ type: ClothingType) -> Bool {
+        localizedCaseInsensitiveContains(type.summaryName)
+    }
+
+    func containsLocalizedTerm(_ term: String) -> Bool {
+        if term.rangeOfCharacter(from: .letters) != nil && term.unicodeScalars.allSatisfy(\.isASCII) {
+            return containsWholeWord(term)
+        }
+        return localizedCaseInsensitiveContains(term)
+    }
+
     func containsWholeWord(_ term: String) -> Bool {
         let pattern = "\\b\(NSRegularExpression.escapedPattern(for: term))\\b"
         return range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil

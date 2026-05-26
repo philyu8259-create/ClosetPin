@@ -66,7 +66,7 @@ final class TodayFeedbackRecorderTests: XCTestCase {
         let outfit = try XCTUnwrap(result.outfit)
         XCTAssertEqual(outfit.itemIds, items.map(\.id))
         XCTAssertEqual(outfit.scenario, .dailyOffice)
-        XCTAssertEqual(outfit.weatherNote, "Spring")
+        XCTAssertEqual(outfit.weatherNote, SeasonTag.spring.displayName)
         XCTAssertEqual(outfit.score, 80)
         XCTAssertEqual(outfit.explanation, "A polished office mix.")
         XCTAssertEqual(outfit.savedAt, savedAt)

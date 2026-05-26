@@ -197,8 +197,8 @@ final class ClosetPinTests: XCTestCase {
         draft.storageLocation = "\n\t"
 
         XCTAssertFalse(draft.canSave)
-        XCTAssertTrue(draft.validationMessages.contains("Color is required."))
-        XCTAssertTrue(draft.validationMessages.contains("Storage location is required."))
+        XCTAssertTrue(draft.validationMessages.contains(L10n.text("closet.validation.color_required")))
+        XCTAssertTrue(draft.validationMessages.contains(L10n.text("closet.validation.storage_required")))
     }
 
     func testAddEditItemDraftUsesStableItemIDForCreatedItem() {
