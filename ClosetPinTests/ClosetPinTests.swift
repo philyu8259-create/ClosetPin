@@ -232,6 +232,14 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
     }
 
+    func testGeneratedMVPAssetsAreBundled() {
+        let onboardingURL = Bundle.main.url(forResource: "work-capsule-onboarding", withExtension: "png")
+        let emptyClosetURL = Bundle.main.url(forResource: "empty-closet", withExtension: "png")
+
+        XCTAssertNotNil(onboardingURL.flatMap { UIImage(contentsOfFile: $0.path) })
+        XCTAssertNotNil(emptyClosetURL.flatMap { UIImage(contentsOfFile: $0.path) })
+    }
+
     func testAddEditItemDraftRequiresColorSeasonStorageAndPhotoBeforeSaving() {
         var draft = AddEditItemDraft()
 

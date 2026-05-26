@@ -71,11 +71,26 @@ struct ClosetView: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView {
-            Label(L10n.text("closet.empty.title"), systemImage: "rectangle.grid.2x2")
-        } description: {
-            Text(L10n.text("closet.empty.description"))
-        } actions: {
+        VStack(spacing: 18) {
+            BundledPNGImage(name: "empty-closet")
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
+                .accessibilityHidden(true)
+
+            VStack(spacing: 8) {
+                Label(L10n.text("closet.empty.title"), systemImage: "rectangle.grid.2x2")
+                    .font(.headline)
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(L10n.text("closet.empty.description"))
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Button {
                 activeSheet = .add
             } label: {
@@ -85,6 +100,8 @@ struct ClosetView: View {
             .tint(DesignSystem.accent)
             .accessibilityIdentifier("addItemButton")
         }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private func items(for type: ClothingType) -> [ClothingItem] {

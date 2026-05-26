@@ -17,12 +17,13 @@ struct WorkCapsuleOnboardingView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 20) {
+                    onboardingImage
                     header
                     checklist
                     actions
                 }
-                .padding(24)
+                .padding(22)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(DesignSystem.background)
@@ -52,6 +53,15 @@ struct WorkCapsuleOnboardingView: View {
         }
     }
 
+    private var onboardingImage: some View {
+        BundledPNGImage(name: "work-capsule-onboarding")
+            .scaledToFill()
+            .frame(maxWidth: .infinity)
+            .frame(height: 180)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
+            .accessibilityHidden(true)
+    }
+
     private var checklist: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(L10n.text("onboarding.checklist.title"))
@@ -73,7 +83,7 @@ struct WorkCapsuleOnboardingView: View {
                 }
             }
         }
-        .padding(18)
+        .padding(16)
         .background(DesignSystem.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
     }

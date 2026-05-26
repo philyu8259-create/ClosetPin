@@ -12,8 +12,11 @@ targets:
     platform: iOS
     sources:
       - ClosetPin
+      - path: Assets/Generated/work-capsule-onboarding.png
+        buildPhase: resources
+      - path: Assets/Generated/empty-closet.png
+        buildPhase: resources
     resources:
-      - Assets
       - ClosetPin/Resources
     settings:
       base:
