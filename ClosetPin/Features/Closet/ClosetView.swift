@@ -25,7 +25,7 @@ struct ClosetView: View {
                 }
             }
             .background(DesignSystem.background)
-            .navigationTitle("Closet")
+            .navigationTitle(L10n.text("closet.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -33,7 +33,7 @@ struct ClosetView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel("Add item")
+                    .accessibilityLabel(L10n.text("closet.add_item.accessibility"))
                     .accessibilityIdentifier("addItemButton")
                 }
             }
@@ -72,14 +72,14 @@ struct ClosetView: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("Build Your Work Closet", systemImage: "rectangle.grid.2x2")
+            Label(L10n.text("closet.empty.title"), systemImage: "rectangle.grid.2x2")
         } description: {
-            Text("Add the work pieces you rely on for office days, meetings, commutes, and after-work plans.")
+            Text(L10n.text("closet.empty.description"))
         } actions: {
             Button {
                 activeSheet = .add
             } label: {
-                Label("Add Item", systemImage: "plus")
+                Label(L10n.text("closet.add_item"), systemImage: "plus")
             }
             .buttonStyle(.borderedProminent)
             .tint(DesignSystem.accent)
@@ -188,57 +188,6 @@ private struct ClosetItemRow: View {
             .red
         case .inactive:
             .secondary
-        }
-    }
-}
-
-extension ClothingType {
-    var displayName: String {
-        switch self {
-        case .top:
-            "Top"
-        case .bottom:
-            "Bottom"
-        case .blazer:
-            "Blazer"
-        case .shoes:
-            "Shoes"
-        case .bag:
-            "Bag"
-        case .outerwear:
-            "Outerwear"
-        case .accessory:
-            "Accessory"
-        }
-    }
-}
-
-extension ClothingStatus {
-    var displayName: String {
-        switch self {
-        case .available:
-            "Available"
-        case .needsWash:
-            "Needs Wash"
-        case .needsRepair:
-            "Needs Repair"
-        case .inactive:
-            "Inactive"
-        }
-    }
-}
-
-extension SeasonTag {
-    var displayName: String {
-        switch self {
-        case .spring:
-            "Spring"
-        case .summer:
-            "Summer"
-        case .autumn:
-            "Autumn"
-        case .winter:
-            "Winter"
         }
     }
 }

@@ -3,8 +3,8 @@ import SwiftUI
 struct LooksView: View {
     var body: some View {
         NavigationStack {
-            Text("Looks")
-                .navigationTitle("Looks")
+            Text(L10n.text("looks.title"))
+                .navigationTitle(L10n.text("looks.title"))
         }
     }
 }

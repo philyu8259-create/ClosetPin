@@ -3,8 +3,7 @@ import XCTest
 @MainActor
 final class ClosetPinUITests: XCTestCase {
     func testLaunchSmoke() {
-        let app = XCUIApplication()
-        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        let app = makeApp()
         app.launch()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
@@ -12,8 +11,7 @@ final class ClosetPinUITests: XCTestCase {
     }
 
     func testUseSampleCapsuleRoutesToToday() {
-        let app = XCUIApplication()
-        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        let app = makeApp()
         app.launch()
 
         XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
@@ -23,8 +21,7 @@ final class ClosetPinUITests: XCTestCase {
     }
 
     func testTodayRecommendationCanRecordWoreFeedback() {
-        let app = XCUIApplication()
-        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        let app = makeApp()
         app.launch()
 
         XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
@@ -38,8 +35,7 @@ final class ClosetPinUITests: XCTestCase {
     }
 
     func testAddClosetItemSmokeFlow() {
-        let app = XCUIApplication()
-        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        let app = makeApp()
         app.launch()
 
         XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
@@ -68,5 +64,12 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Main wardrobe"].exists)
+    }
+
+    private func makeApp() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        return app
     }
 }

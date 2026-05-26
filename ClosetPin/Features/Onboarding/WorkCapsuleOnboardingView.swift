@@ -7,11 +7,11 @@ struct WorkCapsuleOnboardingView: View {
     @State private var saveError: String?
 
     private let checklistItems = [
-        "3 tops",
-        "2 bottoms",
-        "1 blazer or work layer",
-        "2 shoes",
-        "1 bag"
+        "onboarding.checklist.3_tops",
+        "onboarding.checklist.2_bottoms",
+        "onboarding.checklist.1_blazer_or_work_layer",
+        "onboarding.checklist.2_shoes",
+        "onboarding.checklist.1_bag"
     ]
 
     var body: some View {
@@ -26,26 +26,26 @@ struct WorkCapsuleOnboardingView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(DesignSystem.background)
-            .navigationTitle("Work Capsule")
-            .alert("Sample Capsule Was Not Added", isPresented: Binding(
+            .navigationTitle(L10n.text("onboarding.nav_title"))
+            .alert(L10n.text("onboarding.sample_error_title"), isPresented: Binding(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
             )) {
-                Button("OK", role: .cancel) {}
+                Button(L10n.text("common.ok"), role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L10n.text("common.try_again"))
             }
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("10-Minute Work Capsule")
+            Text(L10n.text("onboarding.title"))
                 .font(.largeTitle.bold())
                 .foregroundStyle(DesignSystem.ink)
                 .accessibilityIdentifier("workCapsuleOnboardingTitle")
 
-            Text("Start with a small office-ready capsule for daily recommendations, meetings, and the days that need to feel easy.")
+            Text(L10n.text("onboarding.subtitle"))
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -54,7 +54,7 @@ struct WorkCapsuleOnboardingView: View {
 
     private var checklist: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Recommended starter set")
+            Text(L10n.text("onboarding.checklist.title"))
                 .font(.headline)
                 .foregroundStyle(DesignSystem.ink)
 
@@ -64,7 +64,7 @@ struct WorkCapsuleOnboardingView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(DesignSystem.accent)
                             .accessibilityHidden(true)
-                        Text(item)
+                        Text(L10n.text(item))
                             .font(.body)
                             .foregroundStyle(DesignSystem.ink)
                         Spacer()
@@ -81,9 +81,9 @@ struct WorkCapsuleOnboardingView: View {
     private var actions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Button {
-                entryMessage = "Clothing entry is coming next. Use Sample Capsule to explore recommendations now."
+                entryMessage = L10n.text("onboarding.entry_coming")
             } label: {
-                Label("Start Adding Clothes", systemImage: "plus")
+                Label(L10n.text("onboarding.start_adding"), systemImage: "plus")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -94,7 +94,7 @@ struct WorkCapsuleOnboardingView: View {
             Button {
                 addSampleCapsule()
             } label: {
-                Label("Use Sample Capsule", systemImage: "sparkles")
+                Label(L10n.text("onboarding.use_sample"), systemImage: "sparkles")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)

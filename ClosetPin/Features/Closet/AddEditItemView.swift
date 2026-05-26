@@ -34,16 +34,16 @@ struct AddEditItemDraft {
     var validationMessages: [String] {
         var messages: [String] = []
         if normalized(color).isEmpty {
-            messages.append("Color is required.")
+            messages.append(L10n.text("closet.validation.color_required"))
         }
         if normalized(photoLocalPath).isEmpty && pendingPhotoJPEGData == nil {
-            messages.append("Photo is required.")
+            messages.append(L10n.text("closet.validation.photo_required"))
         }
         if selectedSeasons.isEmpty {
-            messages.append("Select at least one season.")
+            messages.append(L10n.text("closet.validation.season_required"))
         }
         if normalized(storageLocation).isEmpty {
-            messages.append("Storage location is required.")
+            messages.append(L10n.text("closet.validation.storage_required"))
         }
         return messages
     }
@@ -128,30 +128,30 @@ struct AddEditItemView: View {
                     validationSection
                 }
             }
-            .navigationTitle(item == nil ? "Add Item" : "Edit Item")
+            .navigationTitle(item == nil ? L10n.text("closet.add_item") : L10n.text("closet.edit_item"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(L10n.text("common.cancel")) {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(L10n.text("common.save")) {
                         save()
                     }
                     .disabled(!draft.canSave)
                     .accessibilityIdentifier("saveItemButton")
                 }
             }
-            .alert("Item Was Not Saved", isPresented: Binding(
+            .alert(L10n.text("closet.save_error_title"), isPresented: Binding(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
             )) {
-                Button("OK", role: .cancel) {}
+                Button(L10n.text("common.ok"), role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L10n.text("common.try_again"))
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task {
@@ -167,17 +167,17 @@ struct AddEditItemView: View {
     }
 
     private var photoSection: some View {
-        Section("Photo") {
+        Section(L10n.text("closet.photo.section")) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     Button {
                         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                            photoError = "Camera is not available on this device."
+                            photoError = L10n.text("closet.photo.camera_unavailable")
                             return
                         }
                         isCameraPresented = true
                     } label: {
-                        Label("Take Photo", systemImage: "camera")
+                        Label(L10n.text("closet.photo.take"), systemImage: "camera")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -185,7 +185,7 @@ struct AddEditItemView: View {
                     .accessibilityIdentifier("takePhotoButton")
 
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        Label("Choose from Library", systemImage: "photo.on.rectangle")
+                        Label(L10n.text("closet.photo.choose_library"), systemImage: "photo.on.rectangle")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -193,19 +193,19 @@ struct AddEditItemView: View {
                 }
 
                 if !UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    Text("Camera is not available on this device.")
+                    Text(L10n.text("closet.photo.camera_unavailable"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Text("Add a clear photo for this work piece.")
+                Text(L10n.text("closet.photo.help"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
 #if DEBUG
             if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
-                Button("Use Test Photo") {
+                Button(L10n.text("closet.photo.use_test")) {
                     draft.pendingPhotoJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
                     photoError = nil
                 }
@@ -214,11 +214,11 @@ struct AddEditItemView: View {
 #endif
 
             if draft.pendingPhotoJPEGData != nil {
-                Label("Photo ready to save.", systemImage: "checkmark.circle.fill")
+                Label(L10n.text("closet.photo.ready"), systemImage: "checkmark.circle.fill")
                     .font(.footnote)
                     .foregroundStyle(DesignSystem.accent)
             } else if !draft.photoLocalPath.isEmpty {
-                Label("Photo saved locally.", systemImage: "checkmark.circle.fill")
+                Label(L10n.text("closet.photo.saved"), systemImage: "checkmark.circle.fill")
                     .font(.footnote)
                     .foregroundStyle(DesignSystem.accent)
             }
@@ -232,22 +232,22 @@ struct AddEditItemView: View {
     }
 
     private var detailsSection: some View {
-        Section("Item Details") {
-            Picker("Type", selection: $draft.type) {
+        Section(L10n.text("closet.details.section")) {
+            Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
                     Text(type.displayName).tag(type)
                 }
             }
 
-            TextField("Color", text: $draft.color)
+            TextField(L10n.text("closet.color.label"), text: $draft.color)
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemColorField")
 
-            TextField("Storage Location", text: $draft.storageLocation)
+            TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemStorageField")
 
-            Picker("Status", selection: $draft.status) {
+            Picker(L10n.text("closet.status.label"), selection: $draft.status) {
                 ForEach(ClothingStatus.allCases) { status in
                     Text(status.displayName).tag(status)
                 }
@@ -256,7 +256,7 @@ struct AddEditItemView: View {
     }
 
     private var seasonsSection: some View {
-        Section("Seasons") {
+        Section(L10n.text("closet.seasons.section")) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
                 ForEach(SeasonTag.allCases) { season in
                     let isSelected = draft.selectedSeasons.contains(season)
@@ -277,7 +277,7 @@ struct AddEditItemView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("seasonToggle_\(season.rawValue)")
-                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
+                    .accessibilityValue(isSelected ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
                 }
             }
             .padding(.vertical, 4)
@@ -285,15 +285,15 @@ struct AddEditItemView: View {
     }
 
     private var levelsSection: some View {
-        Section("Fit For Workday") {
-            Stepper("Formality: \(draft.formalityLevel)", value: $draft.formalityLevel, in: 1...5)
-            Stepper("Warmth: \(draft.warmthLevel)", value: $draft.warmthLevel, in: 1...5)
+        Section(L10n.text("closet.levels.section")) {
+            Stepper(L10n.string("closet.formality.format", arguments: draft.formalityLevel), value: $draft.formalityLevel, in: 1...5)
+            Stepper(L10n.string("closet.warmth.format", arguments: draft.warmthLevel), value: $draft.warmthLevel, in: 1...5)
         }
     }
 
     private var notesSection: some View {
-        Section("Notes") {
-            TextField("Optional notes", text: $draft.notes, axis: .vertical)
+        Section(L10n.text("closet.notes.section")) {
+            TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
                 .lineLimit(2...4)
         }
     }
@@ -348,7 +348,7 @@ struct AddEditItemView: View {
                     snapshot.restore(item)
                 }
                 try? modelContext.save()
-                saveError = "The photo could not be saved. Please try again."
+                saveError = L10n.text("closet.photo.save_failed")
                 return
             }
 
@@ -372,17 +372,17 @@ struct AddEditItemView: View {
 
         do {
             guard let data = try await item.loadTransferable(type: Data.self) else {
-                photoError = "The selected photo could not be loaded."
+                photoError = L10n.text("closet.photo.selected_load_failed")
                 return
             }
             guard let jpegData = ClosetItemPhotoPersistence.normalizedJPEGData(from: data) else {
-                photoError = "The selected photo could not be read."
+                photoError = L10n.text("closet.photo.selected_read_failed")
                 return
             }
             draft.pendingPhotoJPEGData = jpegData
             photoError = nil
         } catch {
-            photoError = "The selected photo could not be loaded."
+            photoError = L10n.text("closet.photo.selected_load_failed")
         }
     }
 
@@ -391,7 +391,7 @@ struct AddEditItemView: View {
             draft.pendingPhotoJPEGData = data
             photoError = nil
         } else {
-            photoError = "The captured photo could not be saved."
+            photoError = L10n.text("closet.photo.captured_save_failed")
         }
     }
 }

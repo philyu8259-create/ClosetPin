@@ -281,6 +281,7 @@ MVP platform:
 - SwiftData or a local SQLite-backed persistence layer for structured data.
 - Local file storage for clothing photos.
 - AI API for optional tag suggestions and outfit explanations.
+- English and Simplified Chinese localization in the MVP, following the user's system language.
 
 The MVP should not require:
 
@@ -289,6 +290,10 @@ The MVP should not require:
 - Remote image storage.
 - Subscription/paywall infrastructure.
 - Android support.
+
+## Localization
+
+The MVP supports English and Simplified Chinese for app UI, enum display names, onboarding, closet entry, Today recommendations, feedback confirmations, Looks, Settings, and local fallback explanations. Language follows iOS device/system language through standard localization resources. The app should not add an in-app language selector in Settings.
 
 ## Privacy Direction
 
@@ -330,6 +335,7 @@ MVP testing should cover:
 - Saving looks and recording feedback.
 - Recommendation behavior when categories are missing.
 - AI fallback when network or API calls fail.
+- English UI smoke tests on an English simulator, plus at least one Simplified Chinese string lookup test.
 
 Manual QA should verify:
 
@@ -352,6 +358,7 @@ The following are intentionally deferred:
 - Social sharing.
 - Community outfit feed.
 - Full closet analytics dashboard.
+- Explicit in-app language selector; language follows iOS system settings.
 
 ## Success Criteria
 

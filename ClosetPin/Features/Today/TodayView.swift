@@ -43,7 +43,7 @@ struct TodayView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(DesignSystem.background)
-            .navigationTitle("Today")
+            .navigationTitle(L10n.text("today.title"))
             .safeAreaInset(edge: .bottom) {
                 if let confirmationMessage {
                     ConfirmationBanner(message: confirmationMessage)
@@ -52,24 +52,24 @@ struct TodayView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .alert("Feedback Was Not Saved", isPresented: Binding(
+            .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
             )) {
-                Button("OK", role: .cancel) {}
+                Button(L10n.text("common.ok"), role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L10n.text("common.try_again"))
             }
         }
     }
 
     private var contextControls: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Work context")
+            Text(L10n.text("today.context.title"))
                 .font(.headline)
                 .foregroundStyle(DesignSystem.ink)
 
-            Picker("Scenario", selection: $scenario) {
+            Picker(L10n.text("today.scenario.label"), selection: $scenario) {
                 ForEach(OutfitScenario.allCases) { scenario in
                     Text(scenario.displayName).tag(scenario)
                 }
@@ -77,7 +77,7 @@ struct TodayView: View {
             .pickerStyle(.segmented)
             .accessibilityIdentifier("todayScenarioPicker")
 
-            Picker("Season", selection: $season) {
+            Picker(L10n.text("today.season.label"), selection: $season) {
                 ForEach(SeasonTag.allCases) { season in
                     Text(season.displayName).tag(season)
                 }
@@ -92,7 +92,7 @@ struct TodayView: View {
 
     private var recommendationList: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Recommended for \(scenario.displayName)")
+            Text(L10n.string("today.recommended_for.format", arguments: scenario.displayName))
                 .font(.headline)
                 .foregroundStyle(DesignSystem.ink)
 
@@ -125,15 +125,21 @@ struct TodayView: View {
             }
 
             if availableSeasonItems.isEmpty {
-                return "Add one \(type.missingItemPhrase) to generate \(scenario.shortName) outfits."
+                return L10n.string(
+                    "today.missing.add_one.format",
+                    arguments: type.missingItemPhrase, scenario.shortName
+                )
             }
 
             if availableSeasonItems.allSatisfy({ $0.formalityLevel < threshold }) {
-                return "Add or update one more formal \(type.missingItemPhrase) to generate \(scenario.shortName) outfits."
+                return L10n.string(
+                    "today.missing.add_formal.format",
+                    arguments: type.missingItemPhrase, scenario.shortName
+                )
             }
         }
 
-        return "Make one work item available or select a season with office-ready pieces."
+        return L10n.text("today.missing.available_or_season")
     }
 
     private func record(_ action: TodayFeedbackAction, for candidate: OutfitCandidate) {
@@ -172,7 +178,7 @@ private struct RecommendationCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Option \(index + 1)")
+                Text(L10n.string("today.option.format", arguments: index + 1))
                     .font(.headline)
                     .foregroundStyle(DesignSystem.ink)
 
@@ -181,7 +187,7 @@ private struct RecommendationCard: View {
                 Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.accent)
-                    .accessibilityLabel("Score \(candidate.score)")
+                    .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
             }
 
             Text(explanation)
@@ -251,7 +257,7 @@ private struct MissingRecommendationView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Outfit ingredients needed", systemImage: "exclamationmark.circle")
+            Label(L10n.text("today.missing.title"), systemImage: "exclamationmark.circle")
                 .font(.headline)
                 .foregroundStyle(DesignSystem.ink)
 
@@ -311,15 +317,15 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .wore:
-            "Wore"
+            L10n.text("today.feedback.wore")
         case .like:
-            "Like"
+            L10n.text("today.feedback.like")
         case .dislike:
-            "Dislike"
+            L10n.text("today.feedback.dislike")
         case .skip:
-            "Skip"
+            L10n.text("today.feedback.skip")
         case .save:
-            "Save"
+            L10n.text("today.feedback.save")
         }
     }
 
@@ -342,9 +348,9 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         if outcome == .alreadyRecorded {
             switch feedbackType {
             case .wore:
-                return "Already recorded as worn today."
+                return L10n.text("today.confirmation.already_worn")
             case .saved:
-                return "Outfit already saved today."
+                return L10n.text("today.confirmation.already_saved")
             case .liked, .disliked, .skipped, .swapped:
                 break
             }
@@ -352,56 +358,15 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
 
         return switch self {
         case .wore:
-            "Recorded as worn."
+            L10n.text("today.confirmation.wore")
         case .like:
-            "Preference saved."
+            L10n.text("today.confirmation.like")
         case .dislike:
-            "Feedback saved."
+            L10n.text("today.confirmation.dislike")
         case .skip:
-            "Skipped for today."
+            L10n.text("today.confirmation.skip")
         case .save:
-            "Outfit saved."
-        }
-    }
-}
-
-private extension OutfitScenario {
-    var displayName: String {
-        switch self {
-        case .dailyOffice:
-            "Daily Office"
-        case .importantMeeting:
-            "Important Meeting"
-        }
-    }
-
-    var shortName: String {
-        switch self {
-        case .dailyOffice:
-            "office"
-        case .importantMeeting:
-            "meeting"
-        }
-    }
-}
-
-private extension ClothingType {
-    var missingItemPhrase: String {
-        switch self {
-        case .top:
-            "work top"
-        case .bottom:
-            "work bottom"
-        case .blazer:
-            "blazer or work layer"
-        case .shoes:
-            "pair of work shoes"
-        case .bag:
-            "work bag"
-        case .accessory:
-            "work accessory"
-        case .outerwear:
-            "work outerwear"
+            L10n.text("today.confirmation.save")
         }
     }
 }

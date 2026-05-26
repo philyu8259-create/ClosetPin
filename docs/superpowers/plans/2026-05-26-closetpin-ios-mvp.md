@@ -6,7 +6,9 @@
 
 **Architecture:** Native SwiftUI app generated with XcodeGen. Keep domain models, recommendation scoring, AI abstraction, local persistence, and UI screens separated so the recommendation engine can be tested without launching the app. Store clothing images locally and structured data in SwiftData.
 
-**Tech Stack:** Swift 6, SwiftUI, SwiftData, XCTest, XcodeGen, xcodebuild, GPT Image for app visual assets when needed.
+**Tech Stack:** Swift 6, SwiftUI, SwiftData, XCTest, XcodeGen, xcodebuild, Foundation localization resources, GPT Image for app visual assets when needed.
+
+**Localization:** The MVP supports English and Simplified Chinese and follows the iOS device/system language through standard localization resources. Do not add an in-app language selector in Settings.
 
 ---
 
@@ -35,8 +37,15 @@
 - Create: `ClosetPin/Features/Settings/SettingsView.swift` - preferences and local data notes.
 - Create: `ClosetPin/Shared/DesignSystem.swift` - colors, spacing, reusable UI style.
 - Create: `ClosetPin/Shared/SeedData.swift` - deterministic sample data for previews/tests.
+- Create: `ClosetPin/Shared/L10n.swift` - minimal localized string helper.
+- Create: `ClosetPin/Shared/LocalizedDisplayNames.swift` - localized enum display names.
+- Create: `ClosetPin/Resources/en.lproj/Localizable.strings` - English UI strings.
+- Create: `ClosetPin/Resources/zh-Hans.lproj/Localizable.strings` - Simplified Chinese UI strings.
+- Create: `ClosetPin/Resources/en.lproj/InfoPlist.strings` - English privacy permission strings.
+- Create: `ClosetPin/Resources/zh-Hans.lproj/InfoPlist.strings` - Simplified Chinese privacy permission strings.
 - Create: `ClosetPinTests/RecommendationEngineTests.swift` - recommendation filtering and scoring tests.
 - Create: `ClosetPinTests/ImageStoreTests.swift` - local image write/read tests.
+- Create: `ClosetPinTests/LocalizationTests.swift` - localized resource lookup tests.
 - Create: `ClosetPinUITests/ClosetPinUITests.swift` - smoke test for first-run flow.
 - Create: `Assets/Generated/README.md` - documents GPT Image asset prompts and generated file names.
 
@@ -882,6 +891,51 @@ Run:
 ```bash
 git add ClosetPin/Features/Today ClosetPin/Domain
 git commit -m "feat: recommend outfits on Today"
+```
+
+## Task 8.5: Add English and Simplified Chinese Localization Foundation
+
+**Files:**
+- Create: `ClosetPin/Shared/L10n.swift`
+- Create: `ClosetPin/Shared/LocalizedDisplayNames.swift`
+- Create: `ClosetPin/Resources/en.lproj/Localizable.strings`
+- Create: `ClosetPin/Resources/zh-Hans.lproj/Localizable.strings`
+- Create: `ClosetPin/Resources/en.lproj/InfoPlist.strings`
+- Create: `ClosetPin/Resources/zh-Hans.lproj/InfoPlist.strings`
+- Create: `ClosetPinTests/LocalizationTests.swift`
+- Modify: `project.yml`
+- Modify: current UI and explanation files with user-visible strings
+
+- [ ] **Step 1: Add string resources and helper**
+
+Add English and Simplified Chinese `Localizable.strings` files under `ClosetPin/Resources`, include them in the app target, and add a simple `L10n` helper using `NSLocalizedString`.
+
+- [ ] **Step 2: Localize current MVP UI**
+
+Replace user-visible copy in tab labels, onboarding, Closet, Today, Looks, Settings, enum display names, and local fallback explanations with localized string lookups. Keep English values unchanged where UI tests depend on text such as `10-Minute Work Capsule`, `Today`, `Closet`, `Ivory`, and `Recorded as worn.`.
+
+- [ ] **Step 3: Add localization test**
+
+Add a unit test that loads the Simplified Chinese bundle and verifies `tab.today` resolves to `今日`.
+
+- [ ] **Step 4: Verify**
+
+Run:
+
+```bash
+xcodegen generate
+xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -destination 'platform=iOS Simulator,name=iPhone 17' test
+```
+
+Expected: unit and UI tests pass on an English simulator while the app can follow Simplified Chinese system language.
+
+- [ ] **Step 5: Commit localization**
+
+Run:
+
+```bash
+git add project.yml ClosetPin docs ClosetPinTests ClosetPinUITests
+git commit -m "feat: add bilingual localization"
 ```
 
 ## Task 9: Implement Looks and Settings

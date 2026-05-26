@@ -15,16 +15,16 @@ struct AppRootView: View {
     private var tabShell: some View {
         TabView {
             TodayView()
-                .tabItem { Label("Today", systemImage: "sparkles") }
+                .tabItem { Label(L10n.text("tab.today"), systemImage: "sparkles") }
 
             ClosetView()
-                .tabItem { Label("Closet", systemImage: "rectangle.grid.2x2") }
+                .tabItem { Label(L10n.text("tab.closet"), systemImage: "rectangle.grid.2x2") }
 
             LooksView()
-                .tabItem { Label("Looks", systemImage: "heart") }
+                .tabItem { Label(L10n.text("tab.looks"), systemImage: "heart") }
 
             SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tabItem { Label(L10n.text("tab.settings"), systemImage: "gearshape") }
         }
     }
 }

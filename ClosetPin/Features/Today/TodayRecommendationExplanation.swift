@@ -9,16 +9,16 @@ struct TodayRecommendationExplanation {
 
     static func text(for items: [TodayOutfitItemSnapshot], scenario: OutfitScenario) -> String {
         guard !items.isEmpty else {
-            return "No outfit items were available to explain."
+            return L10n.text("recommendation.explanation.empty")
         }
 
         let itemSummary = items.map(\.displayText).joined(separator: ", ")
 
         switch scenario {
         case .dailyOffice:
-            return "A practical, balanced office option with \(itemSummary), easy to wear on a workday."
+            return L10n.string("recommendation.explanation.daily_office.format", arguments: itemSummary)
         case .importantMeeting:
-            return "A more formal, polished office option with \(itemSummary), suitable for a higher-stakes work moment."
+            return L10n.string("recommendation.explanation.important_meeting.format", arguments: itemSummary)
         }
     }
 }
@@ -43,7 +43,11 @@ struct TodayOutfitItemSnapshot: Sendable {
             return typeRawValue
         }
 
-        return "\(sanitizedColor) \(typeRawValue)"
+        return "\(sanitizedColor) \(summaryName)"
+    }
+
+    private var summaryName: String {
+        ClothingType(rawValue: typeRawValue)?.summaryName ?? typeRawValue
     }
 
     private var sanitizedColor: String? {
