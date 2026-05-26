@@ -93,10 +93,84 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertTrue(candidates[0].items.contains { $0.id == blazer.id })
         XCTAssertEqual(candidates[0].items.count, 4)
     }
+
+    func testMaximumResultsIsRespected() {
+        let items = [
+            clothingItem(type: .top, color: "white", formalityLevel: 4),
+            clothingItem(type: .top, color: "blue", formalityLevel: 3),
+            clothingItem(type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(type: .bottom, color: "black", formalityLevel: 3),
+            clothingItem(type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(type: .shoes, color: "brown", formalityLevel: 3)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 2),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 2)
+    }
+
+    func testDeterministicOrderingAndIdentifiersAreStableAcrossRepeatedCalls() {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!, type: .shoes, color: "black", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 5)
+
+        let firstRun = RecommendationEngine().recommend(input: input, items: items, feedback: [])
+        let secondRun = RecommendationEngine().recommend(input: input, items: items, feedback: [])
+
+        XCTAssertEqual(firstRun.map(\.id), secondRun.map(\.id))
+        XCTAssertEqual(firstRun.map(\.explanationSeed), secondRun.map(\.explanationSeed))
+    }
+
+    func testWrongSeasonItemsAreExcluded() {
+        let wrongSeasonTop = clothingItem(type: .top, color: "white", seasons: [.winter], formalityLevel: 5)
+        let springTop = clothingItem(type: .top, color: "blue", seasons: [.spring], formalityLevel: 2)
+        let items = [
+            wrongSeasonTop,
+            springTop,
+            clothingItem(type: .bottom, seasons: [.spring]),
+            clothingItem(type: .shoes, seasons: [.spring])
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 5),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 1)
+        XCTAssertFalse(candidates[0].items.contains { $0.id == wrongSeasonTop.id })
+        XCTAssertTrue(candidates[0].items.contains { $0.id == springTop.id })
+    }
+
+    func testUnsupportedKnownTypesDoNotSatisfyRequiredCategories() {
+        let items = [
+            clothingItem(type: .bag, formalityLevel: 5),
+            clothingItem(type: .accessory, formalityLevel: 5),
+            clothingItem(type: .bottom),
+            clothingItem(type: .shoes)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 5),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertTrue(candidates.isEmpty)
+    }
 }
 
 private extension RecommendationEngineTests {
     func clothingItem(
+        id: UUID = UUID(),
         type: ClothingType,
         color: String = "navy",
         seasons: [SeasonTag] = [.spring],
@@ -104,6 +178,7 @@ private extension RecommendationEngineTests {
         status: ClothingStatus = .available
     ) -> ClothingItem {
         ClothingItem(
+            id: id,
             photoLocalPath: "wardrobe/\(type.rawValue)-\(UUID().uuidString).jpg",
             type: type,
             color: color,

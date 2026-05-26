@@ -1,5 +1,7 @@
 import Foundation
 
+private let maximumItemsPerCategory = 12
+
 struct RecommendationEngine {
     func recommend(
         input: RecommendationInput,
@@ -13,10 +15,10 @@ struct RecommendationEngine {
         }
 
         let threshold = requiredFormality(for: input.scenario)
-        let tops = filtered(groupedItems[.top] ?? [], threshold: threshold)
-        let bottoms = filtered(groupedItems[.bottom] ?? [], threshold: threshold)
-        let shoes = filtered(groupedItems[.shoes] ?? [], threshold: threshold)
-        let blazers = filtered(groupedItems[.blazer] ?? [], threshold: threshold)
+        let tops = filteredAndPreselected(groupedItems[.top] ?? [], threshold: threshold)
+        let bottoms = filteredAndPreselected(groupedItems[.bottom] ?? [], threshold: threshold)
+        let shoes = filteredAndPreselected(groupedItems[.shoes] ?? [], threshold: threshold)
+        let blazers = filteredAndPreselected(groupedItems[.blazer] ?? [], threshold: threshold)
 
         let candidates: [OutfitCandidate]
         switch input.scenario {
@@ -74,7 +76,7 @@ private extension RecommendationEngine {
         }
     }
 
-    func filtered(_ items: [ClothingItem], threshold: Int) -> [ClothingItem] {
+    func filteredAndPreselected(_ items: [ClothingItem], threshold: Int) -> [ClothingItem] {
         items
             .filter { $0.formalityLevel >= threshold }
             .sorted { lhs, rhs in
@@ -86,6 +88,8 @@ private extension RecommendationEngine {
                 }
                 return lhs.id.uuidString < rhs.id.uuidString
             }
+            .prefix(maximumItemsPerCategory)
+            .map { $0 }
     }
 
     func makeCandidates(
@@ -97,6 +101,8 @@ private extension RecommendationEngine {
     ) -> [OutfitCandidate] {
         guard !tops.isEmpty, !bottoms.isEmpty, !shoes.isEmpty else { return [] }
 
+        // Candidate generation stays bounded by the per-category preselection above
+        // while still letting the final sort pick the best MVP results.
         var candidates: [OutfitCandidate] = []
 
         if scenario == .importantMeeting {
@@ -126,7 +132,7 @@ private extension RecommendationEngine {
 
     func makeCandidate(scenario: OutfitScenario, items: [ClothingItem]) -> OutfitCandidate {
         OutfitCandidate(
-            id: UUID(),
+            id: stableIdentifier(scenario: scenario, items: items),
             items: items,
             score: score(scenario: scenario, items: items),
             explanationSeed: explanationSeed(scenario: scenario, items: items)
@@ -156,5 +162,10 @@ private extension RecommendationEngine {
         }
 
         return "scenario=\(scenario.rawValue);items=\(itemTokens.joined(separator: ","))"
+    }
+
+    func stableIdentifier(scenario: OutfitScenario, items: [ClothingItem]) -> String {
+        let itemIDs = items.map(\.id.uuidString).joined(separator: "|")
+        return "\(scenario.rawValue):\(itemIDs)"
     }
 }
