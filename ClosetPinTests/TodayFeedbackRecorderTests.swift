@@ -26,6 +26,7 @@ final class TodayFeedbackRecorderTests: XCTestCase {
             now: wornAt
         )
 
+        XCTAssertEqual(result.outcome, .recorded)
         XCTAssertNil(result.outfit)
         XCTAssertEqual(result.feedback.feedbackType, .wore)
         XCTAssertEqual(result.feedback.scenario, .dailyOffice)
@@ -61,6 +62,7 @@ final class TodayFeedbackRecorderTests: XCTestCase {
             now: savedAt
         )
 
+        XCTAssertEqual(result.outcome, .recorded)
         let outfit = try XCTUnwrap(result.outfit)
         XCTAssertEqual(outfit.itemIds, items.map(\.id))
         XCTAssertEqual(outfit.scenario, .dailyOffice)
@@ -79,6 +81,93 @@ final class TodayFeedbackRecorderTests: XCTestCase {
         XCTAssertEqual(fetchedOutfits.count, 1)
         XCTAssertEqual(fetchedFeedback.count, 1)
         XCTAssertEqual(fetchedFeedback.first?.outfitId, fetchedOutfits.first?.id)
+    }
+
+    func testDuplicateWoreSameCandidateScenarioAndDayDoesNotDoubleIncrement() throws {
+        let context = try makeInMemoryModelContext()
+        let items = [
+            clothingItem(id: UUID(uuidString: "30000000-0000-0000-0000-000000000001")!, type: .top),
+            clothingItem(id: UUID(uuidString: "30000000-0000-0000-0000-000000000002")!, type: .bottom),
+            clothingItem(id: UUID(uuidString: "30000000-0000-0000-0000-000000000003")!, type: .shoes)
+        ]
+        items.forEach(context.insert)
+        try context.save()
+        let candidate = OutfitCandidate(id: "dailyOffice:wore-duplicate", items: items, score: 72, explanationSeed: "seed")
+        let firstTap = Date(timeIntervalSince1970: 3_600)
+        let secondTap = Date(timeIntervalSince1970: 7_200)
+
+        let firstResult = try TodayFeedbackRecorder().record(
+            .wore,
+            candidate: candidate,
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "A practical office option.",
+            in: context,
+            now: firstTap
+        )
+        let secondResult = try TodayFeedbackRecorder().record(
+            .wore,
+            candidate: candidate,
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "A practical office option.",
+            in: context,
+            now: secondTap
+        )
+
+        XCTAssertEqual(firstResult.outcome, .recorded)
+        XCTAssertEqual(secondResult.outcome, .alreadyRecorded)
+        XCTAssertEqual(secondResult.feedback.id, firstResult.feedback.id)
+        XCTAssertEqual(items.map(\.wearCount), [1, 1, 1])
+        XCTAssertEqual(items.map(\.lastWornAt), [firstTap, firstTap, firstTap])
+
+        let fetchedFeedback = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        XCTAssertEqual(fetchedFeedback.count, 1)
+    }
+
+    func testDuplicateSaveSameCandidateScenarioAndDayDoesNotCreateMultipleRecords() throws {
+        let context = try makeInMemoryModelContext()
+        let items = [
+            clothingItem(id: UUID(uuidString: "40000000-0000-0000-0000-000000000001")!, type: .top),
+            clothingItem(id: UUID(uuidString: "40000000-0000-0000-0000-000000000002")!, type: .bottom),
+            clothingItem(id: UUID(uuidString: "40000000-0000-0000-0000-000000000003")!, type: .shoes)
+        ]
+        items.forEach(context.insert)
+        try context.save()
+        let candidate = OutfitCandidate(id: "dailyOffice:save-duplicate", items: items, score: 80, explanationSeed: "seed")
+        let firstTap = Date(timeIntervalSince1970: 3_600)
+        let secondTap = Date(timeIntervalSince1970: 7_200)
+
+        let firstResult = try TodayFeedbackRecorder().record(
+            .saved,
+            candidate: candidate,
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "A polished office mix.",
+            in: context,
+            now: firstTap
+        )
+        let secondResult = try TodayFeedbackRecorder().record(
+            .saved,
+            candidate: candidate,
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "A polished office mix.",
+            in: context,
+            now: secondTap
+        )
+
+        XCTAssertEqual(firstResult.outcome, .recorded)
+        XCTAssertEqual(secondResult.outcome, .alreadyRecorded)
+        XCTAssertEqual(secondResult.feedback.id, firstResult.feedback.id)
+        XCTAssertEqual(secondResult.outfit?.id, firstResult.outfit?.id)
+
+        let fetchedOutfits = try context.fetch(FetchDescriptor<Outfit>())
+        let fetchedFeedback = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        XCTAssertEqual(fetchedOutfits.count, 1)
+        XCTAssertEqual(fetchedFeedback.count, 1)
+        XCTAssertEqual(fetchedOutfits.first?.savedAt, firstTap)
+        XCTAssertEqual(fetchedFeedback.first?.createdAt, firstTap)
     }
 
     private func makeInMemoryModelContext() throws -> ModelContext {

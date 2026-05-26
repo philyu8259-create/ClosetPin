@@ -8,13 +8,11 @@ struct TodayView: View {
 
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = .spring
-    @State private var explanations: [String: String] = [:]
     @State private var pendingActionIDs: Set<String> = []
     @State private var confirmationMessage: String?
     @State private var saveError: String?
 
     private let engine = RecommendationEngine()
-    private let stylistClient = LocalFallbackStylistClient()
     private let feedbackRecorder = TodayFeedbackRecorder()
 
     private var candidates: [OutfitCandidate] {
@@ -27,14 +25,6 @@ struct TodayView: View {
             items: clothingItems,
             feedback: feedback
         )
-    }
-
-    private var recommendationTaskID: String {
-        [
-            scenario.rawValue,
-            season.rawValue,
-            candidates.map(\.id).joined(separator: "|")
-        ].joined(separator: ":")
     }
 
     var body: some View {
@@ -61,9 +51,6 @@ struct TodayView: View {
                         .padding(.bottom, 8)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-            }
-            .task(id: recommendationTaskID) {
-                await loadExplanations(for: candidates)
             }
             .alert("Feedback Was Not Saved", isPresented: Binding(
                 get: { saveError != nil },
@@ -113,7 +100,7 @@ struct TodayView: View {
                 RecommendationCard(
                     index: index,
                     candidate: candidate,
-                    explanation: explanations[candidate.id] ?? "Preparing styling note...",
+                    explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
                     pendingActionIDs: pendingActionIDs,
                     onAction: { action in
                         record(action, for: candidate)
@@ -149,23 +136,6 @@ struct TodayView: View {
         return "Make one work item available or select a season with office-ready pieces."
     }
 
-    private func loadExplanations(for candidates: [OutfitCandidate]) async {
-        let candidateIDs = Set(candidates.map(\.id))
-        explanations = explanations.filter { candidateIDs.contains($0.key) }
-
-        for candidate in candidates {
-            guard explanations[candidate.id] == nil else { continue }
-            guard !Task.isCancelled else { return }
-
-            do {
-                nonisolated(unsafe) let localCandidate = candidate
-                explanations[candidate.id] = try await stylistClient.explain(candidate: localCandidate, scenario: scenario)
-            } catch {
-                explanations[candidate.id] = candidate.explanationSeed
-            }
-        }
-    }
-
     private func record(_ action: TodayFeedbackAction, for candidate: OutfitCandidate) {
         let actionID = "\(candidate.id):\(action.feedbackType.rawValue)"
         guard !pendingActionIDs.contains(actionID) else { return }
@@ -174,17 +144,17 @@ struct TodayView: View {
         defer { pendingActionIDs.remove(actionID) }
 
         do {
-            _ = try feedbackRecorder.record(
+            let result = try feedbackRecorder.record(
                 action.feedbackType,
                 candidate: candidate,
                 scenario: scenario,
                 season: season,
-                explanation: explanations[candidate.id] ?? candidate.explanationSeed,
+                explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
                 in: modelContext
             )
 
             withAnimation(.snappy) {
-                confirmationMessage = action.confirmation
+                confirmationMessage = action.confirmation(for: action.feedbackType, outcome: result.outcome)
             }
         } catch {
             saveError = error.localizedDescription
@@ -368,8 +338,19 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         }
     }
 
-    var confirmation: String {
-        switch self {
+    func confirmation(for feedbackType: FeedbackType, outcome: TodayFeedbackRecorder.RecordOutcome) -> String {
+        if outcome == .alreadyRecorded {
+            switch feedbackType {
+            case .wore:
+                return "Already recorded as worn today."
+            case .saved:
+                return "Outfit already saved today."
+            case .liked, .disliked, .skipped, .swapped:
+                break
+            }
+        }
+
+        return switch self {
         case .wore:
             "Recorded as worn."
         case .like:
