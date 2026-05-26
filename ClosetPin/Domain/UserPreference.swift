@@ -11,6 +11,8 @@ final class UserPreference {
     var preferredStyles: [String]
     var avoidedStyles: [String]
     var workplaceDressCode: String
+    var createdAt: Date
+    var updatedAt: Date
 
     init(
         id: UUID = UUID(),
@@ -20,7 +22,9 @@ final class UserPreference {
         avoidedColors: [String] = [],
         preferredStyles: [String] = [],
         avoidedStyles: [String] = [],
-        workplaceDressCode: String = ""
+        workplaceDressCode: String = "",
+        createdAt: Date = Date(),
+        updatedAt: Date? = nil
     ) {
         self.id = id
         self.defaultScenarioRawValue = defaultScenario.rawValue
@@ -30,6 +34,8 @@ final class UserPreference {
         self.preferredStyles = preferredStyles
         self.avoidedStyles = avoidedStyles
         self.workplaceDressCode = workplaceDressCode
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt ?? createdAt
     }
 
     var defaultScenario: OutfitScenario { OutfitScenario(rawValue: defaultScenarioRawValue) ?? .dailyOffice }

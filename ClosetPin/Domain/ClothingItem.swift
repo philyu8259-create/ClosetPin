@@ -59,7 +59,9 @@ final class ClothingItem {
         self.wearCount = 0
     }
 
-    var type: ClothingType { ClothingType(rawValue: typeRawValue) ?? .top }
+    var resolvedType: ClothingType? { ClothingType(rawValue: typeRawValue) }
+    var type: ClothingType { resolvedType ?? .accessory }
     var seasons: [SeasonTag] { seasonRawValues.compactMap(SeasonTag.init(rawValue:)) }
-    var status: ClothingStatus { ClothingStatus(rawValue: statusRawValue) ?? .available }
+    var resolvedStatus: ClothingStatus? { ClothingStatus(rawValue: statusRawValue) }
+    var status: ClothingStatus { resolvedStatus ?? .inactive }
 }

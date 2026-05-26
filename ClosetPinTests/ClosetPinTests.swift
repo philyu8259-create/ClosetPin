@@ -1,4 +1,5 @@
 import XCTest
+import SwiftData
 @testable import ClosetPin
 
 final class ClosetPinTests: XCTestCase {
@@ -25,10 +26,12 @@ final class ClosetPinTests: XCTestCase {
 
         XCTAssertEqual(item.typeRawValue, ClothingType.blazer.rawValue)
         XCTAssertEqual(item.type, .blazer)
+        XCTAssertEqual(item.resolvedType, .blazer)
         XCTAssertEqual(item.seasonRawValues, [SeasonTag.spring.rawValue, SeasonTag.autumn.rawValue])
         XCTAssertEqual(item.seasons, [.spring, .autumn])
         XCTAssertEqual(item.statusRawValue, ClothingStatus.needsRepair.rawValue)
         XCTAssertEqual(item.status, .needsRepair)
+        XCTAssertEqual(item.resolvedStatus, .needsRepair)
         XCTAssertEqual(item.wearCount, 0)
         XCTAssertNil(item.lastWornAt)
     }
@@ -68,8 +71,10 @@ final class ClosetPinTests: XCTestCase {
         let preference = UserPreference(defaultScenario: .importantMeeting)
         preference.defaultScenarioRawValue = "unexpected"
 
-        XCTAssertEqual(item.type, .top)
-        XCTAssertEqual(item.status, .available)
+        XCTAssertEqual(item.type, .accessory)
+        XCTAssertNil(item.resolvedType)
+        XCTAssertEqual(item.status, .inactive)
+        XCTAssertNil(item.resolvedStatus)
         XCTAssertEqual(item.seasons, [.summer])
         XCTAssertEqual(outfit.scenario, .dailyOffice)
         XCTAssertEqual(feedback.feedbackType, .skipped)
@@ -87,5 +92,82 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.preferredStyles, [])
         XCTAssertEqual(preference.avoidedStyles, [])
         XCTAssertEqual(preference.workplaceDressCode, "")
+        XCTAssertLessThanOrEqual(abs(preference.createdAt.timeIntervalSinceNow), 1)
+        XCTAssertLessThanOrEqual(abs(preference.updatedAt.timeIntervalSinceNow), 1)
+    }
+
+    func testUserPreferenceCanUseExplicitTimestamps() {
+        let createdAt = Date(timeIntervalSince1970: 100)
+        let updatedAt = Date(timeIntervalSince1970: 200)
+
+        let preference = UserPreference(createdAt: createdAt, updatedAt: updatedAt)
+
+        XCTAssertEqual(preference.createdAt, createdAt)
+        XCTAssertEqual(preference.updatedAt, updatedAt)
+    }
+
+    func testSwiftDataInMemoryPersistenceStoresCollectionFields() throws {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: ClothingItem.self,
+            Outfit.self,
+            OutfitFeedback.self,
+            UserPreference.self,
+            configurations: configuration
+        )
+        let context = ModelContext(container)
+        let itemId = UUID()
+        let outfitId = UUID()
+
+        let item = ClothingItem(
+            id: itemId,
+            photoLocalPath: "wardrobe/coat.jpg",
+            type: .outerwear,
+            color: "charcoal",
+            seasons: [.autumn, .winter],
+            styleTags: ["structured", "warm"],
+            formalityLevel: 4,
+            warmthLevel: 5,
+            storageLocation: "coat closet"
+        )
+        let outfit = Outfit(
+            id: outfitId,
+            itemIds: [itemId],
+            scenario: .dailyOffice,
+            dateContext: Date(timeIntervalSince1970: 0),
+            weatherNote: "cold",
+            score: 91,
+            explanation: "warm and polished"
+        )
+        let feedback = OutfitFeedback(
+            outfitId: outfitId,
+            feedbackType: .wore,
+            itemIds: [itemId],
+            scenario: .dailyOffice
+        )
+        let preference = UserPreference(
+            preferredColors: ["charcoal"],
+            avoidedColors: ["neon"],
+            preferredStyles: ["structured"],
+            avoidedStyles: ["distressed"]
+        )
+
+        context.insert(item)
+        context.insert(outfit)
+        context.insert(feedback)
+        context.insert(preference)
+        try context.save()
+
+        let fetchedItems = try context.fetch(FetchDescriptor<ClothingItem>())
+        let fetchedOutfits = try context.fetch(FetchDescriptor<Outfit>())
+        let fetchedFeedback = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        let fetchedPreferences = try context.fetch(FetchDescriptor<UserPreference>())
+
+        XCTAssertEqual(fetchedItems.first?.seasonRawValues, [SeasonTag.autumn.rawValue, SeasonTag.winter.rawValue])
+        XCTAssertEqual(fetchedItems.first?.styleTags, ["structured", "warm"])
+        XCTAssertEqual(fetchedOutfits.first?.itemIds, [itemId])
+        XCTAssertEqual(fetchedFeedback.first?.itemIds, [itemId])
+        XCTAssertEqual(fetchedPreferences.first?.preferredColors, ["charcoal"])
+        XCTAssertEqual(fetchedPreferences.first?.avoidedStyles, ["distressed"])
     }
 }
