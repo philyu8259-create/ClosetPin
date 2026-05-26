@@ -107,6 +107,75 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.updatedAt, updatedAt)
     }
 
+    func testUserPreferenceAppliesSettingsWithoutLanguagePreference() {
+        let preference = UserPreference()
+        let updateDate = Date(timeIntervalSince1970: 300)
+
+        preference.applySettings(
+            defaultScenario: .importantMeeting,
+            preferredFormality: 7,
+            workplaceDressCode: "Business casual, client-facing",
+            updatedAt: updateDate
+        )
+
+        XCTAssertEqual(preference.defaultScenario, .importantMeeting)
+        XCTAssertEqual(preference.preferredFormality, 5)
+        XCTAssertEqual(preference.workplaceDressCode, "Business casual, client-facing")
+        XCTAssertEqual(preference.updatedAt, updateDate)
+    }
+
+    func testLooksHistoryEntriesIncludeSavedOutfitAndWornFeedbackInReverseChronologicalOrder() {
+        let top = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/top.jpg",
+            type: .top,
+            color: "White",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Rack"
+        )
+        let shoes = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/shoes.jpg",
+            type: .shoes,
+            color: "Black",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Shoe shelf"
+        )
+        let savedDate = Date(timeIntervalSince1970: 100)
+        let wornDate = Date(timeIntervalSince1970: 200)
+        let outfit = Outfit(
+            itemIds: [top.id, shoes.id],
+            scenario: .importantMeeting,
+            dateContext: savedDate,
+            weatherNote: "Spring",
+            score: 92,
+            explanation: "Polished for a client meeting.",
+            savedAt: savedDate
+        )
+        let feedback = OutfitFeedback(
+            feedbackType: .wore,
+            itemIds: [top.id],
+            scenario: .dailyOffice
+        )
+        feedback.createdAt = wornDate
+
+        let entries = LooksHistoryEntry.makeEntries(
+            outfits: [outfit],
+            feedback: [feedback],
+            items: [top, shoes]
+        )
+
+        XCTAssertEqual(entries.map(\.kind), [.worn, .saved])
+        XCTAssertEqual(entries.first?.scenario, .dailyOffice)
+        XCTAssertEqual(entries.first?.itemCount, 1)
+        XCTAssertEqual(entries.first?.itemSummary, "White \(ClothingType.top.displayName)")
+        XCTAssertEqual(entries.last?.scenario, .importantMeeting)
+        XCTAssertEqual(entries.last?.itemCount, 2)
+        XCTAssertEqual(entries.last?.explanation, "Polished for a client meeting.")
+    }
+
     func testWorkCapsuleSeedDataProvidesOfficeRecommendationBasics() {
         let items = SeedData.workCapsuleItems()
         let itemTypes = Set(items.map(\.type))

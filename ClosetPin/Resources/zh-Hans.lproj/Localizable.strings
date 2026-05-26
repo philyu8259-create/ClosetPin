@@ -85,7 +85,24 @@
 "today.confirmation.save" = "穿搭已保存。";
 
 "looks.title" = "穿搭";
+"looks.empty.title" = "从这里开始积累你的 Lookbook";
+"looks.empty.description" = "在「今日」里保存穿搭或标记已穿，逐步形成一份真正适合你工作节奏的穿搭记录。";
+"looks.kind.saved" = "已保存";
+"looks.kind.worn" = "已穿";
+"looks.item_count.format" = "%d 件单品";
+"looks.items.unavailable" = "单品不可用";
+"looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配真正适合你的工作周。";
 "settings.title" = "设置";
+"settings.preferences.section" = "搭配偏好";
+"settings.default_scenario.label" = "默认场景";
+"settings.preferred_formality.format" = "偏好正式度：%d";
+"settings.workplace_dress_code.placeholder" = "职场着装要求或备注";
+"settings.privacy.section" = "隐私";
+"settings.privacy.ai.title" = "AI 穿搭推荐";
+"settings.privacy.ai.body" = "启用 AI 搭配时，ClosetPin 应只发送单品类型、颜色、季节和场景等穿搭元数据。除非你之后明确选择图像识别，否则照片保留在本地。";
+"settings.privacy.local.title" = "本地衣橱数据";
+"settings.privacy.local.body" = "MVP 阶段，衣物照片和已保存穿搭记录都存储在这台设备上。";
+"settings.save_error_title" = "未能保存设置";
 
 "clothing.type.top" = "上衣";
 "clothing.type.bottom" = "下装";

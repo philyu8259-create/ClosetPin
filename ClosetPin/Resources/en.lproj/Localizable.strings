@@ -85,7 +85,24 @@
 "today.confirmation.save" = "Outfit saved.";
 
 "looks.title" = "Looks";
+"looks.empty.title" = "Your Lookbook Starts Here";
+"looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works for your routine.";
+"looks.kind.saved" = "Saved";
+"looks.kind.worn" = "Worn";
+"looks.item_count.format" = "%d items";
+"looks.items.unavailable" = "Items unavailable";
+"looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works in your week.";
 "settings.title" = "Settings";
+"settings.preferences.section" = "Styling Preferences";
+"settings.default_scenario.label" = "Default Scenario";
+"settings.preferred_formality.format" = "Preferred Formality: %d";
+"settings.workplace_dress_code.placeholder" = "Workplace dress code or notes";
+"settings.privacy.section" = "Privacy";
+"settings.privacy.ai.title" = "AI recommendations";
+"settings.privacy.ai.body" = "When AI styling is enabled, ClosetPin should send only outfit metadata such as item type, color, season, and scenario. Keep photos local unless you explicitly choose image recognition later.";
+"settings.privacy.local.title" = "Local closet data";
+"settings.privacy.local.body" = "Wardrobe photos and saved outfit history are stored on this device in the MVP.";
+"settings.save_error_title" = "Settings Were Not Saved";
 
 "clothing.type.top" = "Top";
 "clothing.type.bottom" = "Bottom";

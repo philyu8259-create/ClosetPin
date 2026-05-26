@@ -39,4 +39,16 @@ final class UserPreference {
     }
 
     var defaultScenario: OutfitScenario { OutfitScenario(rawValue: defaultScenarioRawValue) ?? .dailyOffice }
+
+    func applySettings(
+        defaultScenario: OutfitScenario,
+        preferredFormality: Int,
+        workplaceDressCode: String,
+        updatedAt: Date = Date()
+    ) {
+        self.defaultScenarioRawValue = defaultScenario.rawValue
+        self.preferredFormality = min(max(preferredFormality, 1), 5)
+        self.workplaceDressCode = workplaceDressCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.updatedAt = updatedAt
+    }
 }
