@@ -1,5 +1,6 @@
 import XCTest
 import SwiftData
+import UIKit
 @testable import ClosetPin
 
 final class ClosetPinTests: XCTestCase {
@@ -177,6 +178,17 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(draft.canSave)
     }
 
+    func testAddEditItemDraftAllowsStagedJPEGPhotoBeforeFinalPathExists() {
+        var draft = AddEditItemDraft()
+        draft.color = "Ivory"
+        draft.selectedSeasons = [.spring]
+        draft.storageLocation = "Main wardrobe"
+        draft.pendingPhotoJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
+
+        XCTAssertTrue(draft.canSave)
+        XCTAssertTrue(draft.photoLocalPath.isEmpty)
+    }
+
     func testAddEditItemDraftRejectsWhitespaceOnlyRequiredText() {
         var draft = AddEditItemDraft()
         draft.photoLocalPath = "/tmp/photo.jpg"
@@ -200,6 +212,58 @@ final class ClosetPinTests: XCTestCase {
 
         XCTAssertEqual(item.id, draft.itemID)
         XCTAssertEqual(item.photoLocalPath, "/tmp/photo.jpg")
+    }
+
+    func testPhotoPersistenceNormalizesUIImageToJPEGData() throws {
+        let image = makeTestImage()
+
+        let data = try XCTUnwrap(ClosetItemPhotoPersistence.jpegData(from: image))
+
+        XCTAssertEqual(data.prefix(2), Data([0xFF, 0xD8]))
+        XCTAssertNotNil(UIImage(data: data))
+    }
+
+    func testPhotoPersistenceNormalizesLibraryDataToJPEGData() throws {
+        let pngData = try XCTUnwrap(makeTestImage().pngData())
+
+        let data = try XCTUnwrap(ClosetItemPhotoPersistence.normalizedJPEGData(from: pngData))
+
+        XCTAssertEqual(data.prefix(2), Data([0xFF, 0xD8]))
+        XCTAssertNotNil(UIImage(data: data))
+    }
+
+    func testPhotoPersistenceRejectsNonImageLibraryData() {
+        let data = ClosetItemPhotoPersistence.normalizedJPEGData(from: Data("not an image".utf8))
+
+        XCTAssertNil(data)
+    }
+
+    func testStagedPhotoWriteDoesNotReplaceExistingImageUntilCommit() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ClosetPinTests-\(UUID().uuidString)", isDirectory: true)
+        let imageStore = ImageStore(baseDirectory: directory)
+        let itemID = UUID()
+        let existingData = Data("old image".utf8)
+        let replacementData = Data("new image".utf8)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let finalURL = directory.appendingPathComponent("\(itemID.uuidString).jpg")
+        try existingData.write(to: finalURL)
+
+        let stagedWrite = try ClosetItemPhotoPersistence.stageJPEGData(
+            replacementData,
+            id: itemID,
+            imageStore: imageStore
+        )
+
+        XCTAssertEqual(try Data(contentsOf: finalURL), existingData)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: stagedWrite.stagingURL.path))
+
+        try stagedWrite.commit()
+
+        XCTAssertEqual(try Data(contentsOf: finalURL), replacementData)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stagedWrite.stagingURL.path))
+
+        try? FileManager.default.removeItem(at: directory)
     }
 
     func testAddEditItemDraftPreservesExistingPhotoPathWhenEditing() {
@@ -357,5 +421,12 @@ final class ClosetPinTests: XCTestCase {
         )
 
         return ModelContext(container)
+    }
+
+    private func makeTestImage() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8)).image { context in
+            UIColor.systemBlue.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }
     }
 }

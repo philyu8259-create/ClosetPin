@@ -4,7 +4,11 @@ import SwiftUI
 @main
 struct ClosetPinApp: App {
     private var shouldUseInMemoryStore: Bool {
+#if DEBUG
         ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1"
+#else
+        false
+#endif
     }
 
     var body: some Scene {

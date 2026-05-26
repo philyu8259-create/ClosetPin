@@ -1,10 +1,12 @@
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct AddEditItemDraft {
     var itemID: UUID = UUID()
     var photoLocalPath: String = ""
+    var pendingPhotoJPEGData: Data?
     var type: ClothingType = .top
     var color: String = ""
     var selectedSeasons: Set<SeasonTag> = []
@@ -34,7 +36,7 @@ struct AddEditItemDraft {
         if normalized(color).isEmpty {
             messages.append("Color is required.")
         }
-        if normalized(photoLocalPath).isEmpty {
+        if normalized(photoLocalPath).isEmpty && pendingPhotoJPEGData == nil {
             messages.append("Photo is required.")
         }
         if selectedSeasons.isEmpty {
@@ -103,6 +105,7 @@ struct AddEditItemView: View {
     private let imageStore: ImageStore
     @State private var draft: AddEditItemDraft
     @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var isCameraPresented = false
     @State private var saveError: String?
     @State private var photoError: String?
 
@@ -155,37 +158,66 @@ struct AddEditItemView: View {
                     await persistSelectedPhoto(newItem)
                 }
             }
+            .sheet(isPresented: $isCameraPresented) {
+                CameraCaptureView { image in
+                    stageCameraImage(image)
+                }
+            }
         }
     }
 
     private var photoSection: some View {
         Section("Photo") {
-            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                HStack(spacing: 12) {
-                    Image(systemName: "photo")
-                        .foregroundStyle(.secondary)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Choose Photo")
-                            .foregroundStyle(DesignSystem.ink)
-                        Text("Required for new closet items.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
+                    Button {
+                        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                            photoError = "Camera is not available on this device."
+                            return
+                        }
+                        isCameraPresented = true
+                    } label: {
+                        Label("Take Photo", systemImage: "camera")
+                            .frame(maxWidth: .infinity)
                     }
-                    Spacer()
+                    .buttonStyle(.bordered)
+                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                    .accessibilityIdentifier("takePhotoButton")
+
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        Label("Choose from Library", systemImage: "photo.on.rectangle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("chooseFromLibraryButton")
                 }
+
+                if !UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    Text("Camera is not available on this device.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("Add a clear photo for this work piece.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .accessibilityIdentifier("itemPhotoPicker")
 
 #if DEBUG
             if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
                 Button("Use Test Photo") {
-                    savePhotoData(Data([0xFF, 0xD8, 0xFF, 0xD9]))
+                    draft.pendingPhotoJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
+                    photoError = nil
                 }
                 .accessibilityIdentifier("useTestPhotoButton")
             }
 #endif
 
-            if !draft.photoLocalPath.isEmpty {
+            if draft.pendingPhotoJPEGData != nil {
+                Label("Photo ready to save.", systemImage: "checkmark.circle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(DesignSystem.accent)
+            } else if !draft.photoLocalPath.isEmpty {
                 Label("Photo saved locally.", systemImage: "checkmark.circle.fill")
                     .font(.footnote)
                     .foregroundStyle(DesignSystem.accent)
@@ -281,25 +313,55 @@ struct AddEditItemView: View {
 
         var insertedItem: ClothingItem?
         let snapshot = item.map(ClothingItemSnapshot.init(item:))
+        var stagedWrite: StagedPhotoWrite?
 
         do {
+            var finalizedDraft = draft
+            if let pendingPhotoJPEGData = draft.pendingPhotoJPEGData {
+                let write = try ClosetItemPhotoPersistence.stageJPEGData(
+                    pendingPhotoJPEGData,
+                    id: draft.itemID,
+                    imageStore: imageStore
+                )
+                stagedWrite = write
+                finalizedDraft.photoLocalPath = write.finalURL.path
+                finalizedDraft.pendingPhotoJPEGData = nil
+            }
+
             if let item {
-                draft.apply(to: item)
+                finalizedDraft.apply(to: item)
             } else {
-                let newItem = draft.makeItem()
+                let newItem = finalizedDraft.makeItem()
                 insertedItem = newItem
                 modelContext.insert(newItem)
             }
             try modelContext.save()
+
+            do {
+                try stagedWrite?.commit()
+            } catch {
+                stagedWrite?.discard()
+                if let insertedItem {
+                    modelContext.delete(insertedItem)
+                }
+                if let item, let snapshot {
+                    snapshot.restore(item)
+                }
+                try? modelContext.save()
+                saveError = "The photo could not be saved. Please try again."
+                return
+            }
+
             dismiss()
         } catch {
+            stagedWrite?.discard()
             if let insertedItem {
                 modelContext.delete(insertedItem)
             }
+            modelContext.rollback()
             if let item, let snapshot {
                 snapshot.restore(item)
             }
-            modelContext.rollback()
             saveError = error.localizedDescription
         }
     }
@@ -313,19 +375,120 @@ struct AddEditItemView: View {
                 photoError = "The selected photo could not be loaded."
                 return
             }
-            savePhotoData(data)
+            guard let jpegData = ClosetItemPhotoPersistence.normalizedJPEGData(from: data) else {
+                photoError = "The selected photo could not be read."
+                return
+            }
+            draft.pendingPhotoJPEGData = jpegData
+            photoError = nil
         } catch {
             photoError = "The selected photo could not be loaded."
         }
     }
 
-    private func savePhotoData(_ data: Data) {
-        do {
-            let url = try imageStore.saveJPEGData(data, id: draft.itemID)
-            draft.photoLocalPath = url.path
+    private func stageCameraImage(_ image: UIImage) {
+        if let data = ClosetItemPhotoPersistence.jpegData(from: image) {
+            draft.pendingPhotoJPEGData = data
             photoError = nil
-        } catch {
-            photoError = "The selected photo could not be saved."
+        } else {
+            photoError = "The captured photo could not be saved."
+        }
+    }
+}
+
+struct ClosetItemPhotoPersistence {
+    static func jpegData(from image: UIImage) -> Data? {
+        image.jpegData(compressionQuality: 0.86)
+    }
+
+    static func normalizedJPEGData(from data: Data) -> Data? {
+        guard let image = UIImage(data: data) else { return nil }
+        return jpegData(from: image)
+    }
+
+    static func stageJPEGData(_ data: Data, id: UUID, imageStore: ImageStore) throws -> StagedPhotoWrite {
+        try FileManager.default.createDirectory(
+            at: imageStore.baseDirectory,
+            withIntermediateDirectories: true
+        )
+
+        let stagingURL = imageStore.baseDirectory
+            .appendingPathComponent("\(id.uuidString)-\(UUID().uuidString).staged.jpg")
+        let finalURL = imageStore.baseDirectory
+            .appendingPathComponent("\(id.uuidString).jpg")
+        try data.write(to: stagingURL, options: [.atomic])
+
+        return StagedPhotoWrite(stagingURL: stagingURL, finalURL: finalURL)
+    }
+}
+
+struct StagedPhotoWrite {
+    let stagingURL: URL
+    let finalURL: URL
+
+    func commit() throws {
+        let fileManager = FileManager.default
+
+        if fileManager.fileExists(atPath: finalURL.path) {
+            let backupURL = finalURL.deletingLastPathComponent()
+                .appendingPathComponent("\(finalURL.deletingPathExtension().lastPathComponent)-backup-\(UUID().uuidString).jpg")
+            try fileManager.moveItem(at: finalURL, to: backupURL)
+            do {
+                try fileManager.moveItem(at: stagingURL, to: finalURL)
+                try? fileManager.removeItem(at: backupURL)
+            } catch {
+                try? fileManager.moveItem(at: backupURL, to: finalURL)
+                throw error
+            }
+        } else {
+            try fileManager.moveItem(at: stagingURL, to: finalURL)
+        }
+    }
+
+    func discard() {
+        try? FileManager.default.removeItem(at: stagingURL)
+    }
+}
+
+private struct CameraCaptureView: UIViewControllerRepresentable {
+    let onImage: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        picker.allowsEditing = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImage: onImage, dismiss: dismiss)
+    }
+
+    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        private let onImage: (UIImage) -> Void
+        private let dismiss: DismissAction
+
+        init(onImage: @escaping (UIImage) -> Void, dismiss: DismissAction) {
+            self.onImage = onImage
+            self.dismiss = dismiss
+        }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            if let image = info[.originalImage] as? UIImage {
+                onImage(image)
+            }
+            dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            dismiss()
         }
     }
 }
