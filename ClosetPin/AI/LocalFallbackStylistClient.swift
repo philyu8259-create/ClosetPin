@@ -34,23 +34,42 @@ struct LocalFallbackStylistClient: AIStylistClient {
         let color = rawColor.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !color.isEmpty,
-              color.range(of: #"^[A-Za-z]+(?:[ -][A-Za-z]+)*$"#, options: .regularExpression) != nil
+              color.allSatisfy({ $0.isLetter || $0 == " " || $0 == "-" })
         else {
             return nil
         }
 
-        let rejectedNouns = Set(
-            ClothingType.allCases.map(\.rawValue) + ["dress", "tie", "suit", "watch"]
-        )
         let words = color
             .lowercased()
-            .split { !$0.isLetter }
+            .split { $0 == " " || $0 == "-" }
             .map(String.init)
 
-        guard !words.contains(where: { rejectedNouns.contains($0) }) else {
+        guard !words.isEmpty,
+              !words.contains(where: { Self.rejectedClothingNouns.contains($0) }),
+              words.allSatisfy({ Self.allowedColorTokens.contains($0) || Self.allowedModifiers.contains($0) }),
+              words.contains(where: { Self.allowedColorTokens.contains($0) })
+        else {
             return nil
         }
 
         return color
     }
+
+    private static let allowedColorTokens: Set<String> = [
+        "black", "white", "gray", "grey", "navy", "blue", "red", "burgundy",
+        "pink", "purple", "green", "olive", "yellow", "cream", "beige", "tan",
+        "brown", "camel", "orange", "ivory", "charcoal", "silver", "gold",
+        "denim", "khaki", "teal", "turquoise", "maroon"
+    ]
+
+    private static let allowedModifiers: Set<String> = [
+        "light", "dark", "pale", "deep", "soft", "bright", "muted"
+    ]
+
+    private static let rejectedClothingNouns: Set<String> = Set(
+        ClothingType.allCases.map(\.rawValue) + [
+            "shirt", "pants", "trousers", "jeans", "skirt", "jacket", "coat",
+            "scarf", "boots", "heels", "dress", "tie", "suit", "watch"
+        ]
+    )
 }
