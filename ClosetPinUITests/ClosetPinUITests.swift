@@ -22,6 +22,21 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testTodayRecommendationCanRecordWoreFeedback() {
+        let app = XCUIApplication()
+        app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let woreButton = app.buttons["todayFeedback_wore_0"]
+        XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
+        woreButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForExistence(timeout: 3))
+    }
+
     func testAddClosetItemSmokeFlow() {
         let app = XCUIApplication()
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
