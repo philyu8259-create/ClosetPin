@@ -152,6 +152,29 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .shoes, color: "blue-green")))
     }
 
+    func testFallbackExplanationAllowsChineseColorsAndRejectsChineseClothingNouns() async throws {
+        let candidate = OutfitCandidate(
+            id: "dailyOffice|zh-seed",
+            items: [
+                clothingItem(type: .top, color: "白色"),
+                clothingItem(type: .bottom, color: "海军蓝"),
+                clothingItem(type: .shoes, color: "黑色鞋"),
+                clothingItem(type: .bag, color: "棕色包")
+            ],
+            score: 10,
+            explanationSeed: "zh-seed"
+        )
+
+        let explanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
+
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .top, color: "白色")))
+        XCTAssertTrue(explanation.localizedCaseInsensitiveContains(itemDescription(type: .bottom, color: "海军蓝")))
+        XCTAssertTrue(explanation.containsType(.shoes))
+        XCTAssertTrue(explanation.containsType(.bag))
+        XCTAssertFalse(explanation.localizedCaseInsensitiveContains("黑色鞋"))
+        XCTAssertFalse(explanation.localizedCaseInsensitiveContains("棕色包"))
+    }
+
     func testFallbackExplanationOmitsUnsupportedPunctuationButAllowsSupportedHyphens() async throws {
         let candidate = OutfitCandidate(
             id: "dailyOffice|seed",

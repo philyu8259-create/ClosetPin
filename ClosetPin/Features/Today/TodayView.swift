@@ -230,7 +230,7 @@ private struct TodayItemRow: View {
     var body: some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(item.color.todaySwatchColor)
+                .fill(ColorResolver.swatchColor(for: item.color))
                 .frame(width: 30, height: 30)
                 .overlay {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -367,31 +367,6 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
             L10n.text("today.confirmation.skip")
         case .save:
             L10n.text("today.confirmation.save")
-        }
-    }
-}
-
-private extension String {
-    var todaySwatchColor: Color {
-        switch trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "black", "charcoal":
-            .black
-        case "white", "ivory", "cream":
-            .white
-        case "navy":
-            Color(red: 0.03, green: 0.09, blue: 0.22)
-        case "blue", "light blue":
-            .blue
-        case "gray", "grey":
-            .gray
-        case "brown", "tan", "camel":
-            .brown
-        case "green", "olive":
-            .green
-        case "red", "burgundy":
-            .red
-        default:
-            DesignSystem.accent.opacity(0.35)
         }
     }
 }

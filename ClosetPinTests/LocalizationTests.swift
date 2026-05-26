@@ -28,9 +28,49 @@ final class LocalizationTests: XCTestCase {
         let zhBundle = try localizedBundle("zh-Hans")
         let items = SeedData.workCapsuleItems(bundle: zhBundle)
 
-        XCTAssertEqual(items.first?.color, "白色")
-        XCTAssertEqual(items.first?.notes, "白色衬衫")
-        XCTAssertEqual(items.first?.storageLocation, "示例通勤胶囊衣橱")
+        let expectedValues: [(color: String, notes: String)] = [
+            ("白色", "白色衬衫"),
+            ("浅蓝色", "浅蓝色衬衫"),
+            ("炭灰色", "炭灰色 Polo 衫"),
+            ("海军蓝", "海军蓝下装"),
+            ("黑色", "黑色下装"),
+            ("炭灰色", "炭灰色西装外套"),
+            ("黑色", "黑色鞋子"),
+            ("棕色", "棕色鞋子"),
+            ("黑色", "通勤包")
+        ]
+
+        XCTAssertEqual(items.count, expectedValues.count)
+
+        for (item, expected) in zip(items, expectedValues) {
+            XCTAssertEqual(item.color, expected.color)
+            XCTAssertEqual(item.notes, expected.notes)
+            XCTAssertEqual(item.storageLocation, "示例通勤胶囊衣橱")
+            XCTAssertFalse(item.color.hasPrefix("seed."))
+            XCTAssertFalse(item.notes.hasPrefix("seed."))
+            XCTAssertFalse(item.storageLocation.hasPrefix("seed."))
+        }
+    }
+
+    @MainActor
+    func testSimplifiedChineseSampleCapsuleColorsSurviveTodayRecommendationExplanation() throws {
+        let zhBundle = try localizedBundle("zh-Hans")
+        let items = SeedData.workCapsuleItems(bundle: zhBundle)
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1),
+            items: items,
+            feedback: []
+        )
+        let candidate = try XCTUnwrap(candidates.first)
+
+        let explanation = TodayRecommendationExplanation.text(for: candidate, scenario: .dailyOffice)
+
+        for item in candidate.items {
+            XCTAssertTrue(
+                explanation.contains(item.color),
+                "Expected explanation to keep zh-Hans color \(item.color), got: \(explanation)"
+            )
+        }
     }
 
     private func localizedBundle(_ language: String) throws -> Bundle {

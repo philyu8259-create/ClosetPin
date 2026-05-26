@@ -156,26 +156,7 @@ private struct ClosetItemRow: View {
     }
 
     private var colorSwatch: Color {
-        switch item.color.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "black", "charcoal":
-            .black
-        case "white", "ivory", "cream":
-            .white
-        case "navy":
-            Color(red: 0.03, green: 0.09, blue: 0.22)
-        case "blue":
-            .blue
-        case "gray", "grey":
-            .gray
-        case "brown", "tan", "camel":
-            .brown
-        case "green", "olive":
-            .green
-        case "red", "burgundy":
-            .red
-        default:
-            DesignSystem.accent.opacity(0.35)
-        }
+        ColorResolver.swatchColor(for: item.color)
     }
 
     private var statusColor: Color {
