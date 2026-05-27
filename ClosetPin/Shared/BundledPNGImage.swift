@@ -62,3 +62,99 @@ struct WardrobePhotoThumbnail: View {
         .accessibilityHidden(true)
     }
 }
+
+struct OutfitVisualItem: Identifiable, Equatable {
+    let id: UUID
+    let type: ClothingType
+    let color: String
+    let photoLocalPath: String
+    let item: ClothingItem?
+
+    var displayName: String {
+        "\(color) \(type.displayName)"
+    }
+
+    static func makeItems(from items: [ClothingItem]) -> [OutfitVisualItem] {
+        items.map { item in
+            OutfitVisualItem(
+                id: item.id,
+                type: item.type,
+                color: item.color,
+                photoLocalPath: item.photoLocalPath,
+                item: item
+            )
+        }
+    }
+
+    static func == (lhs: OutfitVisualItem, rhs: OutfitVisualItem) -> Bool {
+        lhs.id == rhs.id
+            && lhs.type == rhs.type
+            && lhs.color == rhs.color
+            && lhs.photoLocalPath == rhs.photoLocalPath
+    }
+}
+
+struct OutfitVisualBoard: View {
+    let visualItems: [OutfitVisualItem]
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+
+    init(items: [ClothingItem]) {
+        self.visualItems = OutfitVisualItem.makeItems(from: items)
+    }
+
+    init(visualItems: [OutfitVisualItem]) {
+        self.visualItems = visualItems
+    }
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(visualItems) { visualItem in
+                if let item = visualItem.item {
+                    NavigationLink {
+                        ClosetItemDetailView(item: item)
+                    } label: {
+                        OutfitVisualTile(visualItem: visualItem)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    OutfitVisualTile(visualItem: visualItem)
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct OutfitVisualTile: View {
+    let visualItem: OutfitVisualItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            WardrobePhotoThumbnail(
+                image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
+                fallbackColor: ColorResolver.swatchColor(for: visualItem.color),
+                cornerRadius: 7
+            )
+            .aspectRatio(1, contentMode: .fit)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(visualItem.type.displayName)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+                    .lineLimit(1)
+
+                Text(visualItem.color)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityLabel(visualItem.displayName)
+    }
+}

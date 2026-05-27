@@ -178,7 +178,7 @@ private struct ClosetItemRow: View {
     }
 }
 
-private struct ClosetItemDetailView: View {
+struct ClosetItemDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 

@@ -195,6 +195,9 @@ private struct RecommendationCard: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            OutfitVisualBoard(items: candidate.items)
+                .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+
             VStack(spacing: 10) {
                 ForEach(candidate.items) { item in
                     TodayItemRow(item: item)

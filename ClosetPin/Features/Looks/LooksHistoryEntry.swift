@@ -12,6 +12,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
     let scenario: OutfitScenario
     let itemCount: Int
     let itemSummary: String
+    let visualItems: [OutfitVisualItem]
     let explanation: String
     let score: Int?
 
@@ -32,6 +33,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
                     scenario: outfit.scenario,
                     itemCount: outfit.itemIds.count,
                     itemSummary: itemSummary(for: outfit.itemIds, itemsByID: itemsByID),
+                    visualItems: visualItems(for: outfit.itemIds, itemsByID: itemsByID),
                     explanation: outfit.explanation,
                     score: outfit.score
                 )
@@ -47,6 +49,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
                     scenario: feedback.scenario,
                     itemCount: feedback.itemIds.count,
                     itemSummary: itemSummary(for: feedback.itemIds, itemsByID: itemsByID),
+                    visualItems: visualItems(for: feedback.itemIds, itemsByID: itemsByID),
                     explanation: L10n.text("looks.worn.explanation"),
                     score: nil
                 )
@@ -74,5 +77,12 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         }
 
         return names.prefix(3).joined(separator: ", ")
+    }
+
+    private static func visualItems(
+        for itemIds: [UUID],
+        itemsByID: [UUID: ClothingItem]
+    ) -> [OutfitVisualItem] {
+        OutfitVisualItem.makeItems(from: itemIds.compactMap { itemsByID[$0] })
     }
 }

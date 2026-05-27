@@ -71,6 +71,11 @@ private struct LooksHistoryCard: View {
                 .foregroundStyle(DesignSystem.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if !entry.visualItems.isEmpty {
+                OutfitVisualBoard(visualItems: entry.visualItems)
+                    .accessibilityIdentifier("looksOutfitVisualBoard")
+            }
+
             Text(entry.explanation)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
