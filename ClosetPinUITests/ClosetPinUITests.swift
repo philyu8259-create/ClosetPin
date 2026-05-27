@@ -79,6 +79,27 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testSettingsPreferenceAppliesToTodayRecommendation() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Soft Power Office"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_settings"].tap()
+        XCTAssertTrue(app.staticTexts["Workday brief"].waitForExistence(timeout: 3))
+
+        let meetingOption = app.buttons["defaultScenarioOption_importantMeeting"]
+        XCTAssertTrue(meetingOption.waitForExistence(timeout: 3))
+        meetingOption.tap()
+
+        XCTAssertTrue(app.staticTexts["Applied to Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_today"].tap()
+        XCTAssertTrue(app.staticTexts["Executive Polish"].waitForExistence(timeout: 3))
+    }
+
     func testAddClosetItemSmokeFlow() {
         let app = makeApp()
         app.launch()
