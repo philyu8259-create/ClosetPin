@@ -30,6 +30,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["今天穿这套"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["保存到穿搭"].exists)
         XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
+        XCTAssertTrue(app.staticTexts["这套包含"].exists)
 
         app.buttons["appTab_closet"].tap()
         XCTAssertTrue(app.staticTexts["职业衣橱"].waitForExistence(timeout: 3))

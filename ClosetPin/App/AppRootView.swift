@@ -209,14 +209,19 @@ private struct EditorialTabBar: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 10)
-        .background(
+        .background {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(DesignSystem.surface.opacity(0.94))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.32)
+                }
                 .overlay {
                     RoundedRectangle(cornerRadius: 30, style: .continuous)
                         .stroke(DesignSystem.border.opacity(0.85), lineWidth: 1)
                 }
-        )
+        }
         .shadow(color: .black.opacity(0.08), radius: 22, x: 0, y: 10)
     }
 }

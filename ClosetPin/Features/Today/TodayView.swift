@@ -291,8 +291,7 @@ private struct TodayEditorialHero: View {
                 onAction: onAction
             )
 
-            OutfitVisualBoard(items: candidate.items)
-                .accessibilityIdentifier("todayOutfitVisualBoard_0")
+            TodayIncludedItemsSection(items: candidate.items, index: 0)
         }
     }
 
@@ -300,6 +299,24 @@ private struct TodayEditorialHero: View {
         candidate.items.compactMap { WardrobePhoto.localImage(for: $0) }.first
     }
 
+}
+
+private struct TodayIncludedItemsSection: View {
+    let items: [ClothingItem]
+    let index: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(L10n.text("today.items.title"))
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .accessibilityIdentifier("todayIncludedItemsTitle_\(index)")
+
+            OutfitVisualBoard(items: items)
+                .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+        }
+        .padding(.top, DesignSystem.Spacing.sm)
+    }
 }
 
 private struct OutfitCompactCard: View {
