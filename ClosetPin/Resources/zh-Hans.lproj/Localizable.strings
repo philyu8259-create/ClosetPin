@@ -158,7 +158,8 @@
 "settings.formality.scale" = "休闲 1 · 平衡 3 · 精致 5";
 "settings.formality.decrease" = "降低正式度";
 "settings.formality.increase" = "提高正式度";
-"settings.workplace_dress_code.placeholder" = "职场着装要求或备注";
+"settings.workplace_dress_code.placeholder" = "私人职场备注";
+"settings.workplace_dress_code.helper" = "仅作为备注保存。目前真正影响「今日」的是默认场景和正式度。";
 "settings.preferences.autosave.title" = "自动保存";
 "settings.preferences.autosave.body" = "默认场景和正式度会影响「今日」首个推荐；你也可以随时在今日页临时切换场景。";
 "settings.preferences.applied.title" = "已应用到今日";

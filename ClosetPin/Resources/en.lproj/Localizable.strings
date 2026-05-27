@@ -158,7 +158,8 @@
 "settings.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
 "settings.formality.decrease" = "Less formal";
 "settings.formality.increase" = "More formal";
-"settings.workplace_dress_code.placeholder" = "Workplace dress code or notes";
+"settings.workplace_dress_code.placeholder" = "Private workplace notes";
+"settings.workplace_dress_code.helper" = "Saved for reference. Default scenario and formality are what shape Today right now.";
 "settings.preferences.autosave.title" = "Auto-saved";
 "settings.preferences.autosave.body" = "Default scenario and formality shape the first Today recommendation; you can still switch contexts on Today anytime.";
 "settings.preferences.applied.title" = "Applied to Today";

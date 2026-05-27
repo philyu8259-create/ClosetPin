@@ -39,6 +39,11 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                             .accessibilityIdentifier("workplaceDressCodeField")
 
+                            Text(L10n.text("settings.workplace_dress_code.helper"))
+                                .font(.caption)
+                                .foregroundStyle(DesignSystem.secondaryInk)
+                                .fixedSize(horizontal: false, vertical: true)
+
                             SettingsNoteRow(
                                 systemImage: "checkmark.seal.fill",
                                 title: L10n.text("settings.preferences.applied.title"),

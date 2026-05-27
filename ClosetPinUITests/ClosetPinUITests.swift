@@ -146,6 +146,7 @@ final class ClosetPinUITests: XCTestCase {
 
         app.buttons["appTab_settings"].tap()
         XCTAssertTrue(app.staticTexts["Workday brief"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Saved for reference. Default scenario and formality are what shape Today right now."].exists)
 
         let meetingOption = app.buttons["defaultScenarioOption_importantMeeting"]
         XCTAssertTrue(meetingOption.waitForExistence(timeout: 3))
