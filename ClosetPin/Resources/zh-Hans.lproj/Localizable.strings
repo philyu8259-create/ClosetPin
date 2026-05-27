@@ -71,9 +71,10 @@
 "closet.season.selected" = "已选择";
 "closet.season.not_selected" = "未选择";
 "closet.levels.section" = "适合工作日";
-"closet.ai_edit.section" = "主要信息";
-"closet.ai_edit.confirmation_section" = "更多信息";
+"closet.ai_edit.section" = "基本信息";
+"closet.ai_edit.confirmation_section" = "可选信息";
 "closet.save_checklist.title" = "保存前还需要";
+"closet.save_checklist.ready" = "现在可以保存了。";
 "closet.save_checklist.photo" = "添加照片";
 "closet.save_checklist.color" = "填写颜色";
 "closet.save_checklist.season" = "选择季节";

@@ -72,8 +72,9 @@
 "closet.season.not_selected" = "Not selected";
 "closet.levels.section" = "Fit For Workday";
 "closet.ai_edit.section" = "Main Details";
-"closet.ai_edit.confirmation_section" = "More Details";
+"closet.ai_edit.confirmation_section" = "Optional Details";
 "closet.save_checklist.title" = "To save this piece";
+"closet.save_checklist.ready" = "Ready to save.";
 "closet.save_checklist.photo" = "Add a photo";
 "closet.save_checklist.color" = "Add a color";
 "closet.save_checklist.season" = "Choose a season";

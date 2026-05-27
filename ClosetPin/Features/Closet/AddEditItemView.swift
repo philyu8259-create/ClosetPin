@@ -342,13 +342,6 @@ struct AddEditItemView: View {
         Section(L10n.text("closet.ai_edit.section")) {
             EssentialsChecklistGrid(draft: draft)
 
-            if let photoTaggingOutcome {
-                Label(suggestionStatusText(for: photoTaggingOutcome), systemImage: suggestionStatusIcon(for: photoTaggingOutcome))
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(suggestionStatusColor(for: photoTaggingOutcome))
-                    .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
-            }
-
             Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
                     Text(type.displayName).tag(type)
@@ -592,17 +585,46 @@ struct AddEditItemView: View {
 private struct EssentialsChecklistGrid: View {
     let draft: AddEditItemDraft
 
+    private var missingTitles: [String] {
+        var titles: [String] = []
+
+        if !draft.hasPhoto {
+            titles.append(L10n.text("closet.save_checklist.photo"))
+        }
+        if !draft.hasColor {
+            titles.append(L10n.text("closet.save_checklist.color"))
+        }
+        if !draft.hasSeasonSelection {
+            titles.append(L10n.text("closet.save_checklist.season"))
+        }
+        if !draft.hasStorageLocation {
+            titles.append(L10n.text("closet.save_checklist.storage"))
+        }
+
+        return titles
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            Text(L10n.text("closet.save_checklist.title"))
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(DesignSystem.secondaryInk)
+            if missingTitles.isEmpty {
+                Label(L10n.text("closet.save_checklist.ready"), systemImage: "checkmark.circle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(DesignSystem.accent.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                Text(L10n.text("closet.save_checklist.title"))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.secondaryInk)
 
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.photo"), isComplete: draft.hasPhoto)
-                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.color"), isComplete: draft.hasColor)
-                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.season"), isComplete: draft.hasSeasonSelection)
-                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.storage"), isComplete: draft.hasStorageLocation)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                    ForEach(missingTitles, id: \.self) { title in
+                        EssentialsChecklistChip(title: title, isComplete: false)
+                    }
+                }
             }
         }
     }
