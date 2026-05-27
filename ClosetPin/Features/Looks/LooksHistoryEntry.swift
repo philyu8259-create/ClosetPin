@@ -34,7 +34,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
                     itemCount: outfit.itemIds.count,
                     itemSummary: itemSummary(for: outfit.itemIds, itemsByID: itemsByID),
                     visualItems: visualItems(for: outfit.itemIds, itemsByID: itemsByID),
-                    explanation: outfit.explanation,
+                    explanation: explanation(for: outfit, itemsByID: itemsByID),
                     score: outfit.score
                 )
             }
@@ -69,7 +69,8 @@ struct LooksHistoryEntry: Identifiable, Equatable {
     ) -> String {
         let names = itemIds.compactMap { itemID -> String? in
             guard let item = itemsByID[itemID] else { return nil }
-            return "\(item.color) \(item.type.displayName)"
+            let color = ColorResolver.localizedDisplayColor(from: item.color) ?? item.color
+            return "\(color) \(item.type.displayName)"
         }
 
         guard !names.isEmpty else {
@@ -84,5 +85,21 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         itemsByID: [UUID: ClothingItem]
     ) -> [OutfitVisualItem] {
         OutfitVisualItem.makeItems(from: itemIds.compactMap { itemsByID[$0] })
+    }
+
+    private static func explanation(
+        for outfit: Outfit,
+        itemsByID: [UUID: ClothingItem]
+    ) -> String {
+        let snapshots = outfit.itemIds.compactMap { itemID -> TodayOutfitItemSnapshot? in
+            guard let item = itemsByID[itemID] else { return nil }
+            return TodayOutfitItemSnapshot(type: item.type, color: item.color)
+        }
+
+        guard !snapshots.isEmpty else {
+            return outfit.explanation
+        }
+
+        return TodayRecommendationExplanation.text(for: snapshots, scenario: outfit.scenario)
     }
 }

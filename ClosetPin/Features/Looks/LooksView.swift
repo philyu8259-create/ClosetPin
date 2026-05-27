@@ -10,6 +10,14 @@ struct LooksView: View {
         LooksHistoryEntry.makeEntries(outfits: outfits, feedback: feedback, items: items)
     }
 
+    private var savedCount: Int {
+        entries.filter { $0.kind == .saved }.count
+    }
+
+    private var wornCount: Int {
+        entries.filter { $0.kind == .worn }.count
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -18,6 +26,12 @@ struct LooksView: View {
                         .padding(18)
                 } else {
                     LazyVStack(alignment: .leading, spacing: 18) {
+                        LooksArchiveHeader(
+                            savedCount: savedCount,
+                            wornCount: wornCount,
+                            latestEntry: entries.first
+                        )
+
                         ForEach(entries) { entry in
                             LooksHistoryCard(entry: entry)
                         }
@@ -33,42 +47,105 @@ struct LooksView: View {
     }
 }
 
+private struct LooksArchiveHeader: View {
+    let savedCount: Int
+    let wornCount: Int
+    let latestEntry: LooksHistoryEntry?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack(alignment: .lastTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L10n.text("looks.archive.title"))
+                        .font(DesignSystem.editorialSectionFont(size: 30))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    if let latestEntry {
+                        Text(L10n.string("looks.archive.latest.format", arguments: latestEntry.kind.title.lowercased()))
+                            .font(.subheadline)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                    }
+                }
+
+                Spacer(minLength: DesignSystem.Spacing.md)
+            }
+
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                LooksStatPill(
+                    title: L10n.text("looks.kind.saved"),
+                    count: savedCount,
+                    systemImage: LooksHistoryEntry.Kind.saved.systemImage,
+                    tint: DesignSystem.premiumGold
+                )
+
+                LooksStatPill(
+                    title: L10n.text("looks.kind.worn"),
+                    count: wornCount,
+                    systemImage: LooksHistoryEntry.Kind.worn.systemImage,
+                    tint: DesignSystem.accent
+                )
+            }
+        }
+        .padding(.bottom, DesignSystem.Spacing.xs)
+    }
+}
+
+private struct LooksStatPill: View {
+    let title: String
+    let count: Int
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(tint)
+
+            Text("\(count)")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(DesignSystem.ink)
+
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.surface.opacity(0.82))
+        .clipShape(Capsule(style: .continuous))
+        .overlay {
+            Capsule(style: .continuous)
+                .stroke(tint.opacity(0.22), lineWidth: 1)
+        }
+    }
+}
+
 private struct LooksHistoryCard: View {
     let entry: LooksHistoryEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Label(entry.kind.title, systemImage: entry.kind.systemImage)
-                    .font(.headline)
-                    .foregroundStyle(DesignSystem.ink)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                KindBadge(kind: entry.kind)
 
                 Spacer(minLength: 8)
 
-                Text(entry.date, format: .dateTime.month(.abbreviated).day().hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .multilineTextAlignment(.trailing)
-            }
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(entry.date, format: .dateTime.month(.abbreviated).day())
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
 
-            HStack(spacing: 8) {
-                Text(entry.scenario.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.accent)
-
-                Text(L10n.string("looks.item_count.format", arguments: entry.itemCount))
-                    .font(.subheadline)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-
-                if let score = entry.score {
-                    Label("\(score)", systemImage: "gauge.with.dots.needle.50percent")
-                        .font(.subheadline)
+                    Text(entry.date, format: .dateTime.hour().minute())
+                        .font(.caption)
                         .foregroundStyle(DesignSystem.secondaryInk)
                 }
             }
 
             Text(entry.itemSummary)
-                .font(.body.weight(.semibold))
+                .font(.headline.weight(.semibold))
                 .foregroundStyle(DesignSystem.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -77,9 +154,22 @@ private struct LooksHistoryCard: View {
                     .accessibilityIdentifier("looksOutfitVisualBoard")
             }
 
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                CapsuleTag(text: entry.scenario.displayName, tint: DesignSystem.accent)
+                CapsuleTag(text: L10n.string("looks.item_count.format", arguments: entry.itemCount), tint: DesignSystem.secondaryInk)
+
+                if let score = entry.score {
+                    CapsuleTag(
+                        text: L10n.string("looks.score.format", arguments: score),
+                        tint: DesignSystem.premiumGold
+                    )
+                }
+            }
+
             Text(entry.explanation)
-                .font(.subheadline)
+                .font(.footnote)
                 .foregroundStyle(DesignSystem.secondaryInk)
+                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(DesignSystem.Spacing.lg)
@@ -92,6 +182,37 @@ private struct LooksHistoryCard: View {
         }
         .shadow(color: .black.opacity(0.06), radius: 18, x: 0, y: 10)
         .accessibilityIdentifier("looksHistoryCard")
+    }
+}
+
+private struct KindBadge: View {
+    let kind: LooksHistoryEntry.Kind
+
+    var body: some View {
+        Label(kind.title, systemImage: kind.systemImage)
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(kind.foregroundColor)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 7)
+            .background(kind.tintColor.opacity(0.14))
+            .clipShape(Capsule(style: .continuous))
+    }
+}
+
+private struct CapsuleTag: View {
+    let text: String
+    let tint: Color
+
+    var body: some View {
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(tint.opacity(0.1))
+            .clipShape(Capsule(style: .continuous))
     }
 }
 
@@ -132,9 +253,27 @@ private extension LooksHistoryEntry.Kind {
     var systemImage: String {
         switch self {
         case .saved:
-            "bookmark"
+            "bookmark.fill"
         case .worn:
-            "checkmark.circle"
+            "checkmark.circle.fill"
+        }
+    }
+
+    var tintColor: Color {
+        switch self {
+        case .saved:
+            DesignSystem.premiumGold
+        case .worn:
+            DesignSystem.accent
+        }
+    }
+
+    var foregroundColor: Color {
+        switch self {
+        case .saved:
+            DesignSystem.wine
+        case .worn:
+            DesignSystem.accent
         }
     }
 }

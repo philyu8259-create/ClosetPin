@@ -53,6 +53,17 @@ enum ColorResolver {
         return color
     }
 
+    static func localizedDisplayColor(from rawColor: String) -> String? {
+        guard let color = safeDisplayColor(from: rawColor) else { return nil }
+
+        if Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true,
+           let chineseColor = chineseDisplayAlias(for: color) {
+            return chineseColor
+        }
+
+        return color
+    }
+
     static func swatchKind(for rawColor: String) -> SwatchKind {
         switch normalizedSwatchAlias(rawColor) {
         case "black", "charcoal", "黑色", "炭灰色", "深灰色":
@@ -104,6 +115,65 @@ enum ColorResolver {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
             .filter { $0 != " " && $0 != "-" }
+    }
+
+    private static func chineseDisplayAlias(for rawColor: String) -> String? {
+        switch normalizedSwatchAlias(rawColor) {
+        case "black":
+            "黑色"
+        case "white":
+            "白色"
+        case "ivory":
+            "象牙白"
+        case "cream":
+            "奶油色"
+        case "beige":
+            "米色"
+        case "navy":
+            "海军蓝"
+        case "blue":
+            "蓝色"
+        case "lightblue":
+            "浅蓝色"
+        case "darkblue", "deepblue":
+            "深蓝色"
+        case "charcoal":
+            "炭灰色"
+        case "gray", "grey":
+            "灰色"
+        case "silver":
+            "银色"
+        case "brown":
+            "棕色"
+        case "tan":
+            "黄褐色"
+        case "camel":
+            "驼色"
+        case "khaki":
+            "卡其色"
+        case "green":
+            "绿色"
+        case "olive":
+            "橄榄绿"
+        case "red":
+            "红色"
+        case "burgundy", "maroon":
+            "酒红色"
+        case "pink":
+            "粉色"
+        case "purple":
+            "紫色"
+        case "yellow":
+            "黄色"
+        case "gold":
+            "金色"
+        case "orange":
+            "橙色"
+        case "teal", "turquoise":
+            "蓝绿色"
+        default:
+            nil
+        }
     }
 
     private static func containsRejectedClothingNoun(in color: String) -> Bool {

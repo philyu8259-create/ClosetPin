@@ -89,7 +89,11 @@ struct OutfitVisualItem: Identifiable, Equatable {
     let item: ClothingItem?
 
     var displayName: String {
-        "\(color) \(type.displayName)"
+        "\(displayColor) \(type.displayName)"
+    }
+
+    var displayColor: String {
+        ColorResolver.localizedDisplayColor(from: color) ?? color
     }
 
     static func makeItems(from items: [ClothingItem]) -> [OutfitVisualItem] {
@@ -169,7 +173,7 @@ private struct OutfitVisualTile: View {
                     .foregroundStyle(DesignSystem.ink)
                     .lineLimit(1)
 
-                Text(visualItem.color)
+                Text(visualItem.displayColor)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

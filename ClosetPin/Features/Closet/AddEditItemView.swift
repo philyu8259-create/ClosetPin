@@ -136,6 +136,7 @@ struct AddEditItemView: View {
     @State private var photoError: String?
     @State private var photoPreview: PhotoPreviewSheet?
     @State private var photoSuggestion: ClothingPhotoTagSuggestion?
+    @State private var showsOptionalDetails = false
 
     init(
         item: ClothingItem? = nil,
@@ -152,13 +153,8 @@ struct AddEditItemView: View {
         NavigationStack {
             Form {
                 editorialPhotoSection
-                saveReadinessSection
-                aiEditSection
-                advancedSection
-
-                if !draft.canSave {
-                    validationSection
-                }
+                primaryDetailsSection
+                optionalDetailsSection
             }
             .navigationTitle(item == nil ? L10n.text("closet.add_item") : L10n.text("closet.edit_item"))
             .navigationBarTitleDisplayMode(.inline)
@@ -201,18 +197,9 @@ struct AddEditItemView: View {
         }
     }
 
-    private var saveReadinessSection: some View {
-        Section(L10n.text("closet.save_checklist.title")) {
-            SaveChecklistRow(title: L10n.text("closet.save_checklist.photo"), isComplete: draft.hasPhoto)
-            SaveChecklistRow(title: L10n.text("closet.save_checklist.color"), isComplete: draft.hasColor)
-            SaveChecklistRow(title: L10n.text("closet.save_checklist.season"), isComplete: draft.hasSeasonSelection)
-            SaveChecklistRow(title: L10n.text("closet.save_checklist.storage"), isComplete: draft.hasStorageLocation)
-        }
-    }
-
     private var editorialPhotoSection: some View {
         Section(L10n.text("closet.photo.editorial_title")) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Group {
                     if let image = displayPreviewImage {
                         WardrobePhotoThumbnail(
@@ -221,13 +208,13 @@ struct AddEditItemView: View {
                             cornerRadius: DesignSystem.Radius.editorialHero
                         )
                         .frame(maxWidth: .infinity)
-                        .frame(height: 340)
+                        .frame(height: 212)
                         .accessibilityIdentifier("photoPreview")
                     } else {
                         RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous)
                             .fill(DesignSystem.paper)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 240)
+                            .frame(height: 150)
                             .overlay {
                                 VStack(spacing: DesignSystem.Spacing.sm) {
                                     Image(systemName: "camera.macro")
@@ -273,11 +260,8 @@ struct AddEditItemView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text(L10n.text("closet.photo.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 Text(L10n.text("closet.photo.editorial_help"))
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundStyle(DesignSystem.secondaryInk)
             }
 
@@ -354,8 +338,10 @@ struct AddEditItemView: View {
         return WardrobePhoto.localImage(at: draft.originalPhotoLocalPath)
     }
 
-    private var aiEditSection: some View {
+    private var primaryDetailsSection: some View {
         Section(L10n.text("closet.ai_edit.section")) {
+            EssentialsChecklistGrid(draft: draft)
+
             if let photoSuggestion {
                 Label(suggestionStatusText(for: photoSuggestion), systemImage: "sparkles")
                     .font(.footnote.weight(.semibold))
@@ -373,6 +359,10 @@ struct AddEditItemView: View {
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemColorField")
 
+            TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
+                .textInputAutocapitalization(.words)
+                .accessibilityIdentifier("itemStorageField")
+
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("closet.seasons.section"))
                     .font(.footnote.weight(.semibold))
@@ -384,22 +374,24 @@ struct AddEditItemView: View {
         }
     }
 
-    private var advancedSection: some View {
-        Section(L10n.text("closet.ai_edit.confirmation_section")) {
-            TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
-                .textInputAutocapitalization(.words)
-                .accessibilityIdentifier("itemStorageField")
-
-            Picker(L10n.text("closet.status.label"), selection: $draft.status) {
-                ForEach(ClothingStatus.allCases) { status in
-                    Text(status.displayName).tag(status)
+    private var optionalDetailsSection: some View {
+        Section {
+            DisclosureGroup(isExpanded: $showsOptionalDetails) {
+                Picker(L10n.text("closet.status.label"), selection: $draft.status) {
+                    ForEach(ClothingStatus.allCases) { status in
+                        Text(status.displayName).tag(status)
+                    }
                 }
-            }
-            Stepper(L10n.string("closet.formality.format", arguments: draft.formalityLevel), value: $draft.formalityLevel, in: 1...5)
-            Stepper(L10n.string("closet.warmth.format", arguments: draft.warmthLevel), value: $draft.warmthLevel, in: 1...5)
+                Stepper(L10n.string("closet.formality.format", arguments: draft.formalityLevel), value: $draft.formalityLevel, in: 1...5)
+                Stepper(L10n.string("closet.warmth.format", arguments: draft.warmthLevel), value: $draft.warmthLevel, in: 1...5)
 
-            TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
-                .lineLimit(2...4)
+                TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
+                    .lineLimit(2...4)
+            } label: {
+                Text(L10n.text("closet.ai_edit.confirmation_section"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+            }
         }
     }
 
@@ -425,16 +417,6 @@ struct AddEditItemView: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("seasonToggle_\(season.rawValue)")
                 .accessibilityValue(isSelected ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
-            }
-        }
-    }
-
-    private var validationSection: some View {
-        Section {
-            ForEach(draft.validationMessages, id: \.self) { message in
-                Label(message, systemImage: "exclamationmark.circle")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -566,24 +548,46 @@ struct AddEditItemView: View {
     }
 }
 
-private struct SaveChecklistRow: View {
+private struct EssentialsChecklistGrid: View {
+    let draft: AddEditItemDraft
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(L10n.text("closet.save_checklist.title"))
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.photo"), isComplete: draft.hasPhoto)
+                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.color"), isComplete: draft.hasColor)
+                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.season"), isComplete: draft.hasSeasonSelection)
+                EssentialsChecklistChip(title: L10n.text("closet.save_checklist.storage"), isComplete: draft.hasStorageLocation)
+            }
+        }
+    }
+}
+
+private struct EssentialsChecklistChip: View {
     let title: String
     let isComplete: Bool
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.sm) {
+        HStack(spacing: 8) {
             Image(systemName: isComplete ? "checkmark.circle.fill" : "circle.dashed")
                 .foregroundStyle(isComplete ? DesignSystem.accent : DesignSystem.secondaryInk)
-
             Text(title)
-                .font(.subheadline.weight(.medium))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignSystem.ink)
-
-            Spacer()
-
-            Text(isComplete ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
-                .font(.caption)
-                .foregroundStyle(DesignSystem.secondaryInk)
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(isComplete ? DesignSystem.accent.opacity(0.08) : DesignSystem.paper)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(isComplete ? DesignSystem.accent.opacity(0.18) : DesignSystem.border.opacity(0.4), lineWidth: 1)
         }
     }
 }

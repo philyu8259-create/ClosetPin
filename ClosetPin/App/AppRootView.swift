@@ -6,31 +6,47 @@ struct AppRootView: View {
     @Query private var clothingItems: [ClothingItem]
     @State private var debugSeedReady = false
     @State private var selectedTab: AppTab = .today
+    @State private var debugSheet: DebugSheet?
 
     var body: some View {
-        if shouldAutoSeedDebugSampleCapsule {
-            Group {
-                if debugSeedReady {
-                    tabShell
+        Group {
+            if shouldAutoSeedDebugSampleCapsule {
+                Group {
+                    if debugSeedReady {
+                        tabShell
+                    } else {
+                        debugBootstrapView
+                    }
+                }
+                .task {
+                    prepareDebugSampleCapsuleIfNeeded()
+                }
+            } else {
+                if clothingItems.isEmpty {
+                    WorkCapsuleOnboardingView()
                 } else {
-                    debugBootstrapView
+                    tabShell
                 }
             }
-            .task {
-                prepareDebugSampleCapsuleIfNeeded()
+        }
+        .sheet(item: $debugSheet) { sheet in
+            switch sheet {
+            case .addItem:
+                AddEditItemView()
             }
-        } else {
-            if clothingItems.isEmpty {
-                WorkCapsuleOnboardingView()
-            } else {
-                tabShell
-            }
+        }
+        .task {
+            presentDebugSheetIfNeeded()
         }
     }
 
     private var tabShell: some View {
         TabView(selection: $selectedTab) {
-            TodayView()
+            TodayView(onOpenLooks: {
+                withAnimation(.snappy(duration: 0.28)) {
+                    selectedTab = .looks
+                }
+            })
                 .tag(AppTab.today)
 
             ClosetView()
@@ -81,6 +97,26 @@ struct AppRootView: View {
 
         debugSeedReady = true
 #endif
+    }
+
+    @MainActor
+    private func presentDebugSheetIfNeeded() {
+#if DEBUG
+        guard ProcessInfo.processInfo.environment["CLOSETPIN_DEBUG_PRESENT_ADD_ITEM"] == "1" else { return }
+        guard debugSheet == nil else { return }
+        debugSheet = .addItem
+#endif
+    }
+}
+
+private enum DebugSheet: Identifiable {
+    case addItem
+
+    var id: String {
+        switch self {
+        case .addItem:
+            "addItem"
+        }
     }
 }
 

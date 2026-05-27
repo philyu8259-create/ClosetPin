@@ -83,13 +83,11 @@ struct ClosetView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("closet.archive.kicker"))
                     .font(.caption.weight(.bold))
-                    .tracking(0.8)
                     .foregroundStyle(DesignSystem.premiumGold)
                     .textCase(.uppercase)
 
                 Text(L10n.text("closet.archive.title"))
                     .font(DesignSystem.editorialDisplayFont(size: 38))
-                    .tracking(-0.6)
                     .foregroundStyle(.white)
 
                 Text(L10n.string("closet.archive.count.format", arguments: filteredItems.count))

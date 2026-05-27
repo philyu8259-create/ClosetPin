@@ -180,13 +180,22 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(entries.map(\.kind), [.worn, .saved])
         XCTAssertEqual(entries.first?.scenario, .dailyOffice)
         XCTAssertEqual(entries.first?.itemCount, 1)
-        XCTAssertEqual(entries.first?.itemSummary, "White \(ClothingType.top.displayName)")
+        XCTAssertEqual(entries.first?.itemSummary, "\(localizedColor("White")) \(ClothingType.top.displayName)")
         XCTAssertEqual(entries.first?.visualItems.map(\.id), [top.id])
         XCTAssertEqual(entries.first?.visualItems.first?.type, .top)
         XCTAssertEqual(entries.last?.scenario, .importantMeeting)
         XCTAssertEqual(entries.last?.itemCount, 2)
         XCTAssertEqual(entries.last?.visualItems.map(\.id), [top.id, shoes.id])
-        XCTAssertEqual(entries.last?.explanation, "Polished for a client meeting.")
+        XCTAssertEqual(
+            entries.last?.explanation,
+            TodayRecommendationExplanation.text(
+                for: [
+                    TodayOutfitItemSnapshot(type: .top, color: "White"),
+                    TodayOutfitItemSnapshot(type: .shoes, color: "Black")
+                ],
+                scenario: .importantMeeting
+            )
+        )
     }
 
     func testOutfitVisualItemsPreserveOutfitOrderAndPhotoMetadata() {
@@ -214,9 +223,13 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(visualItems.map(\.id), [shoes.id, top.id])
         XCTAssertEqual(visualItems.map(\.photoLocalPath), ["/tmp/shoes.jpg", "/tmp/top.jpg"])
         XCTAssertEqual(visualItems.map(\.displayName), [
-            "Black \(ClothingType.shoes.displayName)",
-            "White \(ClothingType.top.displayName)"
+            "\(localizedColor("Black")) \(ClothingType.shoes.displayName)",
+            "\(localizedColor("White")) \(ClothingType.top.displayName)"
         ])
+    }
+
+    private func localizedColor(_ color: String) -> String {
+        ColorResolver.localizedDisplayColor(from: color) ?? color
     }
 
     func testWorkCapsuleSeedDataProvidesOfficeRecommendationBasics() {

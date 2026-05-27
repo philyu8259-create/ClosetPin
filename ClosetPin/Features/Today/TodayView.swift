@@ -9,11 +9,17 @@ struct TodayView: View {
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = .spring
     @State private var pendingActionIDs: Set<String> = []
-    @State private var confirmationMessage: String?
+    @State private var confirmation: TodayConfirmation?
     @State private var saveError: String?
+
+    let onOpenLooks: (() -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
+
+    init(onOpenLooks: (() -> Void)? = nil) {
+        self.onOpenLooks = onOpenLooks
+    }
 
     private var candidates: [OutfitCandidate] {
         engine.recommend(
@@ -46,10 +52,13 @@ struct TodayView: View {
             .navigationTitle(L10n.text("today.title"))
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
-                if let confirmationMessage {
-                    ConfirmationBanner(message: confirmationMessage)
+                if let confirmation {
+                    ConfirmationBanner(
+                        confirmation: confirmation,
+                        onOpenLooks: onOpenLooks
+                    )
                         .padding(.horizontal, 18)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, DesignSystem.Spacing.tabBarClearance + 8)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
@@ -199,7 +208,10 @@ struct TodayView: View {
             )
 
             withAnimation(.snappy) {
-                confirmationMessage = action.confirmation(for: action.feedbackType, outcome: result.outcome)
+                confirmation = TodayConfirmation(
+                    message: action.confirmation(for: action.feedbackType, outcome: result.outcome),
+                    showsLookbookAction: action.showsLookbookAction
+                )
             }
         } catch {
             saveError = error.localizedDescription
@@ -227,7 +239,6 @@ private struct TodayEditorialHero: View {
 
                     Text(title)
                         .font(DesignSystem.editorialDisplayFont(size: 42))
-                        .tracking(-0.8)
                         .foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -374,19 +385,41 @@ private struct MissingRecommendationView: View {
     }
 }
 
-private struct ConfirmationBanner: View {
+private struct TodayConfirmation: Equatable {
     let message: String
+    let showsLookbookAction: Bool
+}
+
+private struct ConfirmationBanner: View {
+    let confirmation: TodayConfirmation
+    let onOpenLooks: (() -> Void)?
 
     var body: some View {
-        Label(message, systemImage: "checkmark.circle.fill")
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignSystem.accent)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
-            .accessibilityIdentifier("todayFeedbackConfirmation")
+        HStack(spacing: DesignSystem.Spacing.sm) {
+            Label(confirmation.message, systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if confirmation.showsLookbookAction, let onOpenLooks {
+                Button(action: onOpenLooks) {
+                    Text(L10n.text("today.confirmation.view_looks"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(.white)
+                        .clipShape(Capsule(style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("todayFeedbackViewLooksButton")
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.accent)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
     }
 }
 
@@ -441,6 +474,15 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
             "arrow.triangle.2.circlepath"
         case .save:
             "bookmark.fill"
+        }
+    }
+
+    var showsLookbookAction: Bool {
+        switch self {
+        case .wore, .save:
+            true
+        case .like, .dislike, .skip:
+            false
         }
     }
 

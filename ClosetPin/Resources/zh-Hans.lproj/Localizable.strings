@@ -118,13 +118,17 @@
 "today.confirmation.dislike" = "反馈已保存。";
 "today.confirmation.skip" = "今天已跳过。";
 "today.confirmation.save" = "穿搭已保存。";
+"today.confirmation.view_looks" = "去穿搭";
 
 "looks.title" = "穿搭";
-"looks.empty.title" = "从这里开始积累你的 Lookbook";
+"looks.empty.title" = "从这里开始积累你的穿搭档案";
 "looks.empty.description" = "在「今日」里保存穿搭或标记已穿，逐步形成一份真正适合你工作节奏的穿搭记录。";
 "looks.kind.saved" = "已保存";
 "looks.kind.worn" = "已穿";
 "looks.item_count.format" = "%d 件单品";
+"looks.score.format" = "评分 %d";
+"looks.archive.title" = "穿搭档案";
+"looks.archive.latest.format" = "最近：%@";
 "looks.items.unavailable" = "单品不可用";
 "looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配真正适合你的工作周。";
 "closet.archive.kicker" = "衣橱档案";

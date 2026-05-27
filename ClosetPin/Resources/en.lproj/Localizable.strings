@@ -118,6 +118,7 @@
 "today.confirmation.dislike" = "Feedback saved.";
 "today.confirmation.skip" = "Skipped for today.";
 "today.confirmation.save" = "Outfit saved.";
+"today.confirmation.view_looks" = "View Looks";
 
 "looks.title" = "Looks";
 "looks.empty.title" = "Your Lookbook Starts Here";
@@ -125,6 +126,9 @@
 "looks.kind.saved" = "Saved";
 "looks.kind.worn" = "Worn";
 "looks.item_count.format" = "%d items";
+"looks.score.format" = "Score %d";
+"looks.archive.title" = "Lookbook";
+"looks.archive.latest.format" = "Latest: %@";
 "looks.items.unavailable" = "Items unavailable";
 "looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works in your week.";
 "closet.archive.kicker" = "Archive";

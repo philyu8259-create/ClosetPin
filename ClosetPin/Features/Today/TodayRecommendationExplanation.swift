@@ -39,7 +39,7 @@ struct TodayOutfitItemSnapshot: Sendable {
     }
 
     fileprivate var displayText: String {
-        guard let color = ColorResolver.safeDisplayColor(from: color) else {
+        guard let color = ColorResolver.localizedDisplayColor(from: color) else {
             return typeRawValue
         }
 
