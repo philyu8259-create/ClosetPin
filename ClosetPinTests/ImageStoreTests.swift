@@ -35,6 +35,25 @@ final class ImageStoreTests: XCTestCase {
         XCTAssertEqual(url.lastPathComponent, "12345678-1234-1234-1234-123456789ABC.jpg")
     }
 
+    func testWardrobePhotoLoadsUIImageFromLocalPath() throws {
+        let directory = temporaryDirectory()
+        let imageURL = directory.appendingPathComponent("item.jpg")
+        let imageData = try XCTUnwrap(makeImage().jpegData(compressionQuality: 0.9))
+        try imageData.write(to: imageURL)
+
+        let image = WardrobePhoto.localImage(at: imageURL.path)
+
+        XCTAssertNotNil(image)
+        XCTAssertEqual(image?.cgImage?.width, makeImage().cgImage?.width)
+        XCTAssertEqual(image?.cgImage?.height, makeImage().cgImage?.height)
+    }
+
+    func testWardrobePhotoReturnsNilForMissingPath() {
+        let image = WardrobePhoto.localImage(at: "/tmp/closetpin-missing-\(UUID().uuidString).jpg")
+
+        XCTAssertNil(image)
+    }
+
     func testSavingSameUUIDOverwritesExistingJPEGData() throws {
         let directory = temporaryDirectory()
         let store = ImageStore(baseDirectory: directory)
@@ -74,5 +93,12 @@ private extension ImageStoreTests {
         }
 
         return directory
+    }
+
+    func makeImage() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 12, height: 8)).image { context in
+            UIColor.systemTeal.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 12, height: 8))
+        }
     }
 }

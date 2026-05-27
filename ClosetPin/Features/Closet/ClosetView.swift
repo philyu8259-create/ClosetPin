@@ -41,8 +41,6 @@ struct ClosetView: View {
                 switch sheet {
                 case .add:
                     AddEditItemView()
-                case .edit(let item):
-                    AddEditItemView(item: item)
                 }
             }
         }
@@ -55,12 +53,11 @@ struct ClosetView: View {
                 if !categoryItems.isEmpty {
                     Section(type.displayName) {
                         ForEach(categoryItems) { item in
-                            Button {
-                                activeSheet = .edit(item)
+                            NavigationLink {
+                                ClosetItemDetailView(item: item)
                             } label: {
                                 ClosetItemRow(item: item)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -118,14 +115,11 @@ struct ClosetView: View {
 
 private enum ClosetSheet: Identifiable {
     case add
-    case edit(ClothingItem)
 
     var id: String {
         switch self {
         case .add:
             "add"
-        case .edit(let item):
-            item.id.uuidString
         }
     }
 }
@@ -135,14 +129,8 @@ private struct ClosetItemRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(colorSwatch)
-                .frame(width: 36, height: 36)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(.quaternary, lineWidth: 1)
-                }
-                .accessibilityHidden(true)
+            WardrobePhotoThumbnail(item: item, cornerRadius: 7)
+                .frame(width: 48, height: 48)
 
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
@@ -186,6 +174,136 @@ private struct ClosetItemRow: View {
             .red
         case .inactive:
             .secondary
+        }
+    }
+}
+
+private struct ClosetItemDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    let item: ClothingItem
+
+    @State private var isEditing = false
+    @State private var isShowingOriginal = false
+    @State private var isConfirmingDelete = false
+    @State private var deleteError: String?
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    WardrobePhotoThumbnail(item: item, cornerRadius: 8)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 280)
+
+                    if WardrobePhoto.localImage(at: item.originalPhotoLocalPath) != nil {
+                        Button {
+                            isShowingOriginal = true
+                        } label: {
+                            Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section(L10n.text("closet.details.section")) {
+                detailRow(title: L10n.text("closet.type.label"), value: item.type.displayName)
+                detailRow(title: L10n.text("closet.color.label"), value: item.color)
+                detailRow(title: L10n.text("closet.storage_location.label"), value: item.storageLocation)
+                detailRow(title: L10n.text("closet.status.label"), value: item.status.displayName)
+            }
+
+            Section(L10n.text("closet.seasons.section")) {
+                Text(item.seasons.map(\.displayName).joined(separator: " / "))
+                    .foregroundStyle(DesignSystem.ink)
+            }
+
+            Section(L10n.text("closet.levels.section")) {
+                detailRow(title: L10n.text("closet.formality.label"), value: "\(item.formalityLevel)")
+                detailRow(title: L10n.text("closet.warmth.label"), value: "\(item.warmthLevel)")
+            }
+
+            if !item.notes.isEmpty {
+                Section(L10n.text("closet.notes.section")) {
+                    Text(item.notes)
+                        .foregroundStyle(DesignSystem.ink)
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.background)
+        .navigationTitle("\(item.color) \(item.type.displayName)")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    isEditing = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .accessibilityLabel(L10n.text("closet.detail.edit"))
+
+                Button(role: .destructive) {
+                    isConfirmingDelete = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .accessibilityLabel(L10n.text("closet.detail.delete"))
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            AddEditItemView(item: item)
+        }
+        .sheet(isPresented: $isShowingOriginal) {
+            if let image = WardrobePhoto.localImage(at: item.originalPhotoLocalPath) {
+                PhotoPreviewSheetView(preview: PhotoPreviewSheet(title: L10n.text("closet.photo.original"), image: image))
+            }
+        }
+        .confirmationDialog(
+            L10n.text("closet.detail.delete_confirm_title"),
+            isPresented: $isConfirmingDelete,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.text("closet.detail.delete"), role: .destructive) {
+                deleteItem()
+            }
+            Button(L10n.text("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(L10n.text("closet.detail.delete_confirm_message"))
+        }
+        .alert(L10n.text("closet.detail.delete_error_title"), isPresented: Binding(
+            get: { deleteError != nil },
+            set: { if !$0 { deleteError = nil } }
+        )) {
+            Button(L10n.text("common.ok"), role: .cancel) {}
+        } message: {
+            Text(deleteError ?? L10n.text("common.try_again"))
+        }
+    }
+
+    private func detailRow(title: String, value: String) -> some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 12)
+            Text(value)
+                .foregroundStyle(DesignSystem.ink)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+
+    private func deleteItem() {
+        do {
+            modelContext.delete(item)
+            try modelContext.save()
+            ClosetItemPhotoPersistence.removeLocalPhotos(for: item)
+            dismiss()
+        } catch {
+            deleteError = error.localizedDescription
         }
     }
 }

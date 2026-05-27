@@ -229,14 +229,8 @@ private struct TodayItemRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(ColorResolver.swatchColor(for: item.color))
-                .frame(width: 30, height: 30)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(.quaternary, lineWidth: 1)
-                }
-                .accessibilityHidden(true)
+            WardrobePhotoThumbnail(item: item, cornerRadius: 6)
+                .frame(width: 34, height: 34)
 
             Text(item.color)
                 .font(.subheadline.weight(.semibold))

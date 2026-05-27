@@ -113,6 +113,7 @@ struct AddEditItemView: View {
     @State private var isCameraPresented = false
     @State private var saveError: String?
     @State private var photoError: String?
+    @State private var photoPreview: PhotoPreviewSheet?
 
     init(item: ClothingItem? = nil, imageStore: ImageStore = ImageStore()) {
         self.item = item
@@ -168,6 +169,9 @@ struct AddEditItemView: View {
                     stageCameraImage(image)
                 }
             }
+            .sheet(item: $photoPreview) { preview in
+                PhotoPreviewSheetView(preview: preview)
+            }
         }
     }
 
@@ -208,6 +212,40 @@ struct AddEditItemView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if let image = displayPreviewImage {
+                VStack(alignment: .leading, spacing: 8) {
+                    WardrobePhotoThumbnail(
+                        image: image,
+                        fallbackColor: ColorResolver.swatchColor(for: draft.color),
+                        cornerRadius: 8
+                    )
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 220)
+
+                    HStack {
+                        Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        if let originalPreviewImage {
+                            Button {
+                                photoPreview = PhotoPreviewSheet(
+                                    title: L10n.text("closet.photo.original"),
+                                    image: originalPreviewImage
+                                )
+                            } label: {
+                                Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
+                            }
+                            .font(.footnote.weight(.semibold))
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("photoPreview")
+            }
+
 #if DEBUG
             if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
                 Button(L10n.text("closet.photo.use_test")) {
@@ -235,6 +273,20 @@ struct AddEditItemView: View {
                     .foregroundStyle(.red)
             }
         }
+    }
+
+    private var displayPreviewImage: UIImage? {
+        if let data = draft.pendingPhotoJPEGData {
+            return UIImage(data: data)
+        }
+        return WardrobePhoto.localImage(at: draft.photoLocalPath)
+    }
+
+    private var originalPreviewImage: UIImage? {
+        if let data = draft.pendingOriginalPhotoJPEGData {
+            return UIImage(data: data)
+        }
+        return WardrobePhoto.localImage(at: draft.originalPhotoLocalPath)
     }
 
     private var detailsSection: some View {
@@ -461,6 +513,11 @@ struct ClosetItemPhotoPersistence {
         }
     }
 
+    static func removeLocalPhotos(for item: ClothingItem) {
+        removePhoto(at: item.photoLocalPath)
+        removePhoto(at: item.originalPhotoLocalPath)
+    }
+
     private static func stageJPEGData(_ data: Data, stagingDirectory: URL, finalURL: URL) throws -> StagedPhotoWrite {
         try FileManager.default.createDirectory(
             at: stagingDirectory,
@@ -480,6 +537,12 @@ struct ClosetItemPhotoPersistence {
         return UIGraphicsImageRenderer(size: image.size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: image.size))
         }
+    }
+
+    private static func removePhoto(at path: String) {
+        guard !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              FileManager.default.fileExists(atPath: path) else { return }
+        try? FileManager.default.removeItem(atPath: path)
     }
 }
 
@@ -650,6 +713,39 @@ struct StagedPhotoDataWrite {
     func discard() {
         display.discard()
         original.discard()
+    }
+}
+
+struct PhotoPreviewSheet: Identifiable {
+    let id = UUID()
+    let title: String
+    let image: UIImage
+}
+
+struct PhotoPreviewSheetView: View {
+    let preview: PhotoPreviewSheet
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                DesignSystem.background.ignoresSafeArea()
+
+                Image(uiImage: preview.image)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(18)
+            }
+            .navigationTitle(preview.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L10n.text("common.ok")) {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
