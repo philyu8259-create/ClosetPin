@@ -4,6 +4,9 @@ import SwiftUI
 import UIKit
 
 struct AddEditItemDraft {
+    static let defaultFormalityLevel = 3
+    static let defaultWarmthLevel = 3
+
     var itemID: UUID = UUID()
     var photoLocalPath: String = ""
     var originalPhotoLocalPath: String = ""
@@ -12,8 +15,8 @@ struct AddEditItemDraft {
     var type: ClothingType = .top
     var color: String = ""
     var selectedSeasons: Set<SeasonTag> = []
-    var formalityLevel: Int = 3
-    var warmthLevel: Int = 3
+    var formalityLevel: Int = defaultFormalityLevel
+    var warmthLevel: Int = defaultWarmthLevel
     var storageLocation: String = ""
     var status: ClothingStatus = .available
     var notes: String = ""
@@ -108,16 +111,23 @@ struct AddEditItemView: View {
 
     private let item: ClothingItem?
     private let imageStore: ImageStore
+    private let photoIntelligenceClient: ClothingPhotoTaggingClient
     @State private var draft: AddEditItemDraft
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var isCameraPresented = false
     @State private var saveError: String?
     @State private var photoError: String?
     @State private var photoPreview: PhotoPreviewSheet?
+    @State private var photoSuggestion: ClothingPhotoTagSuggestion?
 
-    init(item: ClothingItem? = nil, imageStore: ImageStore = ImageStore()) {
+    init(
+        item: ClothingItem? = nil,
+        imageStore: ImageStore = ImageStore(),
+        photoIntelligenceClient: ClothingPhotoTaggingClient = LocalPhotoIntelligenceClient()
+    ) {
         self.item = item
         self.imageStore = imageStore
+        self.photoIntelligenceClient = photoIntelligenceClient
         _draft = State(initialValue: AddEditItemDraft(item: item))
     }
 
@@ -265,6 +275,13 @@ struct AddEditItemView: View {
                 Label(L10n.text("closet.photo.saved"), systemImage: "checkmark.circle.fill")
                     .font(.footnote)
                     .foregroundStyle(DesignSystem.accent)
+            }
+
+            if let photoSuggestion {
+                Label(suggestionStatusText(for: photoSuggestion), systemImage: "sparkles")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
             }
 
             if let photoError {
@@ -445,6 +462,7 @@ struct AddEditItemView: View {
             }
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
             draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
+            applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
             photoError = nil
         } catch {
             photoError = L10n.text("closet.photo.selected_load_failed")
@@ -455,10 +473,27 @@ struct AddEditItemView: View {
         if let photoData = ClosetItemPhotoPersistence.processedPhotoData(from: image) {
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
             draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
+            applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
             photoError = nil
         } else {
             photoError = L10n.text("closet.photo.captured_save_failed")
         }
+    }
+
+    private func applyPhotoIntelligenceIfAvailable(from data: Data) {
+        guard let image = UIImage(data: data),
+              let suggestion = photoIntelligenceClient.suggestTags(for: image)
+        else {
+            photoSuggestion = nil
+            return
+        }
+
+        suggestion.apply(to: &draft)
+        photoSuggestion = suggestion
+    }
+
+    private func suggestionStatusText(for suggestion: ClothingPhotoTagSuggestion) -> String {
+        L10n.string("closet.photo.ai_suggestion.format", arguments: suggestion.color, suggestion.type.displayName)
     }
 }
 

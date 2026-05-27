@@ -2,6 +2,66 @@ import XCTest
 @testable import ClosetPin
 
 final class AIStylistClientTests: XCTestCase {
+    func testLocalPhotoIntelligenceSuggestsDominantColorAndPracticalDefaults() throws {
+        let image = makeSolidImage(color: .systemBlue)
+
+        let suggestion = try XCTUnwrap(LocalPhotoIntelligenceClient().suggestTags(for: image))
+
+        XCTAssertEqual(suggestion.color, "blue")
+        XCTAssertEqual(suggestion.type, .top)
+        XCTAssertEqual(suggestion.seasons, [.spring, .summer, .autumn])
+        XCTAssertEqual(suggestion.formalityLevel, 3)
+        XCTAssertEqual(suggestion.warmthLevel, 2)
+        XCTAssertGreaterThan(suggestion.confidence, 0)
+    }
+
+    func testPhotoTagSuggestionFillsEmptyDraftFields() {
+        var draft = AddEditItemDraft()
+        let suggestion = ClothingPhotoTagSuggestion(
+            type: .shoes,
+            color: "black",
+            seasons: [.autumn, .winter],
+            formalityLevel: 4,
+            warmthLevel: 3,
+            confidence: 0.72,
+            source: .localHeuristic
+        )
+
+        suggestion.apply(to: &draft)
+
+        XCTAssertEqual(draft.type, .shoes)
+        XCTAssertEqual(draft.color, "black")
+        XCTAssertEqual(draft.selectedSeasons, [.autumn, .winter])
+        XCTAssertEqual(draft.formalityLevel, 4)
+        XCTAssertEqual(draft.warmthLevel, 3)
+    }
+
+    func testPhotoTagSuggestionDoesNotOverwriteManualDraftFields() {
+        var draft = AddEditItemDraft()
+        draft.type = .bag
+        draft.color = "Ivory"
+        draft.selectedSeasons = [.spring]
+        draft.formalityLevel = 5
+        draft.warmthLevel = 1
+        let suggestion = ClothingPhotoTagSuggestion(
+            type: .shoes,
+            color: "black",
+            seasons: [.autumn, .winter],
+            formalityLevel: 4,
+            warmthLevel: 3,
+            confidence: 0.72,
+            source: .localHeuristic
+        )
+
+        suggestion.apply(to: &draft)
+
+        XCTAssertEqual(draft.type, .bag)
+        XCTAssertEqual(draft.color, "Ivory")
+        XCTAssertEqual(draft.selectedSeasons, [.spring])
+        XCTAssertEqual(draft.formalityLevel, 5)
+        XCTAssertEqual(draft.warmthLevel, 1)
+    }
+
     func testFallbackExplanationMentionsProvidedItemColorsAndTypes() async throws {
         let candidate = OutfitCandidate(
             id: "dailyOffice|seed",
@@ -329,6 +389,13 @@ private extension AIStylistClientTests {
 
     func itemDescription(type: ClothingType, color: String) -> String {
         "\(color) \(type.summaryName)"
+    }
+
+    func makeSolidImage(color: UIColor) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 60, height: 80)).image { context in
+            color.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 60, height: 80))
+        }
     }
 }
 

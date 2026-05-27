@@ -7,6 +7,7 @@ ClosetPin is an iOS MVP for a bilingual AI wardrobe assistant focused on profess
 - Add clothing with camera capture or photo library selection
 - Store item metadata such as color, season, formality, warmth, status, notes, and storage location
 - Auto-crop a local display photo while preserving the original image locally
+- Suggest clothing tags locally after photo capture or library selection
 - Generate local outfit recommendations for daily office and meeting scenarios
 - Save looks and record wear/like/dislike feedback
 - Use Chinese or English automatically based on the device language

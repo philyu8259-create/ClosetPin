@@ -44,6 +44,7 @@
 "closet.photo.auto_cropped" = "Auto-cropped display photo";
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
+"closet.photo.ai_suggestion.format" = "Suggested %@ %@. You can edit every field.";
 "closet.photo.save_failed" = "The photo could not be saved. Please try again.";
 "closet.photo.selected_load_failed" = "The selected photo could not be loaded.";
 "closet.photo.selected_read_failed" = "The selected photo could not be read.";
@@ -109,7 +110,7 @@
 "settings.workplace_dress_code.placeholder" = "Workplace dress code or notes";
 "settings.privacy.section" = "Privacy";
 "settings.privacy.ai.title" = "AI recommendations";
-"settings.privacy.ai.body" = "When AI styling is enabled, ClosetPin should send only outfit metadata such as item type, color, season, and scenario. Keep photos local unless you explicitly choose image recognition later.";
+"settings.privacy.ai.body" = "ClosetPin generates photo tag suggestions locally in the MVP. If cloud image recognition is added later, photos should only be sent after you explicitly choose it.";
 "settings.privacy.local.title" = "Local closet data";
 "settings.privacy.local.body" = "Wardrobe photos and saved outfit history are stored on this device in the MVP.";
 "settings.save_error_title" = "Settings Were Not Saved";
