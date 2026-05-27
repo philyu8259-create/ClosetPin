@@ -558,6 +558,19 @@ struct ClosetItemDetailView: View {
                         }
                     }
                 }
+
+                LuxurySurfaceCard {
+                    Button(role: .destructive) {
+                        isConfirmingDelete = true
+                    } label: {
+                        Label(L10n.text("closet.detail.delete"), systemImage: "trash")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignSystem.wine)
+                    .accessibilityIdentifier("deleteItemButton")
+                }
             }
             .padding(18)
             .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
@@ -567,22 +580,11 @@ struct ClosetItemDetailView: View {
         .navigationTitle(item.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Button {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(L10n.text("closet.detail.edit")) {
                     isEditing = true
-                } label: {
-                    Image(systemName: "pencil")
                 }
-                .accessibilityLabel(L10n.text("closet.detail.edit"))
                 .accessibilityIdentifier("editItemButton")
-
-                Button(role: .destructive) {
-                    isConfirmingDelete = true
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .accessibilityLabel(L10n.text("closet.detail.delete"))
-                .accessibilityIdentifier("deleteItemButton")
             }
         }
         .sheet(isPresented: $isEditing) {
