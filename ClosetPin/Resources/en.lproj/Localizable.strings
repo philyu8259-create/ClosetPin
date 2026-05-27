@@ -8,13 +8,13 @@
 "tab.looks" = "Looks";
 "tab.settings" = "Settings";
 
-"onboarding.nav_title" = "Work Capsule";
-"onboarding.title" = "10-Minute Work Capsule";
-"onboarding.subtitle" = "Start with a small office-ready capsule for daily recommendations, meetings, and the days that need to feel easy.";
+"onboarding.nav_title" = "Starter Closet";
+"onboarding.title" = "10-Minute Starter Closet";
+"onboarding.subtitle" = "Start with a small ready-to-style closet for workdays, banquets, weekends, and the days that need to feel easy.";
 "onboarding.checklist.title" = "Recommended starter set";
 "onboarding.checklist.3_tops" = "3 tops";
 "onboarding.checklist.2_bottoms" = "2 bottoms";
-"onboarding.checklist.1_blazer_or_work_layer" = "1 blazer or work layer";
+"onboarding.checklist.1_blazer_or_work_layer" = "1 blazer or polished layer";
 "onboarding.checklist.2_shoes" = "2 shoes";
 "onboarding.checklist.1_bag" = "1 bag";
 "onboarding.start_adding" = "Start Adding Clothes";
@@ -24,12 +24,12 @@
 
 "closet.title" = "Closet";
 "closet.add_item.accessibility" = "Add item";
-"closet.empty.title" = "Build Your Work Closet";
-"closet.empty.description" = "Start with 2 tops, 1 bottom, 1 blazer or work layer, and a pair of work shoes.";
+"closet.empty.title" = "Build Your Closet";
+"closet.empty.description" = "Start with 2 tops, 1 bottom, 1 polished layer, and a pair of shoes you can actually wear.";
 "closet.filter.all" = "All";
 "closet.filter.status_all" = "Any Status";
 "closet.filtered_empty.title" = "No pieces match";
-"closet.filtered_empty.description" = "Adjust the filters or add another work-ready item to complete this capsule.";
+"closet.filtered_empty.description" = "Adjust the filters or add another item to complete this closet.";
 "closet.add_item" = "Add Item";
 "closet.edit_item" = "Edit Item";
 "closet.validation.color_required" = "Color is required.";
@@ -41,7 +41,7 @@
 "closet.photo.camera_unavailable" = "Camera is not available on this device.";
 "closet.photo.take" = "Take Photo";
 "closet.photo.choose_library" = "Choose from Library";
-"closet.photo.help" = "Add a clear photo for this work piece.";
+"closet.photo.help" = "Add a clear photo for this piece.";
 "closet.photo.use_test" = "Use Test Photo";
 "closet.photo.ready" = "Photo ready to save.";
 "closet.photo.saved" = "Photo saved locally.";
@@ -70,7 +70,7 @@
 "closet.seasons.section" = "Seasons";
 "closet.season.selected" = "Selected";
 "closet.season.not_selected" = "Not selected";
-"closet.levels.section" = "Fit For Workday";
+"closet.levels.section" = "Style Range";
 "closet.ai_edit.section" = "Main Details";
 "closet.ai_edit.confirmation_section" = "Optional Details";
 "closet.save_checklist.title" = "To save this piece";
@@ -92,7 +92,9 @@
 "today.greeting" = "Good morning";
 "today.subtitle" = "A quieter way to decide what works for your day.";
 "today.feedback_error_title" = "Feedback Was Not Saved";
-"today.context.title" = "Work context";
+"today.context.title" = "Occasion";
+"today.ai_assist.body" = "Choose an occasion and season; ClosetPin ranks the looks, and you still decide what to wear.";
+"today.season.auto_note" = "Season starts from your system date; weather-aware planning can be added once a forecast source is enabled.";
 "today.edit.kicker" = "Today's Edit";
 "today.scenario.label" = "Scenario";
 "today.season.label" = "Season";
@@ -100,6 +102,8 @@
 "today.best.title" = "Today's Best";
 "today.best.name.daily_office" = "Soft Power Office";
 "today.best.name.important_meeting" = "Executive Polish";
+"today.best.name.weekend_casual" = "Weekend Ease";
+"today.best.name.banquet" = "Banquet Polish";
 "today.why_this_look" = "Why this look?";
 "today.more_actions" = "More actions";
 "today.items.title" = "Included in this look";
@@ -108,7 +112,7 @@
 "today.alternative.more_relaxed" = "More relaxed";
 "today.missing.add_one.format" = "Add one %@ to generate %@ outfits.";
 "today.missing.add_formal.format" = "Add or update one more formal %@ to generate %@ outfits.";
-"today.missing.available_or_season" = "Make one work item available or select a season with office-ready pieces.";
+"today.missing.available_or_season" = "Make one item available or select a season with ready pieces.";
 "today.option.format" = "Option %d";
 "today.score.accessibility.format" = "Score %d";
 "today.missing.title" = "Outfit ingredients needed";
@@ -130,7 +134,7 @@
 
 "looks.title" = "Looks";
 "looks.empty.title" = "Your Lookbook Starts Here";
-"looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works for your routine.";
+"looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works across your real occasions.";
 "looks.empty.open_today" = "Go to Today";
 "looks.kind.saved" = "Saved";
 "looks.kind.worn" = "Worn";
@@ -143,34 +147,34 @@
 "looks.context.saved.title" = "Saved from Today";
 "looks.context.saved.body" = "Kept for planning, repeating, or comparing against future recommendations.";
 "looks.context.worn.title" = "Actually worn";
-"looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works in your week.";
-"looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works in your week.";
+"looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works across your routine.";
+"looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works across your routine.";
 "closet.archive.kicker" = "Archive";
-"closet.archive.title" = "Work Closet";
+"closet.archive.title" = "Your Closet";
 "closet.archive.count.format" = "%d pieces ready to style";
 "settings.title" = "Settings";
-"settings.summary.kicker" = "Workday brief";
+"settings.summary.kicker" = "Style brief";
 "settings.summary.title.format" = "%@ · Formality %d";
-"settings.summary.body" = "These defaults shape Today before you make any temporary context switches.";
+"settings.summary.body" = "These defaults shape Today before you make any temporary occasion switches.";
 "settings.preferences.section" = "Styling Preferences";
-"settings.preferences.subtitle" = "Set the first recommendation ClosetPin should reach for on a normal workday.";
+"settings.preferences.subtitle" = "Set the first recommendation ClosetPin should reach for when the app opens.";
 "settings.default_scenario.label" = "Default Scenario";
 "settings.preferred_formality.format" = "Preferred Formality: %d";
 "settings.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
 "settings.formality.decrease" = "Less formal";
 "settings.formality.increase" = "More formal";
-"settings.workplace_dress_code.placeholder" = "Private workplace notes";
-"settings.workplace_dress_code.helper" = "Saved for reference. Default scenario and formality are what shape Today right now.";
+"settings.workplace_dress_code.placeholder" = "Private style notes";
+"settings.workplace_dress_code.helper" = "Saved for reference. Default occasion and formality are what shape Today right now.";
 "settings.preferences.autosave.title" = "Auto-saved";
-"settings.preferences.autosave.body" = "Default scenario and formality shape the first Today recommendation; you can still switch contexts on Today anytime.";
+"settings.preferences.autosave.body" = "Default occasion and formality shape the first Today recommendation; you can still switch occasion on Today anytime.";
 "settings.preferences.applied.title" = "Applied to Today";
-"settings.preferences.applied.body.format" = "Today will start with %@ recommendations tuned to formality %d. You can still switch context on Today anytime.";
+"settings.preferences.applied.body.format" = "Today will start with %@ recommendations tuned to formality %d. You can still switch occasion on Today anytime.";
 "settings.privacy.section" = "Privacy";
 "settings.privacy.subtitle" = "Keep the data boundary obvious before any cloud-assisted features are enabled.";
 "settings.privacy.cloud_photo_recognition.title" = "Cloud photo recognition";
 "settings.privacy.cloud_photo_recognition.body" = "Off by default. When enabled, only the current clothing photo and device locale are sent to the configured recognition backend; your closet library stays on device.";
 "settings.privacy.ai.title" = "AI recommendations";
-"settings.privacy.ai.body" = "ClosetPin keeps local photo tag suggestions available even when the cloud recognition backend is unavailable.";
+"settings.privacy.ai.body" = "ClosetPin keeps local photo tag suggestions available even when the cloud recognition backend is unavailable. Weather-aware tomorrow outfits should only run after forecast access is explicitly enabled.";
 "settings.privacy.local.title" = "Local closet data";
 "settings.privacy.local.body" = "Wardrobe photos and saved outfit history are stored on this device in the MVP.";
 "settings.save_error_title" = "Settings Were Not Saved";
@@ -189,13 +193,13 @@
 "clothing.type.bag.summary" = "bag";
 "clothing.type.outerwear.summary" = "outerwear";
 "clothing.type.accessory.summary" = "accessory";
-"clothing.type.top.missing" = "work top";
-"clothing.type.bottom.missing" = "work bottom";
-"clothing.type.blazer.missing" = "blazer or work layer";
-"clothing.type.shoes.missing" = "pair of work shoes";
-"clothing.type.bag.missing" = "work bag";
-"clothing.type.accessory.missing" = "work accessory";
-"clothing.type.outerwear.missing" = "work outerwear";
+"clothing.type.top.missing" = "top";
+"clothing.type.bottom.missing" = "bottom";
+"clothing.type.blazer.missing" = "blazer or polished layer";
+"clothing.type.shoes.missing" = "pair of shoes";
+"clothing.type.bag.missing" = "bag";
+"clothing.type.accessory.missing" = "accessory";
+"clothing.type.outerwear.missing" = "outerwear";
 
 "clothing.status.available" = "Available";
 "clothing.status.needsWash" = "Needs Wash";
@@ -209,8 +213,12 @@
 
 "scenario.dailyOffice" = "Daily Office";
 "scenario.importantMeeting" = "Important Meeting";
+"scenario.weekendCasual" = "Weekend Casual";
+"scenario.banquet" = "Banquet";
 "scenario.dailyOffice.short" = "office";
 "scenario.importantMeeting.short" = "meeting";
+"scenario.weekendCasual.short" = "weekend";
+"scenario.banquet.short" = "banquet";
 
 "feedback.wore" = "Wore";
 "feedback.liked" = "Liked";
@@ -222,8 +230,10 @@
 "recommendation.explanation.empty" = "No outfit items were available to explain.";
 "recommendation.explanation.daily_office.format" = "A practical, balanced office option with %@, easy to wear on a workday.";
 "recommendation.explanation.important_meeting.format" = "A more formal, polished office option with %@, suitable for a higher-stakes work moment.";
+"recommendation.explanation.weekend_casual.format" = "A relaxed, easy option with %@, built for a casual weekend without overthinking it.";
+"recommendation.explanation.banquet.format" = "A polished event option with %@, suitable for banquets, receptions, and dressed-up gatherings.";
 
-"seed.work_capsule.storage_location" = "Sample work capsule";
+"seed.work_capsule.storage_location" = "Sample starter closet";
 "seed.work_capsule.white_shirt.color" = "white";
 "seed.work_capsule.white_shirt.notes" = "White shirt";
 "seed.work_capsule.light_blue_blouse.color" = "light blue";
@@ -241,4 +251,4 @@
 "seed.work_capsule.brown_shoes.color" = "brown";
 "seed.work_capsule.brown_shoes.notes" = "Brown shoes";
 "seed.work_capsule.work_bag.color" = "black";
-"seed.work_capsule.work_bag.notes" = "Work bag";
+"seed.work_capsule.work_bag.notes" = "Structured bag";

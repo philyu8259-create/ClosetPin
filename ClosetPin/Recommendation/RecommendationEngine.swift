@@ -23,7 +23,7 @@ struct RecommendationEngine {
 
         let candidates: [OutfitCandidate]
         switch input.scenario {
-        case .dailyOffice:
+        case .dailyOffice, .weekendCasual:
             candidates = makeCandidates(
                 scenario: input.scenario,
                 tops: tops,
@@ -32,6 +32,16 @@ struct RecommendationEngine {
                 blazers: [],
                 targetFormality: targetFormality
             )
+        case .banquet:
+            candidates = makeCandidates(
+                scenario: input.scenario,
+                tops: tops,
+                bottoms: bottoms,
+                shoes: shoes,
+                blazers: blazers,
+                targetFormality: targetFormality,
+                requiresBlazer: false
+            )
         case .importantMeeting:
             candidates = makeCandidates(
                 scenario: input.scenario,
@@ -39,7 +49,8 @@ struct RecommendationEngine {
                 bottoms: bottoms,
                 shoes: shoes,
                 blazers: blazers,
-                targetFormality: targetFormality
+                targetFormality: targetFormality,
+                requiresBlazer: true
             )
         }
 
@@ -72,16 +83,25 @@ private extension RecommendationEngine {
 
     func requiredFormality(for scenario: OutfitScenario) -> Int {
         switch scenario {
+        case .weekendCasual:
+            1
         case .dailyOffice:
             2
-        case .importantMeeting:
+        case .importantMeeting, .banquet:
             4
         }
     }
 
     func targetFormality(for input: RecommendationInput) -> Int {
         let preferredFormality = input.preferredFormality.map { min(max($0, 1), 5) }
-        let fallback = input.scenario == .dailyOffice ? 3 : 5
+        let fallback = switch input.scenario {
+        case .weekendCasual:
+            2
+        case .dailyOffice:
+            3
+        case .importantMeeting, .banquet:
+            5
+        }
         return max(requiredFormality(for: input.scenario), preferredFormality ?? fallback)
     }
 
@@ -112,7 +132,8 @@ private extension RecommendationEngine {
         bottoms: [ClothingItem],
         shoes: [ClothingItem],
         blazers: [ClothingItem],
-        targetFormality: Int
+        targetFormality: Int,
+        requiresBlazer: Bool = false
     ) -> [OutfitCandidate] {
         guard !tops.isEmpty, !bottoms.isEmpty, !shoes.isEmpty else { return [] }
 
@@ -120,7 +141,7 @@ private extension RecommendationEngine {
         // while still letting the final sort pick the best MVP results.
         var candidates: [OutfitCandidate] = []
 
-        if scenario == .importantMeeting {
+        if requiresBlazer {
             guard !blazers.isEmpty else { return [] }
 
             for top in tops {
@@ -145,6 +166,14 @@ private extension RecommendationEngine {
                             items: [top, bottom, shoe],
                             targetFormality: targetFormality
                         ))
+
+                        for blazer in blazers {
+                            candidates.append(makeCandidate(
+                                scenario: scenario,
+                                items: [top, bottom, shoe, blazer],
+                                targetFormality: targetFormality
+                            ))
+                        }
                     }
                 }
             }
@@ -163,7 +192,15 @@ private extension RecommendationEngine {
     }
 
     func score(scenario: OutfitScenario, items: [ClothingItem]) -> Int {
-        score(scenario: scenario, items: items, targetFormality: scenario == .dailyOffice ? 3 : 5)
+        let fallbackFormality = switch scenario {
+        case .weekendCasual:
+            2
+        case .dailyOffice:
+            3
+        case .importantMeeting, .banquet:
+            5
+        }
+        return score(scenario: scenario, items: items, targetFormality: fallbackFormality)
     }
 
     func score(scenario: OutfitScenario, items: [ClothingItem], targetFormality: Int) -> Int {
@@ -171,10 +208,14 @@ private extension RecommendationEngine {
             total + max(0, 5 - abs(item.formalityLevel - targetFormality)) * 10
         }
         let scenarioBonus = switch scenario {
+        case .weekendCasual:
+            8
         case .dailyOffice:
             12
         case .importantMeeting:
             24
+        case .banquet:
+            20
         }
         let uniqueColorCount = Set(items.map(\.color)).count
         let colorVarietyPenalty = max(0, uniqueColorCount - 2) * 2

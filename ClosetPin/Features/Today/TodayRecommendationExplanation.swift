@@ -19,6 +19,10 @@ struct TodayRecommendationExplanation {
             return L10n.string("recommendation.explanation.daily_office.format", arguments: itemSummary)
         case .importantMeeting:
             return L10n.string("recommendation.explanation.important_meeting.format", arguments: itemSummary)
+        case .weekendCasual:
+            return L10n.string("recommendation.explanation.weekend_casual.format", arguments: itemSummary)
+        case .banquet:
+            return L10n.string("recommendation.explanation.banquet.format", arguments: itemSummary)
         }
     }
 }

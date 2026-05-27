@@ -8,7 +8,7 @@ struct TodayView: View {
     @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
     @State private var scenario: OutfitScenario = .dailyOffice
-    @State private var season: SeasonTag = .spring
+    @State private var season: SeasonTag = SeasonResolver.currentSeason()
     @State private var pendingActionIDs: Set<String> = []
     @State private var confirmation: TodayConfirmation?
     @State private var saveError: String?
@@ -42,8 +42,8 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.editorial) {
-                    editorialHero
                     contextStrip
+                    editorialHero
 
                     if candidates.count > 1 {
                         alternativesSection
@@ -106,6 +106,11 @@ struct TodayView: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
 
+            Text(L10n.text("today.ai_assist.body"))
+                .font(.caption)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(OutfitScenario.allCases) { scenario in
@@ -125,6 +130,11 @@ struct TodayView: View {
                 .padding(.vertical, 1)
             }
             .accessibilityIdentifier("todaySeasonPicker")
+
+            Text(L10n.text("today.season.auto_note"))
+                .font(.caption2)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -161,6 +171,10 @@ struct TodayView: View {
             L10n.text("today.best.name.daily_office")
         case .importantMeeting:
             L10n.text("today.best.name.important_meeting")
+        case .weekendCasual:
+            L10n.text("today.best.name.weekend_casual")
+        case .banquet:
+            L10n.text("today.best.name.banquet")
         }
     }
 
@@ -179,10 +193,8 @@ struct TodayView: View {
     }
 
     private var missingRecommendationMessage: String {
-        let requiredTypes: [ClothingType] = scenario == .importantMeeting
-            ? [.top, .bottom, .shoes, .blazer]
-            : [.top, .bottom, .shoes]
-        let threshold = scenario == .importantMeeting ? 4 : 2
+        let requiredTypes = requiredTypes(for: scenario)
+        let threshold = requiredFormality(for: scenario)
 
         for type in requiredTypes {
             let availableSeasonItems = clothingItems.filter { item in
@@ -207,6 +219,26 @@ struct TodayView: View {
         }
 
         return L10n.text("today.missing.available_or_season")
+    }
+
+    private func requiredTypes(for scenario: OutfitScenario) -> [ClothingType] {
+        switch scenario {
+        case .importantMeeting:
+            [.top, .bottom, .shoes, .blazer]
+        case .dailyOffice, .weekendCasual, .banquet:
+            [.top, .bottom, .shoes]
+        }
+    }
+
+    private func requiredFormality(for scenario: OutfitScenario) -> Int {
+        switch scenario {
+        case .weekendCasual:
+            1
+        case .dailyOffice:
+            2
+        case .importantMeeting, .banquet:
+            4
+        }
     }
 
     private func alternativeLabel(for index: Int) -> String {
@@ -253,7 +285,7 @@ private struct TodayEditorialHero: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
             EditorialImageSurface(
                 image: coverImage,
-                height: 380
+                height: 330
             ) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                     Label(L10n.text("today.edit.kicker"), systemImage: "sparkles")

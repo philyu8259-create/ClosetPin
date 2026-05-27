@@ -37,7 +37,7 @@ final class LocalizationTests: XCTestCase {
             ("炭灰色", "炭灰色西装外套"),
             ("黑色", "黑色鞋子"),
             ("棕色", "棕色鞋子"),
-            ("黑色", "通勤包")
+            ("黑色", "黑色包")
         ]
 
         XCTAssertEqual(items.count, expectedValues.count)
@@ -45,7 +45,7 @@ final class LocalizationTests: XCTestCase {
         for (item, expected) in zip(items, expectedValues) {
             XCTAssertEqual(item.color, expected.color)
             XCTAssertEqual(item.notes, expected.notes)
-            XCTAssertEqual(item.storageLocation, "示例通勤胶囊衣橱")
+            XCTAssertEqual(item.storageLocation, "示例入门衣橱")
             XCTAssertFalse(item.color.hasPrefix("seed."))
             XCTAssertFalse(item.notes.hasPrefix("seed."))
             XCTAssertFalse(item.storageLocation.hasPrefix("seed."))

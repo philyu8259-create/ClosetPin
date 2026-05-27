@@ -16,7 +16,7 @@ enum SeasonTag: String, CaseIterable, Codable, Identifiable {
 }
 
 enum OutfitScenario: String, CaseIterable, Codable, Identifiable {
-    case dailyOffice, importantMeeting
+    case dailyOffice, importantMeeting, weekendCasual, banquet
     var id: String { rawValue }
 }
 

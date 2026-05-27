@@ -7,14 +7,14 @@ final class ClosetPinUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
     }
 
     func testUseSampleCapsuleRoutesToToday() {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
@@ -24,29 +24,31 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp(language: "zh-Hans", locale: "zh_CN")
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10 分钟通勤胶囊衣橱"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10 分钟入门衣橱"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         XCTAssertTrue(app.staticTexts["今天穿这套"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["保存到穿搭"].exists)
         XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
+        XCTAssertTrue(app.staticTexts["场合"].exists)
+        XCTAssertTrue(app.buttons["宴会"].exists)
 
         app.buttons["appTab_closet"].tap()
-        XCTAssertTrue(app.staticTexts["职业衣橱"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["你的衣橱"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_looks"].tap()
         XCTAssertTrue(app.staticTexts["从这里开始积累你的穿搭档案"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_settings"].tap()
-        XCTAssertTrue(app.staticTexts["工作日着装简报"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["穿搭简报"].waitForExistence(timeout: 3))
     }
 
     func testStartAddingFromOnboardingOpensAddItemFlow() {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["startAddingClothesButton"].tap()
 
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
@@ -56,7 +58,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         let woreButton = app.buttons["todayFeedback_wore_0"]
@@ -70,7 +72,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Tune future recommendations"].waitForExistence(timeout: 3))
@@ -86,7 +88,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         let saveButton = app.buttons["todayFeedback_saved_0"]
@@ -110,7 +112,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
 
@@ -127,7 +129,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
         let woreButton = app.buttons["todayFeedback_wore_0"]
@@ -145,13 +147,13 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Soft Power Office"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_settings"].tap()
-        XCTAssertTrue(app.staticTexts["Workday brief"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Saved for reference. Default scenario and formality are what shape Today right now."].exists)
+        XCTAssertTrue(app.staticTexts["Style brief"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Saved for reference. Default occasion and formality are what shape Today right now."].exists)
 
         let meetingOption = app.buttons["defaultScenarioOption_importantMeeting"]
         XCTAssertTrue(meetingOption.waitForExistence(timeout: 3))
@@ -167,7 +169,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
 
@@ -202,7 +204,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
 

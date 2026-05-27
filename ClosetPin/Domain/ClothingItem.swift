@@ -87,6 +87,8 @@ final class ClothingItem {
 
     private static let seedStorageLocationAliases: Set<String> = [
         "Sample work capsule",
-        "示例通勤胶囊衣橱"
+        "Sample starter closet",
+        "示例通勤胶囊衣橱",
+        "示例入门衣橱"
     ]
 }

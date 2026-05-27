@@ -307,6 +307,16 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
     }
 
+    func testSeasonResolverUsesCalendarMonth() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        XCTAssertEqual(SeasonResolver.currentSeason(date: date(month: 1, calendar: calendar), calendar: calendar), .winter)
+        XCTAssertEqual(SeasonResolver.currentSeason(date: date(month: 4, calendar: calendar), calendar: calendar), .spring)
+        XCTAssertEqual(SeasonResolver.currentSeason(date: date(month: 7, calendar: calendar), calendar: calendar), .summer)
+        XCTAssertEqual(SeasonResolver.currentSeason(date: date(month: 10, calendar: calendar), calendar: calendar), .autumn)
+    }
+
     func testGeneratedMVPAssetsAreBundled() {
         let onboardingURL = Bundle.main.url(forResource: "work-capsule-onboarding", withExtension: "png")
         let emptyClosetURL = Bundle.main.url(forResource: "empty-closet", withExtension: "png")
@@ -675,5 +685,9 @@ final class ClosetPinTests: XCTestCase {
             UIColor.systemRed.setFill()
             context.fill(CGRect(x: 35, y: 30, width: 30, height: 40))
         }
+    }
+
+    private func date(month: Int, calendar: Calendar) -> Date {
+        calendar.date(from: DateComponents(year: 2026, month: month, day: 15))!
     }
 }

@@ -223,7 +223,7 @@ private struct ScenarioSelectionRow: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
 
-            HStack(spacing: DesignSystem.Spacing.sm) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: DesignSystem.Spacing.sm), GridItem(.flexible(), spacing: DesignSystem.Spacing.sm)], spacing: DesignSystem.Spacing.sm) {
                 ForEach(OutfitScenario.allCases) { scenario in
                     PreferenceOptionButton(
                         title: scenario.displayName,

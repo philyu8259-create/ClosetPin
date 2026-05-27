@@ -94,6 +94,40 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertEqual(candidates[0].items.count, 4)
     }
 
+    func testWeekendCasualAllowsRelaxedItems() {
+        let items = [
+            clothingItem(type: .top, color: "cream", formalityLevel: 1),
+            clothingItem(type: .bottom, color: "denim", formalityLevel: 1),
+            clothingItem(type: .shoes, color: "white", formalityLevel: 1)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .weekendCasual, season: .spring, maximumResults: 5),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 1)
+        XCTAssertEqual(candidates.first?.items.count, 3)
+    }
+
+    func testBanquetPrefersPolishedLooksWithoutRequiringBlazer() {
+        let items = [
+            clothingItem(type: .top, color: "silk black", formalityLevel: 4),
+            clothingItem(type: .bottom, color: "black", formalityLevel: 4),
+            clothingItem(type: .shoes, color: "black", formalityLevel: 4)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .banquet, season: .spring, maximumResults: 5),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 1)
+        XCTAssertEqual(candidates.first?.items.count, 3)
+    }
+
     func testMaximumResultsIsRespected() {
         let items = [
             clothingItem(type: .top, color: "white", formalityLevel: 4),
