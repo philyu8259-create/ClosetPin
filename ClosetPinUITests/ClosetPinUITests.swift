@@ -99,6 +99,11 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Saved from Today"].waitForExistence(timeout: 3))
+
+        let addAnotherButton = app.buttons["looksArchiveOpenTodayButton"]
+        XCTAssertTrue(addAnotherButton.exists)
+        addAnotherButton.tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
     func testEmptyLooksCanReturnToToday() {

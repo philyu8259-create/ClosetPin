@@ -138,6 +138,7 @@
 "looks.score.format" = "评分 %d";
 "looks.archive.title" = "穿搭档案";
 "looks.archive.latest.format" = "最近：%@";
+"looks.archive.open_today" = "去今日继续记录";
 "looks.items.unavailable" = "单品不可用";
 "looks.context.saved.title" = "从今日保存";
 "looks.context.saved.body" = "用于之后复穿、规划，或和后续推荐做对比。";

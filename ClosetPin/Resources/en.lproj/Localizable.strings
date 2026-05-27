@@ -138,6 +138,7 @@
 "looks.score.format" = "Score %d";
 "looks.archive.title" = "Lookbook";
 "looks.archive.latest.format" = "Latest: %@";
+"looks.archive.open_today" = "Add another from Today";
 "looks.items.unavailable" = "Items unavailable";
 "looks.context.saved.title" = "Saved from Today";
 "looks.context.saved.body" = "Kept for planning, repeating, or comparing against future recommendations.";

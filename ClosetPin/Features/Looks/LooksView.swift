@@ -34,7 +34,8 @@ struct LooksView: View {
                         LooksArchiveHeader(
                             savedCount: savedCount,
                             wornCount: wornCount,
-                            latestEntry: entries.first
+                            latestEntry: entries.first,
+                            onOpenToday: onOpenToday
                         )
 
                         ForEach(entries) { entry in
@@ -56,6 +57,7 @@ private struct LooksArchiveHeader: View {
     let savedCount: Int
     let wornCount: Int
     let latestEntry: LooksHistoryEntry?
+    let onOpenToday: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -89,6 +91,32 @@ private struct LooksArchiveHeader: View {
                     systemImage: LooksHistoryEntry.Kind.worn.systemImage,
                     tint: DesignSystem.accent
                 )
+            }
+
+            if let onOpenToday {
+                Button(action: onOpenToday) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "sparkles")
+                            .font(.footnote.weight(.bold))
+                        Text(L10n.text("looks.archive.open_today"))
+                            .font(.subheadline.weight(.semibold))
+                        Spacer(minLength: 8)
+                        Image(systemName: "arrow.right")
+                            .font(.footnote.weight(.bold))
+                    }
+                    .foregroundStyle(DesignSystem.accent)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(DesignSystem.accent.opacity(0.1))
+                    .clipShape(Capsule(style: .continuous))
+                    .overlay {
+                        Capsule(style: .continuous)
+                            .stroke(DesignSystem.accent.opacity(0.18), lineWidth: 1)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("looksArchiveOpenTodayButton")
             }
         }
         .padding(.bottom, DesignSystem.Spacing.xs)
