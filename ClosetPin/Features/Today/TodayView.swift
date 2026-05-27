@@ -284,30 +284,12 @@ private struct TodayEditorialHero: View {
                     .foregroundStyle(DesignSystem.secondaryInk)
             }
 
-            HStack(spacing: DesignSystem.Spacing.sm) {
-                Button {
-                    onAction(.wore)
-                } label: {
-                    Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(DesignSystem.accent)
-                .disabled(isPending(.wore))
-                .accessibilityIdentifier("todayFeedback_wore_0")
-
-                Button {
-                    onAction(.save)
-                } label: {
-                    Image(systemName: TodayFeedbackAction.save.systemImage)
-                        .frame(width: 42, height: 42)
-                }
-                .buttonStyle(.bordered)
-                .tint(DesignSystem.accent)
-                .disabled(isPending(.save))
-                .accessibilityLabel(TodayFeedbackAction.save.title)
-                .accessibilityIdentifier("todayFeedback_saved_0")
-            }
+            TodayActionPanel(
+                candidate: candidate,
+                index: 0,
+                pendingActionIDs: pendingActionIDs,
+                onAction: onAction
+            )
 
             OutfitVisualBoard(items: candidate.items)
                 .accessibilityIdentifier("todayOutfitVisualBoard_0")
@@ -318,9 +300,6 @@ private struct TodayEditorialHero: View {
         candidate.items.compactMap { WardrobePhoto.localImage(for: $0) }.first
     }
 
-    private func isPending(_ action: TodayFeedbackAction) -> Bool {
-        pendingActionIDs.contains("\(candidate.id):\(action.feedbackType.rawValue)")
-    }
 }
 
 private struct OutfitCompactCard: View {
@@ -356,29 +335,81 @@ private struct OutfitCompactCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    Button {
-                        onAction(.wore)
-                    } label: {
-                        Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                    .tint(DesignSystem.accent)
-                    .disabled(isPending(.wore))
-                    .accessibilityIdentifier("todayFeedback_wore_\(index)")
+                TodayActionPanel(
+                    candidate: candidate,
+                    index: index,
+                    pendingActionIDs: pendingActionIDs,
+                    onAction: onAction
+                )
+            }
+        }
+    }
+}
 
-                    Button {
-                        onAction(.save)
-                    } label: {
-                        Label(TodayFeedbackAction.save.title, systemImage: TodayFeedbackAction.save.systemImage)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .tint(DesignSystem.accent)
-                    .disabled(isPending(.save))
-                    .accessibilityIdentifier("todayFeedback_saved_\(index)")
+private struct TodayActionPanel: View {
+    let candidate: OutfitCandidate
+    let index: Int
+    let pendingActionIDs: Set<String>
+    let onAction: (TodayFeedbackAction) -> Void
+
+    private let learningActions: [TodayFeedbackAction] = [.like, .dislike, .skip]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                Button {
+                    onAction(.wore)
+                } label: {
+                    Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignSystem.accent)
+                .disabled(isPending(.wore))
+                .accessibilityIdentifier("todayFeedback_wore_\(index)")
+
+                Button {
+                    onAction(.save)
+                } label: {
+                    Label(TodayFeedbackAction.save.title, systemImage: TodayFeedbackAction.save.systemImage)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(DesignSystem.accent)
+                .disabled(isPending(.save))
+                .accessibilityIdentifier("todayFeedback_saved_\(index)")
+            }
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                Text(L10n.text("today.feedback.tune_title"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(learningActions) { action in
+                        Button {
+                            onAction(action)
+                        } label: {
+                            Label(action.title, systemImage: action.systemImage)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(action.tint)
+                        .disabled(isPending(action))
+                        .accessibilityIdentifier("todayFeedback_\(action.feedbackType.rawValue)_\(index)")
+                    }
+                }
+            }
+            .padding(DesignSystem.Spacing.sm)
+            .background(DesignSystem.paper.opacity(0.82))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                    .stroke(DesignSystem.border.opacity(0.52), lineWidth: 1)
             }
         }
     }
@@ -502,13 +533,24 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         case .wore:
             "checkmark.circle.fill"
         case .like:
-            "hand.thumbsup"
+            "hand.thumbsup.fill"
         case .dislike:
-            "hand.thumbsdown"
+            "hand.thumbsdown.fill"
         case .skip:
             "arrow.triangle.2.circlepath"
         case .save:
             "bookmark.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .wore, .save, .like:
+            DesignSystem.accent
+        case .dislike:
+            DesignSystem.wine
+        case .skip:
+            DesignSystem.secondaryInk
         }
     }
 

@@ -112,17 +112,18 @@
 "today.missing.title" = "需要补齐穿搭单品";
 "today.missing.open_closet" = "继续补齐衣橱";
 "today.feedback.wore" = "今天穿这套";
-"today.feedback.like" = "喜欢";
-"today.feedback.dislike" = "不喜欢";
-"today.feedback.skip" = "跳过";
-"today.feedback.save" = "保存";
+"today.feedback.like" = "适合我";
+"today.feedback.dislike" = "不适合我";
+"today.feedback.skip" = "今天跳过";
+"today.feedback.save" = "保存到穿搭";
+"today.feedback.tune_title" = "调整之后的推荐";
 "today.confirmation.already_worn" = "今天已经记录为已穿。";
 "today.confirmation.already_saved" = "今天已经保存过这套穿搭。";
 "today.confirmation.wore" = "已记录为已穿。";
 "today.confirmation.like" = "偏好已保存。";
 "today.confirmation.dislike" = "反馈已保存。";
 "today.confirmation.skip" = "今天已跳过。";
-"today.confirmation.save" = "穿搭已保存。";
+"today.confirmation.save" = "已保存到穿搭。";
 "today.confirmation.view_looks" = "去穿搭";
 
 "looks.title" = "穿搭";

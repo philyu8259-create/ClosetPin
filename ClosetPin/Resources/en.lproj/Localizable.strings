@@ -112,17 +112,18 @@
 "today.missing.title" = "Outfit ingredients needed";
 "today.missing.open_closet" = "Continue in Closet";
 "today.feedback.wore" = "Wear Today";
-"today.feedback.like" = "Like";
-"today.feedback.dislike" = "Dislike";
-"today.feedback.skip" = "Skip";
-"today.feedback.save" = "Save";
+"today.feedback.like" = "Good Fit";
+"today.feedback.dislike" = "Not for Me";
+"today.feedback.skip" = "Skip Today";
+"today.feedback.save" = "Save to Looks";
+"today.feedback.tune_title" = "Tune future recommendations";
 "today.confirmation.already_worn" = "Already recorded as worn today.";
 "today.confirmation.already_saved" = "Outfit already saved today.";
 "today.confirmation.wore" = "Recorded as worn.";
 "today.confirmation.like" = "Preference saved.";
 "today.confirmation.dislike" = "Feedback saved.";
 "today.confirmation.skip" = "Skipped for today.";
-"today.confirmation.save" = "Outfit saved.";
+"today.confirmation.save" = "Saved to Looks.";
 "today.confirmation.view_looks" = "View Looks";
 
 "looks.title" = "Looks";
