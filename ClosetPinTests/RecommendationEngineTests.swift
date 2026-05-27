@@ -113,6 +113,47 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertEqual(candidates.count, 2)
     }
 
+    func testPreferredFormalityChangesDailyOfficeRanking() throws {
+        let relaxedTop = clothingItem(type: .top, color: "soft blue", formalityLevel: 2)
+        let relaxedBottom = clothingItem(type: .bottom, color: "khaki", formalityLevel: 2)
+        let relaxedShoes = clothingItem(type: .shoes, color: "brown", formalityLevel: 2)
+        let polishedTop = clothingItem(type: .top, color: "white", formalityLevel: 5)
+        let polishedBottom = clothingItem(type: .bottom, color: "navy", formalityLevel: 5)
+        let polishedShoes = clothingItem(type: .shoes, color: "black", formalityLevel: 5)
+        let items = [
+            relaxedTop,
+            relaxedBottom,
+            relaxedShoes,
+            polishedTop,
+            polishedBottom,
+            polishedShoes
+        ]
+
+        let relaxedCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .dailyOffice,
+                season: .spring,
+                maximumResults: 1,
+                preferredFormality: 2
+            ),
+            items: items,
+            feedback: []
+        ).first)
+        let polishedCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .dailyOffice,
+                season: .spring,
+                maximumResults: 1,
+                preferredFormality: 5
+            ),
+            items: items,
+            feedback: []
+        ).first)
+
+        XCTAssertTrue(relaxedCandidate.items.allSatisfy { $0.formalityLevel == 2 })
+        XCTAssertTrue(polishedCandidate.items.allSatisfy { $0.formalityLevel == 5 })
+    }
+
     func testDeterministicOrderingAndIdentifiersAreStableAcrossRepeatedCalls() {
         let items = [
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, type: .top, color: "white", formalityLevel: 4),

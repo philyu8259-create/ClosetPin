@@ -22,12 +22,14 @@ struct SettingsView: View {
                             Text(scenario.displayName).tag(scenario)
                         }
                     }
+                    .accessibilityIdentifier("defaultScenarioPicker")
 
                     Stepper(
                         L10n.string("settings.preferred_formality.format", arguments: preferredFormality),
                         value: $preferredFormality,
                         in: 1...5
                     )
+                    .accessibilityIdentifier("preferredFormalityStepper")
 
                     TextField(
                         L10n.text("settings.workplace_dress_code.placeholder"),
@@ -35,6 +37,13 @@ struct SettingsView: View {
                         axis: .vertical
                     )
                     .lineLimit(2...4)
+                    .accessibilityIdentifier("workplaceDressCodeField")
+
+                    SettingsNoteRow(
+                        systemImage: "sparkles.rectangle.stack",
+                        title: L10n.text("settings.preferences.autosave.title"),
+                        bodyText: L10n.text("settings.preferences.autosave.body")
+                    )
                 }
 
                 Section(L10n.text("settings.privacy.section")) {

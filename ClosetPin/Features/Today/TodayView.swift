@@ -5,12 +5,14 @@ struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \ClothingItem.createdAt, order: .reverse) private var clothingItems: [ClothingItem]
     @Query(sort: \OutfitFeedback.createdAt, order: .reverse) private var feedback: [OutfitFeedback]
+    @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = .spring
     @State private var pendingActionIDs: Set<String> = []
     @State private var confirmation: TodayConfirmation?
     @State private var saveError: String?
+    @State private var lastAppliedPreferenceScenario: OutfitScenario?
 
     let onOpenLooks: (() -> Void)?
 
@@ -26,7 +28,8 @@ struct TodayView: View {
             input: RecommendationInput(
                 scenario: scenario,
                 season: season,
-                maximumResults: 3
+                maximumResults: 3,
+                preferredFormality: currentPreference?.preferredFormality
             ),
             items: clothingItems,
             feedback: feedback
@@ -51,6 +54,10 @@ struct TodayView: View {
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("today.title"))
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear(perform: applyPreferenceDefaultsIfNeeded)
+            .onChange(of: currentPreference?.updatedAt) { _, _ in
+                applyPreferenceDefaultsIfNeeded()
+            }
             .safeAreaInset(edge: .bottom) {
                 if let confirmation {
                     ConfirmationBanner(
@@ -153,6 +160,20 @@ struct TodayView: View {
         case .importantMeeting:
             L10n.text("today.best.name.important_meeting")
         }
+    }
+
+    private var currentPreference: UserPreference? {
+        preferences.first
+    }
+
+    private func applyPreferenceDefaultsIfNeeded() {
+        let preferredScenario = currentPreference?.defaultScenario ?? .dailyOffice
+        guard lastAppliedPreferenceScenario == nil || scenario == lastAppliedPreferenceScenario else {
+            return
+        }
+
+        scenario = preferredScenario
+        lastAppliedPreferenceScenario = preferredScenario
     }
 
     private var missingRecommendationMessage: String {

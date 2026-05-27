@@ -15,10 +15,11 @@ struct RecommendationEngine {
         }
 
         let threshold = requiredFormality(for: input.scenario)
-        let tops = filteredAndPreselected(groupedItems[.top] ?? [], threshold: threshold)
-        let bottoms = filteredAndPreselected(groupedItems[.bottom] ?? [], threshold: threshold)
-        let shoes = filteredAndPreselected(groupedItems[.shoes] ?? [], threshold: threshold)
-        let blazers = filteredAndPreselected(groupedItems[.blazer] ?? [], threshold: threshold)
+        let targetFormality = targetFormality(for: input)
+        let tops = filteredAndPreselected(groupedItems[.top] ?? [], threshold: threshold, targetFormality: targetFormality)
+        let bottoms = filteredAndPreselected(groupedItems[.bottom] ?? [], threshold: threshold, targetFormality: targetFormality)
+        let shoes = filteredAndPreselected(groupedItems[.shoes] ?? [], threshold: threshold, targetFormality: targetFormality)
+        let blazers = filteredAndPreselected(groupedItems[.blazer] ?? [], threshold: threshold, targetFormality: targetFormality)
 
         let candidates: [OutfitCandidate]
         switch input.scenario {
@@ -28,7 +29,8 @@ struct RecommendationEngine {
                 tops: tops,
                 bottoms: bottoms,
                 shoes: shoes,
-                blazers: []
+                blazers: [],
+                targetFormality: targetFormality
             )
         case .importantMeeting:
             candidates = makeCandidates(
@@ -36,7 +38,8 @@ struct RecommendationEngine {
                 tops: tops,
                 bottoms: bottoms,
                 shoes: shoes,
-                blazers: blazers
+                blazers: blazers,
+                targetFormality: targetFormality
             )
         }
 
@@ -76,10 +79,21 @@ private extension RecommendationEngine {
         }
     }
 
-    func filteredAndPreselected(_ items: [ClothingItem], threshold: Int) -> [ClothingItem] {
+    func targetFormality(for input: RecommendationInput) -> Int {
+        let preferredFormality = input.preferredFormality.map { min(max($0, 1), 5) }
+        let fallback = input.scenario == .dailyOffice ? 3 : 5
+        return max(requiredFormality(for: input.scenario), preferredFormality ?? fallback)
+    }
+
+    func filteredAndPreselected(_ items: [ClothingItem], threshold: Int, targetFormality: Int) -> [ClothingItem] {
         items
             .filter { $0.formalityLevel >= threshold }
             .sorted { lhs, rhs in
+                let lhsDistance = abs(lhs.formalityLevel - targetFormality)
+                let rhsDistance = abs(rhs.formalityLevel - targetFormality)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance < rhsDistance
+                }
                 if lhs.formalityLevel != rhs.formalityLevel {
                     return lhs.formalityLevel > rhs.formalityLevel
                 }
@@ -97,7 +111,8 @@ private extension RecommendationEngine {
         tops: [ClothingItem],
         bottoms: [ClothingItem],
         shoes: [ClothingItem],
-        blazers: [ClothingItem]
+        blazers: [ClothingItem],
+        targetFormality: Int
     ) -> [OutfitCandidate] {
         guard !tops.isEmpty, !bottoms.isEmpty, !shoes.isEmpty else { return [] }
 
@@ -112,7 +127,11 @@ private extension RecommendationEngine {
                 for bottom in bottoms {
                     for shoe in shoes {
                         for blazer in blazers {
-                            candidates.append(makeCandidate(scenario: scenario, items: [top, bottom, shoe, blazer]))
+                            candidates.append(makeCandidate(
+                                scenario: scenario,
+                                items: [top, bottom, shoe, blazer],
+                                targetFormality: targetFormality
+                            ))
                         }
                     }
                 }
@@ -121,7 +140,11 @@ private extension RecommendationEngine {
             for top in tops {
                 for bottom in bottoms {
                     for shoe in shoes {
-                        candidates.append(makeCandidate(scenario: scenario, items: [top, bottom, shoe]))
+                        candidates.append(makeCandidate(
+                            scenario: scenario,
+                            items: [top, bottom, shoe],
+                            targetFormality: targetFormality
+                        ))
                     }
                 }
             }
@@ -130,18 +153,22 @@ private extension RecommendationEngine {
         return candidates
     }
 
-    func makeCandidate(scenario: OutfitScenario, items: [ClothingItem]) -> OutfitCandidate {
+    func makeCandidate(scenario: OutfitScenario, items: [ClothingItem], targetFormality: Int) -> OutfitCandidate {
         OutfitCandidate(
             id: stableIdentifier(scenario: scenario, items: items),
             items: items,
-            score: score(scenario: scenario, items: items),
+            score: score(scenario: scenario, items: items, targetFormality: targetFormality),
             explanationSeed: explanationSeed(scenario: scenario, items: items)
         )
     }
 
     func score(scenario: OutfitScenario, items: [ClothingItem]) -> Int {
+        score(scenario: scenario, items: items, targetFormality: scenario == .dailyOffice ? 3 : 5)
+    }
+
+    func score(scenario: OutfitScenario, items: [ClothingItem], targetFormality: Int) -> Int {
         let formalityScore = items.reduce(0) { total, item in
-            total + item.formalityLevel * 10
+            total + max(0, 5 - abs(item.formalityLevel - targetFormality)) * 10
         }
         let scenarioBonus = switch scenario {
         case .dailyOffice:

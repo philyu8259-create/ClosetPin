@@ -139,6 +139,8 @@
 "settings.default_scenario.label" = "默认场景";
 "settings.preferred_formality.format" = "偏好正式度：%d";
 "settings.workplace_dress_code.placeholder" = "职场着装要求或备注";
+"settings.preferences.autosave.title" = "自动保存";
+"settings.preferences.autosave.body" = "默认场景和正式度会影响「今日」首个推荐；你也可以随时在今日页临时切换场景。";
 "settings.privacy.section" = "隐私";
 "settings.privacy.cloud_photo_recognition.title" = "云端照片识别";
 "settings.privacy.cloud_photo_recognition.body" = "默认关闭。开启后，只会把当前衣物照片和设备语言发送到已配置的识别后端；你的衣橱库仍保存在本机。";
