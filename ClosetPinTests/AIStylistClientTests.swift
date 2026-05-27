@@ -62,6 +62,83 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertEqual(draft.warmthLevel, 1)
     }
 
+    func testCloudPhotoTaggingRequestContainsOnlyPhotoPayloadAndLocale() throws {
+        let image = makeSolidImage(color: .systemBlue)
+
+        let body = try CloudPhotoTaggingClient.makeRequestBody(for: image, localeIdentifier: "en_US")
+        let payload = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+
+        XCTAssertNotNil(payload["imageJPEGBase64"] as? String)
+        XCTAssertEqual(payload["localeIdentifier"] as? String, "en_US")
+        XCTAssertNil(payload["closetItems"])
+        XCTAssertNil(payload["wardrobe"])
+        XCTAssertNil(payload["userPreference"])
+    }
+
+    func testCloudPhotoTaggingClientDecodesRemoteSuggestion() throws {
+        let json = """
+        {
+          "type": "shoes",
+          "color": "black",
+          "seasons": ["autumn", "winter", "unsupported"],
+          "formalityLevel": 8,
+          "warmthLevel": 0,
+          "confidence": 0.82
+        }
+        """
+
+        let suggestion = try XCTUnwrap(CloudPhotoTaggingClient.decodeSuggestion(from: Data(json.utf8)))
+
+        XCTAssertEqual(suggestion.type, .shoes)
+        XCTAssertEqual(suggestion.color, "black")
+        XCTAssertEqual(suggestion.seasons, [.autumn, .winter])
+        XCTAssertEqual(suggestion.formalityLevel, 5)
+        XCTAssertEqual(suggestion.warmthLevel, 1)
+        XCTAssertEqual(suggestion.confidence, 0.82, accuracy: 0.001)
+        XCTAssertEqual(suggestion.source, .remoteAI)
+    }
+
+    func testPhotoTaggingPipelineUsesCloudSuggestionWhenAllowed() async {
+        let remoteSuggestion = ClothingPhotoTagSuggestion(
+            type: .bag,
+            color: "black",
+            seasons: [.autumn, .winter],
+            formalityLevel: 4,
+            warmthLevel: 2,
+            confidence: 0.9,
+            source: .remoteAI
+        )
+        let pipeline = PhotoTaggingPipeline(
+            localClient: LocalPhotoIntelligenceClient(),
+            cloudClient: StubAsyncPhotoTaggingClient(suggestion: remoteSuggestion)
+        )
+
+        let suggestion = await pipeline.suggestTags(for: makeSolidImage(color: .systemBlue), allowsCloudRecognition: true)
+
+        XCTAssertEqual(suggestion, remoteSuggestion)
+    }
+
+    func testPhotoTaggingPipelineFallsBackToLocalWhenCloudIsDisabledOrFails() async throws {
+        let pipeline = PhotoTaggingPipeline(
+            localClient: LocalPhotoIntelligenceClient(),
+            cloudClient: FailingAsyncPhotoTaggingClient()
+        )
+
+        let disabledSuggestionResult = await pipeline.suggestTags(
+            for: makeSolidImage(color: .systemBlue),
+            allowsCloudRecognition: false
+        )
+        let failedSuggestionResult = await pipeline.suggestTags(
+            for: makeSolidImage(color: .systemBlue),
+            allowsCloudRecognition: true
+        )
+        let disabledSuggestion = try XCTUnwrap(disabledSuggestionResult)
+        let failedSuggestion = try XCTUnwrap(failedSuggestionResult)
+
+        XCTAssertEqual(disabledSuggestion.source, .localHeuristic)
+        XCTAssertEqual(failedSuggestion.source, .localHeuristic)
+    }
+
     func testFallbackExplanationMentionsProvidedItemColorsAndTypes() async throws {
         let candidate = OutfitCandidate(
             id: "dailyOffice|seed",
@@ -396,6 +473,20 @@ private extension AIStylistClientTests {
             color.setFill()
             context.fill(CGRect(x: 0, y: 0, width: 60, height: 80))
         }
+    }
+}
+
+private struct StubAsyncPhotoTaggingClient: AsyncClothingPhotoTaggingClient {
+    let suggestion: ClothingPhotoTagSuggestion?
+
+    func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion? {
+        suggestion
+    }
+}
+
+private struct FailingAsyncPhotoTaggingClient: AsyncClothingPhotoTaggingClient {
+    func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion? {
+        throw URLError(.badServerResponse)
     }
 }
 

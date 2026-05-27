@@ -93,6 +93,7 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.preferredStyles, [])
         XCTAssertEqual(preference.avoidedStyles, [])
         XCTAssertEqual(preference.workplaceDressCode, "")
+        XCTAssertFalse(preference.cloudPhotoRecognitionEnabled)
         XCTAssertLessThanOrEqual(abs(preference.createdAt.timeIntervalSinceNow), 1)
         XCTAssertLessThanOrEqual(abs(preference.updatedAt.timeIntervalSinceNow), 1)
     }
@@ -115,12 +116,14 @@ final class ClosetPinTests: XCTestCase {
             defaultScenario: .importantMeeting,
             preferredFormality: 7,
             workplaceDressCode: "Business casual, client-facing",
+            cloudPhotoRecognitionEnabled: true,
             updatedAt: updateDate
         )
 
         XCTAssertEqual(preference.defaultScenario, .importantMeeting)
         XCTAssertEqual(preference.preferredFormality, 5)
         XCTAssertEqual(preference.workplaceDressCode, "Business casual, client-facing")
+        XCTAssertTrue(preference.cloudPhotoRecognitionEnabled)
         XCTAssertEqual(preference.updatedAt, updateDate)
     }
 

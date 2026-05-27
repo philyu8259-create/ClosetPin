@@ -5,12 +5,16 @@ protocol AIStylistClient {
     func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String
 }
 
-protocol ClothingPhotoTaggingClient {
+protocol ClothingPhotoTaggingClient: Sendable {
     func suggestTags(for image: UIImage) -> ClothingPhotoTagSuggestion?
 }
 
-struct ClothingPhotoTagSuggestion: Equatable {
-    enum Source: Equatable {
+protocol AsyncClothingPhotoTaggingClient: Sendable {
+    func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion?
+}
+
+struct ClothingPhotoTagSuggestion: Equatable, Sendable {
+    enum Source: Equatable, Sendable {
         case localHeuristic
         case remoteAI
     }
@@ -43,6 +47,136 @@ struct ClothingPhotoTagSuggestion: Equatable {
         if draft.warmthLevel == AddEditItemDraft.defaultWarmthLevel {
             draft.warmthLevel = warmthLevel
         }
+    }
+}
+
+struct PhotoTaggingPipeline: Sendable {
+    let localClient: any ClothingPhotoTaggingClient
+    let cloudClient: (any AsyncClothingPhotoTaggingClient)?
+
+    static func appDefault() -> PhotoTaggingPipeline {
+        PhotoTaggingPipeline(
+            localClient: LocalPhotoIntelligenceClient(),
+            cloudClient: CloudPhotoTaggingEndpoint.configuredURL.map {
+                CloudPhotoTaggingClient(endpoint: $0)
+            }
+        )
+    }
+
+    func suggestTags(for image: UIImage, allowsCloudRecognition: Bool) async -> ClothingPhotoTagSuggestion? {
+        if allowsCloudRecognition, let cloudClient {
+            do {
+                if let suggestion = try await cloudClient.suggestTags(for: image) {
+                    return suggestion
+                }
+            } catch {
+                // Cloud recognition is optional; keep item capture usable with local suggestions.
+            }
+        }
+
+        return localClient.suggestTags(for: image)
+    }
+}
+
+struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Sendable {
+    let endpoint: URL
+    let session: URLSession
+
+    init(endpoint: URL, session: URLSession = .shared) {
+        self.endpoint = endpoint
+        self.session = session
+    }
+
+    func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion? {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try Self.makeRequestBody(
+            for: image,
+            localeIdentifier: Locale.current.identifier
+        )
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            return nil
+        }
+
+        return try Self.decodeSuggestion(from: data)
+    }
+
+    static func makeRequestBody(for image: UIImage, localeIdentifier: String) throws -> Data {
+        guard let jpegData = image.jpegData(compressionQuality: 0.72) else {
+            throw CloudPhotoTaggingClientError.imageEncodingFailed
+        }
+
+        let request = CloudPhotoTaggingRequest(
+            imageJPEGBase64: jpegData.base64EncodedString(),
+            localeIdentifier: localeIdentifier
+        )
+        return try JSONEncoder().encode(request)
+    }
+
+    static func decodeSuggestion(from data: Data) throws -> ClothingPhotoTagSuggestion? {
+        let response = try JSONDecoder().decode(CloudPhotoTaggingResponse.self, from: data)
+        guard let type = ClothingType(rawValue: response.type),
+              !response.color.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+
+        let seasons = Set(response.seasons.compactMap(SeasonTag.init(rawValue:)))
+        return ClothingPhotoTagSuggestion(
+            type: type,
+            color: response.color.trimmingCharacters(in: .whitespacesAndNewlines),
+            seasons: seasons.isEmpty ? [.spring, .autumn] : seasons,
+            formalityLevel: response.formalityLevel.clamped(to: 1...5),
+            warmthLevel: response.warmthLevel.clamped(to: 1...5),
+            confidence: response.confidence.clamped(to: 0...1),
+            source: .remoteAI
+        )
+    }
+}
+
+enum CloudPhotoTaggingClientError: Error {
+    case imageEncodingFailed
+}
+
+private struct CloudPhotoTaggingRequest: Encodable {
+    let imageJPEGBase64: String
+    let localeIdentifier: String
+}
+
+private struct CloudPhotoTaggingResponse: Decodable {
+    let type: String
+    let color: String
+    let seasons: [String]
+    let formalityLevel: Int
+    let warmthLevel: Int
+    let confidence: Double
+}
+
+private enum CloudPhotoTaggingEndpoint {
+    static var configuredURL: URL? {
+        if let infoValue = Bundle.main.object(forInfoDictionaryKey: "CLOSETPIN_CLOUD_PHOTO_RECOGNITION_URL") as? String,
+           let url = normalizedURL(from: infoValue) {
+            return url
+        }
+
+#if DEBUG
+        if let environmentValue = ProcessInfo.processInfo.environment["CLOSETPIN_CLOUD_PHOTO_RECOGNITION_URL"],
+           let url = normalizedURL(from: environmentValue) {
+            return url
+        }
+#endif
+
+        return nil
+    }
+
+    private static func normalizedURL(from value: String) -> URL? {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty else { return nil }
+        return URL(string: trimmedValue)
     }
 }
 
@@ -166,7 +300,13 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
     }
 }
 
-private struct RGBColor: Equatable {
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+
+private struct RGBColor: Equatable, Sendable {
     let red: Int
     let green: Int
     let blue: Int

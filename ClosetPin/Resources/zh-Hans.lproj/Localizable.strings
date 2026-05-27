@@ -109,8 +109,10 @@
 "settings.preferred_formality.format" = "偏好正式度：%d";
 "settings.workplace_dress_code.placeholder" = "职场着装要求或备注";
 "settings.privacy.section" = "隐私";
+"settings.privacy.cloud_photo_recognition.title" = "云端照片识别";
+"settings.privacy.cloud_photo_recognition.body" = "默认关闭。开启后，只会把当前衣物照片和设备语言发送到已配置的识别后端；你的衣橱库仍保存在本机。";
 "settings.privacy.ai.title" = "AI 穿搭推荐";
-"settings.privacy.ai.body" = "MVP 阶段，ClosetPin 会在本地生成照片标签建议。如果后续加入云端图像识别，只有在你明确选择后才应上传照片。";
+"settings.privacy.ai.body" = "即使云端识别后端不可用，ClosetPin 仍会继续提供本地照片标签建议。";
 "settings.privacy.local.title" = "本地衣橱数据";
 "settings.privacy.local.body" = "MVP 阶段，衣物照片和已保存穿搭记录都存储在这台设备上。";
 "settings.save_error_title" = "未能保存设置";

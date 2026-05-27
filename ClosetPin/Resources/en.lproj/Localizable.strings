@@ -109,8 +109,10 @@
 "settings.preferred_formality.format" = "Preferred Formality: %d";
 "settings.workplace_dress_code.placeholder" = "Workplace dress code or notes";
 "settings.privacy.section" = "Privacy";
+"settings.privacy.cloud_photo_recognition.title" = "Cloud photo recognition";
+"settings.privacy.cloud_photo_recognition.body" = "Off by default. When enabled, only the current clothing photo and device locale are sent to the configured recognition backend; your closet library stays on device.";
 "settings.privacy.ai.title" = "AI recommendations";
-"settings.privacy.ai.body" = "ClosetPin generates photo tag suggestions locally in the MVP. If cloud image recognition is added later, photos should only be sent after you explicitly choose it.";
+"settings.privacy.ai.body" = "ClosetPin keeps local photo tag suggestions available even when the cloud recognition backend is unavailable.";
 "settings.privacy.local.title" = "Local closet data";
 "settings.privacy.local.body" = "Wardrobe photos and saved outfit history are stored on this device in the MVP.";
 "settings.save_error_title" = "Settings Were Not Saved";

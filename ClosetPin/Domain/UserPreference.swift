@@ -11,6 +11,7 @@ final class UserPreference {
     var preferredStyles: [String]
     var avoidedStyles: [String]
     var workplaceDressCode: String
+    var cloudPhotoRecognitionEnabled: Bool = false
     var createdAt: Date
     var updatedAt: Date
 
@@ -23,6 +24,7 @@ final class UserPreference {
         preferredStyles: [String] = [],
         avoidedStyles: [String] = [],
         workplaceDressCode: String = "",
+        cloudPhotoRecognitionEnabled: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date? = nil
     ) {
@@ -34,6 +36,7 @@ final class UserPreference {
         self.preferredStyles = preferredStyles
         self.avoidedStyles = avoidedStyles
         self.workplaceDressCode = workplaceDressCode
+        self.cloudPhotoRecognitionEnabled = cloudPhotoRecognitionEnabled
         self.createdAt = createdAt
         self.updatedAt = updatedAt ?? createdAt
     }
@@ -44,11 +47,13 @@ final class UserPreference {
         defaultScenario: OutfitScenario,
         preferredFormality: Int,
         workplaceDressCode: String,
+        cloudPhotoRecognitionEnabled: Bool,
         updatedAt: Date = Date()
     ) {
         self.defaultScenarioRawValue = defaultScenario.rawValue
         self.preferredFormality = min(max(preferredFormality, 1), 5)
         self.workplaceDressCode = workplaceDressCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.cloudPhotoRecognitionEnabled = cloudPhotoRecognitionEnabled
         self.updatedAt = updatedAt
     }
 }

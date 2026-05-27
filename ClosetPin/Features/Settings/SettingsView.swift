@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var defaultScenario: OutfitScenario = .dailyOffice
     @State private var preferredFormality = 3
     @State private var workplaceDressCode = ""
+    @State private var cloudPhotoRecognitionEnabled = false
     @State private var hasLoadedPreference = false
     @State private var currentPreferenceID: UUID?
     @State private var saveError: String?
@@ -37,6 +38,20 @@ struct SettingsView: View {
                 }
 
                 Section(L10n.text("settings.privacy.section")) {
+                    Toggle(isOn: $cloudPhotoRecognitionEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n.text("settings.privacy.cloud_photo_recognition.title"))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(DesignSystem.ink)
+
+                            Text(L10n.text("settings.privacy.cloud_photo_recognition.body"))
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .accessibilityIdentifier("cloudPhotoRecognitionToggle")
+
                     SettingsNoteRow(
                         systemImage: "lock.shield",
                         title: L10n.text("settings.privacy.ai.title"),
@@ -55,6 +70,7 @@ struct SettingsView: View {
             .onChange(of: defaultScenario) { _, _ in savePreference() }
             .onChange(of: preferredFormality) { _, _ in savePreference() }
             .onChange(of: workplaceDressCode) { _, _ in savePreference() }
+            .onChange(of: cloudPhotoRecognitionEnabled) { _, _ in savePreference() }
             .alert(L10n.text("settings.save_error_title"), isPresented: Binding(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
@@ -74,6 +90,7 @@ struct SettingsView: View {
         defaultScenario = preference.defaultScenario
         preferredFormality = preference.preferredFormality
         workplaceDressCode = preference.workplaceDressCode
+        cloudPhotoRecognitionEnabled = preference.cloudPhotoRecognitionEnabled
         hasLoadedPreference = true
     }
 
@@ -96,7 +113,8 @@ struct SettingsView: View {
         preference.applySettings(
             defaultScenario: defaultScenario,
             preferredFormality: preferredFormality,
-            workplaceDressCode: workplaceDressCode
+            workplaceDressCode: workplaceDressCode,
+            cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled
         )
 
         do {

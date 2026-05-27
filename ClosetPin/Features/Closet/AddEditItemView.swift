@@ -108,10 +108,11 @@ struct AddEditItemDraft {
 struct AddEditItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
     private let item: ClothingItem?
     private let imageStore: ImageStore
-    private let photoIntelligenceClient: ClothingPhotoTaggingClient
+    private let photoTaggingPipeline: PhotoTaggingPipeline
     @State private var draft: AddEditItemDraft
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var isCameraPresented = false
@@ -123,11 +124,11 @@ struct AddEditItemView: View {
     init(
         item: ClothingItem? = nil,
         imageStore: ImageStore = ImageStore(),
-        photoIntelligenceClient: ClothingPhotoTaggingClient = LocalPhotoIntelligenceClient()
+        photoTaggingPipeline: PhotoTaggingPipeline = .appDefault()
     ) {
         self.item = item
         self.imageStore = imageStore
-        self.photoIntelligenceClient = photoIntelligenceClient
+        self.photoTaggingPipeline = photoTaggingPipeline
         _draft = State(initialValue: AddEditItemDraft(item: item))
     }
 
@@ -462,7 +463,7 @@ struct AddEditItemView: View {
             }
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
             draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
-            applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+            await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
             photoError = nil
         } catch {
             photoError = L10n.text("closet.photo.selected_load_failed")
@@ -473,23 +474,36 @@ struct AddEditItemView: View {
         if let photoData = ClosetItemPhotoPersistence.processedPhotoData(from: image) {
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
             draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
-            applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+            Task {
+                await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+            }
             photoError = nil
         } else {
             photoError = L10n.text("closet.photo.captured_save_failed")
         }
     }
 
-    private func applyPhotoIntelligenceIfAvailable(from data: Data) {
-        guard let image = UIImage(data: data),
-              let suggestion = photoIntelligenceClient.suggestTags(for: image)
-        else {
+    @MainActor
+    private func applyPhotoIntelligenceIfAvailable(from data: Data) async {
+        guard let image = UIImage(data: data) else {
+            photoSuggestion = nil
+            return
+        }
+
+        guard let suggestion = await photoTaggingPipeline.suggestTags(
+            for: image,
+            allowsCloudRecognition: allowsCloudPhotoRecognition
+        ) else {
             photoSuggestion = nil
             return
         }
 
         suggestion.apply(to: &draft)
         photoSuggestion = suggestion
+    }
+
+    private var allowsCloudPhotoRecognition: Bool {
+        preferences.first?.cloudPhotoRecognitionEnabled ?? false
     }
 
     private func suggestionStatusText(for suggestion: ClothingPhotoTagSuggestion) -> String {
@@ -871,5 +885,5 @@ private struct ClothingItemSnapshot {
 
 #Preview {
     AddEditItemView()
-        .modelContainer(for: ClothingItem.self, inMemory: true)
+        .modelContainer(for: [ClothingItem.self, UserPreference.self], inMemory: true)
 }
