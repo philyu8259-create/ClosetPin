@@ -5,6 +5,11 @@ struct LooksView: View {
     @Query(sort: \Outfit.dateContext, order: .reverse) private var outfits: [Outfit]
     @Query(sort: \OutfitFeedback.createdAt, order: .reverse) private var feedback: [OutfitFeedback]
     @Query private var items: [ClothingItem]
+    let onOpenToday: (() -> Void)?
+
+    init(onOpenToday: (() -> Void)? = nil) {
+        self.onOpenToday = onOpenToday
+    }
 
     private var entries: [LooksHistoryEntry] {
         LooksHistoryEntry.makeEntries(outfits: outfits, feedback: feedback, items: items)
@@ -22,7 +27,7 @@ struct LooksView: View {
         NavigationStack {
             ScrollView {
                 if entries.isEmpty {
-                    EmptyLooksView()
+                    EmptyLooksView(onOpenToday: onOpenToday)
                         .padding(18)
                 } else {
                     LazyVStack(alignment: .leading, spacing: 18) {
@@ -217,6 +222,8 @@ private struct CapsuleTag: View {
 }
 
 private struct EmptyLooksView: View {
+    let onOpenToday: (() -> Void)?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(L10n.text("looks.empty.title"), systemImage: "calendar")
@@ -227,6 +234,17 @@ private struct EmptyLooksView: View {
                 .font(.body)
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let onOpenToday {
+                Button(action: onOpenToday) {
+                    Label(L10n.text("looks.empty.open_today"), systemImage: "sparkles")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(DesignSystem.accent)
+                .accessibilityIdentifier("looksEmptyOpenTodayButton")
+            }
         }
         .padding(DesignSystem.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)

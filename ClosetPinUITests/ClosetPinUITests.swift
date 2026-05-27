@@ -62,6 +62,23 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 3))
     }
 
+    func testEmptyLooksCanReturnToToday() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_looks"].tap()
+
+        let openTodayButton = app.buttons["looksEmptyOpenTodayButton"]
+        XCTAssertTrue(openTodayButton.waitForExistence(timeout: 3))
+        openTodayButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+    }
+
     func testAddClosetItemSmokeFlow() {
         let app = makeApp()
         app.launch()

@@ -15,12 +15,14 @@ struct TodayView: View {
     @State private var lastAppliedPreferenceScenario: OutfitScenario?
 
     let onOpenLooks: (() -> Void)?
+    let onOpenCloset: (() -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
 
-    init(onOpenLooks: (() -> Void)? = nil) {
+    init(onOpenLooks: (() -> Void)? = nil, onOpenCloset: (() -> Void)? = nil) {
         self.onOpenLooks = onOpenLooks
+        self.onOpenCloset = onOpenCloset
     }
 
     private var candidates: [OutfitCandidate] {
@@ -93,7 +95,7 @@ struct TodayView: View {
                     }
                 )
             } else {
-                MissingRecommendationView(message: missingRecommendationMessage)
+                MissingRecommendationView(message: missingRecommendationMessage, onOpenCloset: onOpenCloset)
             }
         }
     }
@@ -388,6 +390,7 @@ private struct OutfitCompactCard: View {
 
 private struct MissingRecommendationView: View {
     let message: String
+    let onOpenCloset: (() -> Void)?
 
     var body: some View {
         LuxurySurfaceCard {
@@ -400,6 +403,17 @@ private struct MissingRecommendationView: View {
                     .font(.body)
                     .foregroundStyle(DesignSystem.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let onOpenCloset {
+                    Button(action: onOpenCloset) {
+                        Label(L10n.text("today.missing.open_closet"), systemImage: "square.grid.2x2.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("todayMissingOpenClosetButton")
+                }
             }
         }
         .accessibilityIdentifier("todayMissingRecommendation")

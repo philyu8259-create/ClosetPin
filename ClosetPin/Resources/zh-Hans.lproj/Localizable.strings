@@ -108,6 +108,7 @@
 "today.option.format" = "方案 %d";
 "today.score.accessibility.format" = "评分 %d";
 "today.missing.title" = "需要补齐穿搭单品";
+"today.missing.open_closet" = "继续补齐衣橱";
 "today.feedback.wore" = "今天穿这套";
 "today.feedback.like" = "喜欢";
 "today.feedback.dislike" = "不喜欢";
@@ -125,6 +126,7 @@
 "looks.title" = "穿搭";
 "looks.empty.title" = "从这里开始积累你的穿搭档案";
 "looks.empty.description" = "在「今日」里保存穿搭或标记已穿，逐步形成一份真正适合你工作节奏的穿搭记录。";
+"looks.empty.open_today" = "去今日保存穿搭";
 "looks.kind.saved" = "已保存";
 "looks.kind.worn" = "已穿";
 "looks.item_count.format" = "%d 件单品";

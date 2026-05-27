@@ -108,6 +108,7 @@
 "today.option.format" = "Option %d";
 "today.score.accessibility.format" = "Score %d";
 "today.missing.title" = "Outfit ingredients needed";
+"today.missing.open_closet" = "Continue in Closet";
 "today.feedback.wore" = "Wear Today";
 "today.feedback.like" = "Like";
 "today.feedback.dislike" = "Dislike";
@@ -125,6 +126,7 @@
 "looks.title" = "Looks";
 "looks.empty.title" = "Your Lookbook Starts Here";
 "looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works for your routine.";
+"looks.empty.open_today" = "Go to Today";
 "looks.kind.saved" = "Saved";
 "looks.kind.worn" = "Worn";
 "looks.item_count.format" = "%d items";

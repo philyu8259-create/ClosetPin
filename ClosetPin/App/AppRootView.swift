@@ -46,13 +46,21 @@ struct AppRootView: View {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .looks
                 }
+            }, onOpenCloset: {
+                withAnimation(.snappy(duration: 0.28)) {
+                    selectedTab = .closet
+                }
             })
                 .tag(AppTab.today)
 
             ClosetView()
                 .tag(AppTab.closet)
 
-            LooksView()
+            LooksView(onOpenToday: {
+                withAnimation(.snappy(duration: 0.28)) {
+                    selectedTab = .today
+                }
+            })
                 .tag(AppTab.looks)
 
             SettingsView()
