@@ -18,6 +18,19 @@ extension ClothingStatus {
     var displayName: String {
         L10n.text("clothing.status.\(rawValue)")
     }
+
+    var systemImage: String {
+        switch self {
+        case .available:
+            "checkmark.circle.fill"
+        case .needsWash:
+            "washer.fill"
+        case .needsRepair:
+            "wrench.and.screwdriver.fill"
+        case .inactive:
+            "archivebox.fill"
+        }
+    }
 }
 
 extension SeasonTag {

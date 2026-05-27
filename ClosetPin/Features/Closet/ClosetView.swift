@@ -4,6 +4,8 @@ import SwiftUI
 struct ClosetView: View {
     @Query(sort: \ClothingItem.createdAt, order: .reverse) private var items: [ClothingItem]
     @State private var activeSheet: ClosetSheet?
+    @State private var typeFilter: ClosetTypeFilter = .all
+    @State private var statusFilter: ClosetStatusFilter = .all
 
     private let categoryOrder: [ClothingType] = [
         .top,
@@ -21,7 +23,7 @@ struct ClosetView: View {
                 if items.isEmpty {
                     emptyState
                 } else {
-                    closetList
+                    closetGrid
                 }
             }
             .background(DesignSystem.background)
@@ -31,7 +33,7 @@ struct ClosetView: View {
                     Button {
                         activeSheet = .add
                     } label: {
-                        Image(systemName: "plus")
+                        Label(L10n.text("closet.add_item"), systemImage: "plus.circle.fill")
                     }
                     .accessibilityLabel(L10n.text("closet.add_item.accessibility"))
                     .accessibilityIdentifier("addItemButton")
@@ -46,44 +48,74 @@ struct ClosetView: View {
         }
     }
 
-    private var closetList: some View {
-        List {
-            ForEach(categoryOrder, id: \.self) { type in
-                let categoryItems = items(for: type)
-                if !categoryItems.isEmpty {
-                    Section(type.displayName) {
-                        ForEach(categoryItems) { item in
+    private var closetGrid: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                filterBar
+
+                if filteredItems.isEmpty {
+                    EmptyFilteredClosetView()
+                } else {
+                    LazyVGrid(columns: gridColumns, spacing: DesignSystem.Spacing.md) {
+                        ForEach(filteredItems) { item in
                             NavigationLink {
                                 ClosetItemDetailView(item: item)
                             } label: {
-                                ClosetItemRow(item: item)
+                                GarmentGridCard(item: item)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
             }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
+    }
+
+    private var filterBar: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ContextChip(title: L10n.text("closet.filter.all"), value: ClosetTypeFilter.all, selection: $typeFilter)
+
+                    ForEach(categoryOrder, id: \.self) { type in
+                        ContextChip(title: type.displayName, value: ClosetTypeFilter.type(type), selection: $typeFilter)
+                    }
+                }
+                .padding(.vertical, 1)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ContextChip(title: L10n.text("closet.filter.status_all"), value: ClosetStatusFilter.all, selection: $statusFilter)
+
+                    ForEach(ClothingStatus.allCases) { status in
+                        ContextChip(title: status.displayName, value: ClosetStatusFilter.status(status), selection: $statusFilter)
+                    }
+                }
+                .padding(.vertical, 1)
+            }
+        }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: DesignSystem.Spacing.lg) {
             BundledPNGImage(name: "empty-closet")
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
                 .frame(height: 220)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
                 .accessibilityHidden(true)
 
-            VStack(spacing: 8) {
+            VStack(spacing: DesignSystem.Spacing.sm) {
                 Label(L10n.text("closet.empty.title"), systemImage: "rectangle.grid.2x2")
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
 
                 Text(L10n.text("closet.empty.description"))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignSystem.secondaryInk)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -97,19 +129,48 @@ struct ClosetView: View {
             .tint(DesignSystem.accent)
             .accessibilityIdentifier("addItemButton")
         }
+        .padding(DesignSystem.Spacing.xl)
+        .background(DesignSystem.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous)
+                .stroke(DesignSystem.border, lineWidth: 1)
+        }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
-    private func items(for type: ClothingType) -> [ClothingItem] {
+    private var filteredItems: [ClothingItem] {
         items
-            .filter { ($0.resolvedType ?? $0.type) == type }
+            .filter { item in
+                switch typeFilter {
+                case .all:
+                    true
+                case .type(let type):
+                    (item.resolvedType ?? item.type) == type
+                }
+            }
+            .filter { item in
+                switch statusFilter {
+                case .all:
+                    true
+                case .status(let status):
+                    item.resolvedStatus == status
+                }
+            }
             .sorted {
                 if $0.color.localizedCaseInsensitiveCompare($1.color) == .orderedSame {
                     return $0.storageLocation.localizedCaseInsensitiveCompare($1.storageLocation) == .orderedAscending
                 }
                 return $0.color.localizedCaseInsensitiveCompare($1.color) == .orderedAscending
             }
+    }
+
+    private var gridColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
+            GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
+        ]
     }
 }
 
@@ -120,6 +181,80 @@ private enum ClosetSheet: Identifiable {
         switch self {
         case .add:
             "add"
+        }
+    }
+}
+
+private enum ClosetTypeFilter: Hashable {
+    case all
+    case type(ClothingType)
+}
+
+private enum ClosetStatusFilter: Hashable {
+    case all
+    case status(ClothingStatus)
+}
+
+private struct GarmentGridCard: View {
+    let item: ClothingItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            WardrobePhotoThumbnail(item: item, cornerRadius: DesignSystem.Radius.md)
+                .aspectRatio(0.86, contentMode: .fit)
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                Text(item.color)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                Text(item.type.displayName)
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(1)
+
+                Text(item.storageLocation)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(1)
+
+                StatusChip(status: item.status)
+                    .padding(.top, 2)
+            }
+        }
+        .padding(DesignSystem.Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
+                .stroke(DesignSystem.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var accessibilityLabel: String {
+        let seasons = item.seasons.map(\.displayName).joined(separator: ", ")
+        return "\(item.color) \(item.type.displayName), \(item.status.displayName), \(seasons), \(L10n.text("closet.formality.label")) \(item.formalityLevel)"
+    }
+}
+
+private struct EmptyFilteredClosetView: View {
+    var body: some View {
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                Label(L10n.text("closet.filtered_empty.title"), systemImage: "line.3.horizontal.decrease.circle")
+                    .font(.headline)
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(L10n.text("closet.filtered_empty.description"))
+                    .font(.body)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

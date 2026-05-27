@@ -127,6 +127,13 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.updatedAt, updateDate)
     }
 
+    func testStatusMetadataIncludesIconAndReadableLabel() {
+        for status in ClothingStatus.allCases {
+            XCTAssertFalse(status.displayName.isEmpty)
+            XCTAssertFalse(status.systemImage.isEmpty)
+        }
+    }
+
     func testLooksHistoryEntriesIncludeSavedOutfitAndWornFeedbackInReverseChronologicalOrder() {
         let top = ClothingItem(
             id: UUID(),

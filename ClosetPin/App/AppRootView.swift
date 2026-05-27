@@ -21,7 +21,7 @@ struct AppRootView: View {
                 .tabItem { Label(L10n.text("tab.closet"), systemImage: "rectangle.grid.2x2") }
 
             LooksView()
-                .tabItem { Label(L10n.text("tab.looks"), systemImage: "heart") }
+                .tabItem { Label(L10n.text("tab.looks"), systemImage: "calendar") }
 
             SettingsView()
                 .tabItem { Label(L10n.text("tab.settings"), systemImage: "gearshape") }

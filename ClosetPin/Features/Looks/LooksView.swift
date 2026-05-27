@@ -36,75 +36,71 @@ private struct LooksHistoryCard: View {
     let entry: LooksHistoryEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Label(entry.kind.title, systemImage: entry.kind.systemImage)
-                    .font(.headline)
-                    .foregroundStyle(DesignSystem.ink)
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Label(entry.kind.title, systemImage: entry.kind.systemImage)
+                        .font(.headline)
+                        .foregroundStyle(DesignSystem.ink)
 
-                Spacer(minLength: 8)
+                    Spacer(minLength: 8)
 
-                Text(entry.date, format: .dateTime.month(.abbreviated).day().hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
-            }
-
-            HStack(spacing: 8) {
-                Text(entry.scenario.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.accent)
-
-                Text(L10n.string("looks.item_count.format", arguments: entry.itemCount))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                if let score = entry.score {
-                    Label("\(score)", systemImage: "gauge.with.dots.needle.50percent")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text(entry.date, format: .dateTime.month(.abbreviated).day().hour().minute())
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .multilineTextAlignment(.trailing)
                 }
+
+                HStack(spacing: 8) {
+                    Text(entry.scenario.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+
+                    Text(L10n.string("looks.item_count.format", arguments: entry.itemCount))
+                        .font(.subheadline)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+
+                    if let score = entry.score {
+                        Label("\(score)", systemImage: "gauge.with.dots.needle.50percent")
+                            .font(.subheadline)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                    }
+                }
+
+                Text(entry.itemSummary)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !entry.visualItems.isEmpty {
+                    OutfitVisualBoard(visualItems: entry.visualItems)
+                        .accessibilityIdentifier("looksOutfitVisualBoard")
+                }
+
+                Text(entry.explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            Text(entry.itemSummary)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(DesignSystem.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if !entry.visualItems.isEmpty {
-                OutfitVisualBoard(visualItems: entry.visualItems)
-                    .accessibilityIdentifier("looksOutfitVisualBoard")
-            }
-
-            Text(entry.explanation)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
         .accessibilityIdentifier("looksHistoryCard")
     }
 }
 
 private struct EmptyLooksView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(L10n.text("looks.empty.title"), systemImage: "heart")
-                .font(.headline)
-                .foregroundStyle(DesignSystem.ink)
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(L10n.text("looks.empty.title"), systemImage: "calendar")
+                    .font(.headline)
+                    .foregroundStyle(DesignSystem.ink)
 
-            Text(L10n.text("looks.empty.description"))
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                Text(L10n.text("looks.empty.description"))
+                    .font(.body)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
     }
 }
 

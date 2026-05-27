@@ -9,6 +9,7 @@ struct TodayView: View {
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = .spring
     @State private var pendingActionIDs: Set<String> = []
+    @State private var expandedRecommendationIDs: Set<String> = []
     @State private var confirmationMessage: String?
     @State private var saveError: String?
 
@@ -30,13 +31,14 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xl) {
+                    header
                     contextControls
 
                     if candidates.isEmpty {
                         MissingRecommendationView(message: missingRecommendationMessage)
                     } else {
-                        recommendationList
+                        recommendationContent
                     }
                 }
                 .padding(18)
@@ -44,6 +46,7 @@ struct TodayView: View {
             }
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("today.title"))
+            .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
                 if let confirmationMessage {
                     ConfirmationBanner(message: confirmationMessage)
@@ -63,51 +66,101 @@ struct TodayView: View {
         }
     }
 
-    private var contextControls: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(L10n.text("today.context.title"))
-                .font(.headline)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(L10n.text("today.greeting"))
+                .font(.title.weight(.semibold))
                 .foregroundStyle(DesignSystem.ink)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Picker(L10n.text("today.scenario.label"), selection: $scenario) {
-                ForEach(OutfitScenario.allCases) { scenario in
-                    Text(scenario.displayName).tag(scenario)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityIdentifier("todayScenarioPicker")
-
-            Picker(L10n.text("today.season.label"), selection: $season) {
-                ForEach(SeasonTag.allCases) { season in
-                    Text(season.displayName).tag(season)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityIdentifier("todaySeasonPicker")
+            Text(L10n.text("today.subtitle"))
+                .font(.body)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
     }
 
-    private var recommendationList: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(L10n.string("today.recommended_for.format", arguments: scenario.displayName))
-                .font(.headline)
-                .foregroundStyle(DesignSystem.ink)
+    private var contextControls: some View {
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                Text(L10n.text("today.context.title"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
 
-            ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                RecommendationCard(
-                    index: index,
-                    candidate: candidate,
-                    explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        ForEach(OutfitScenario.allCases) { scenario in
+                            ContextChip(title: scenario.displayName, value: scenario, selection: $scenario)
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
+                .accessibilityIdentifier("todayScenarioPicker")
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        ForEach(SeasonTag.allCases) { season in
+                            ContextChip(title: season.displayName, value: season, selection: $season)
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
+                .accessibilityIdentifier("todaySeasonPicker")
+            }
+        }
+    }
+
+    private var recommendationContent: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+            if let heroCandidate = candidates.first {
+                OutfitHeroCard(
+                    index: 0,
+                    candidate: heroCandidate,
+                    title: L10n.text("today.best.title"),
+                    subtitle: recommendationName,
+                    explanation: TodayRecommendationExplanation.text(for: heroCandidate, scenario: scenario),
+                    isExpanded: expandedRecommendationIDs.contains(heroCandidate.id),
                     pendingActionIDs: pendingActionIDs,
+                    onToggleExplanation: {
+                        toggleExplanation(for: heroCandidate)
+                    },
                     onAction: { action in
-                        record(action, for: candidate)
+                        record(action, for: heroCandidate)
                     }
                 )
-                .accessibilityIdentifier("todayRecommendationCard_\(index)")
             }
+
+            let alternatives = Array(candidates.dropFirst().enumerated())
+            if !alternatives.isEmpty {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                    Text(L10n.text("today.alternatives.title"))
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    ForEach(alternatives, id: \.element.id) { offset, candidate in
+                        let index = offset + 1
+                        OutfitCompactCard(
+                            index: index,
+                            label: alternativeLabel(for: index),
+                            candidate: candidate,
+                            explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
+                            pendingActionIDs: pendingActionIDs,
+                            onAction: { action in
+                                record(action, for: candidate)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var recommendationName: String {
+        switch scenario {
+        case .dailyOffice:
+            L10n.text("today.best.name.daily_office")
+        case .importantMeeting:
+            L10n.text("today.best.name.important_meeting")
         }
     }
 
@@ -142,6 +195,20 @@ struct TodayView: View {
         return L10n.text("today.missing.available_or_season")
     }
 
+    private func alternativeLabel(for index: Int) -> String {
+        index == 1 ? L10n.text("today.alternative.more_formal") : L10n.text("today.alternative.more_relaxed")
+    }
+
+    private func toggleExplanation(for candidate: OutfitCandidate) {
+        withAnimation(.snappy) {
+            if expandedRecommendationIDs.contains(candidate.id) {
+                expandedRecommendationIDs.remove(candidate.id)
+            } else {
+                expandedRecommendationIDs.insert(candidate.id)
+            }
+        }
+    }
+
     private func record(_ action: TodayFeedbackAction, for candidate: OutfitCandidate) {
         let actionID = "\(candidate.id):\(action.feedbackType.rawValue)"
         guard !pendingActionIDs.contains(actionID) else { return }
@@ -168,84 +235,173 @@ struct TodayView: View {
     }
 }
 
-private struct RecommendationCard: View {
+private struct OutfitHeroCard: View {
     let index: Int
+    let candidate: OutfitCandidate
+    let title: String
+    let subtitle: String
+    let explanation: String
+    let isExpanded: Bool
+    let pendingActionIDs: Set<String>
+    let onToggleExplanation: () -> Void
+    let onAction: (TodayFeedbackAction) -> Void
+
+    var body: some View {
+        LuxurySurfaceCard(isElevated: true) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                        Label(title, systemImage: "sparkles")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(DesignSystem.premiumGold)
+
+                        Text(subtitle)
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: DesignSystem.Spacing.md)
+
+                    Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
+                }
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                    Text(explanation)
+                        .font(.body)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .lineLimit(isExpanded ? nil : 2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Button {
+                        onToggleExplanation()
+                    } label: {
+                        Label(L10n.text("today.why_this_look"), systemImage: "sparkle.magnifyingglass")
+                    }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .buttonStyle(.plain)
+                }
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Button {
+                        onAction(.wore)
+                    } label: {
+                        Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.accent)
+                    .disabled(isPending(.wore))
+                    .accessibilityIdentifier("todayFeedback_wore_\(index)")
+
+                    Button {
+                        onAction(.save)
+                    } label: {
+                        Image(systemName: TodayFeedbackAction.save.systemImage)
+                            .frame(width: 36, height: 36)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignSystem.accent)
+                    .disabled(isPending(.save))
+                    .accessibilityLabel(TodayFeedbackAction.save.title)
+                    .accessibilityIdentifier("todayFeedback_saved_\(index)")
+
+                    Menu {
+                        ForEach([TodayFeedbackAction.like, .dislike, .skip]) { action in
+                            Button {
+                                onAction(action)
+                            } label: {
+                                Label(action.title, systemImage: action.systemImage)
+                            }
+                            .disabled(isPending(action))
+                            .accessibilityIdentifier("todayFeedback_\(action.feedbackType.rawValue)_\(index)")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .frame(width: 36, height: 36)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignSystem.secondaryInk)
+                    .accessibilityLabel(L10n.text("today.more_actions"))
+                }
+
+                OutfitVisualBoard(items: candidate.items)
+                    .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+            }
+        }
+    }
+
+    private func isPending(_ action: TodayFeedbackAction) -> Bool {
+        pendingActionIDs.contains("\(candidate.id):\(action.feedbackType.rawValue)")
+    }
+}
+
+private struct OutfitCompactCard: View {
+    let index: Int
+    let label: String
     let candidate: OutfitCandidate
     let explanation: String
     let pendingActionIDs: Set<String>
     let onAction: (TodayFeedbackAction) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(L10n.string("today.option.format", arguments: index + 1))
-                    .font(.headline)
-                    .foregroundStyle(DesignSystem.ink)
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(label)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
 
-                Spacer()
+                    Spacer(minLength: DesignSystem.Spacing.sm)
 
-                Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.accent)
-                    .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
-            }
-
-            Text(explanation)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            OutfitVisualBoard(items: candidate.items)
-                .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
-
-            VStack(spacing: 10) {
-                ForEach(candidate.items) { item in
-                    TodayItemRow(item: item)
+                    Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
                 }
-            }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(TodayFeedbackAction.allCases) { action in
-                        Button {
-                            onAction(action)
-                        } label: {
-                            Label(action.title, systemImage: action.systemImage)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(pendingActionIDs.contains("\(candidate.id):\(action.feedbackType.rawValue)"))
-                        .accessibilityIdentifier("todayFeedback_\(action.feedbackType.rawValue)_\(index)")
+                OutfitVisualBoard(items: candidate.items)
+                    .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+
+                Text(explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Button {
+                        onAction(.wore)
+                    } label: {
+                        Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .tint(DesignSystem.accent)
+                    .disabled(isPending(.wore))
+                    .accessibilityIdentifier("todayFeedback_wore_\(index)")
+
+                    Button {
+                        onAction(.save)
+                    } label: {
+                        Label(TodayFeedbackAction.save.title, systemImage: TodayFeedbackAction.save.systemImage)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .tint(DesignSystem.accent)
+                    .disabled(isPending(.save))
+                    .accessibilityIdentifier("todayFeedback_saved_\(index)")
                 }
-                .padding(.vertical, 1)
             }
         }
-        .padding(16)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
     }
-}
 
-private struct TodayItemRow: View {
-    let item: ClothingItem
-
-    var body: some View {
-        HStack(spacing: 10) {
-            WardrobePhotoThumbnail(item: item, cornerRadius: 6)
-                .frame(width: 34, height: 34)
-
-            Text(item.color)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(DesignSystem.ink)
-
-            Text(item.type.displayName)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
+    private func isPending(_ action: TodayFeedbackAction) -> Bool {
+        pendingActionIDs.contains("\(candidate.id):\(action.feedbackType.rawValue)")
     }
 }
 
@@ -253,20 +409,18 @@ private struct MissingRecommendationView: View {
     let message: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(L10n.text("today.missing.title"), systemImage: "exclamationmark.circle")
-                .font(.headline)
-                .foregroundStyle(DesignSystem.ink)
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                Label(L10n.text("today.missing.title"), systemImage: "exclamationmark.circle")
+                    .font(.headline)
+                    .foregroundStyle(DesignSystem.ink)
 
-            Text(message)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                Text(message)
+                    .font(.body)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
         .accessibilityIdentifier("todayMissingRecommendation")
     }
 }
@@ -282,7 +436,7 @@ private struct ConfirmationBanner: View {
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(DesignSystem.accent)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
             .accessibilityIdentifier("todayFeedbackConfirmation")
     }
 }
@@ -329,15 +483,15 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .wore:
-            "checkmark.circle"
+            "checkmark.circle.fill"
         case .like:
             "hand.thumbsup"
         case .dislike:
             "hand.thumbsdown"
         case .skip:
-            "arrow.right.circle"
+            "arrow.triangle.2.circlepath"
         case .save:
-            "bookmark"
+            "bookmark.fill"
         }
     }
 
