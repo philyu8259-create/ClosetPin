@@ -253,7 +253,7 @@ private struct TodayEditorialHero: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
             EditorialImageSurface(
                 image: coverImage,
-                height: 420
+                height: 380
             ) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                     Label(L10n.text("today.edit.kicker"), systemImage: "sparkles")

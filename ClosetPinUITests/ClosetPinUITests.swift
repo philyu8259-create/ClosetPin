@@ -20,6 +20,27 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testSimplifiedChineseTabsAndTodayActionsFitPrimaryFlow() {
+        let app = makeApp(language: "zh-Hans", locale: "zh_CN")
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10 分钟通勤胶囊衣橱"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["今天穿这套"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["保存到穿搭"].exists)
+        XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
+
+        app.buttons["appTab_closet"].tap()
+        XCTAssertTrue(app.staticTexts["职业衣橱"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_looks"].tap()
+        XCTAssertTrue(app.staticTexts["从这里开始积累你的穿搭档案"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_settings"].tap()
+        XCTAssertTrue(app.staticTexts["工作日着装简报"].waitForExistence(timeout: 3))
+    }
+
     func testStartAddingFromOnboardingOpensAddItemFlow() {
         let app = makeApp()
         app.launch()
@@ -203,9 +224,9 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["5"].waitForExistence(timeout: 3))
     }
 
-    private func makeApp() -> XCUIApplication {
+    private func makeApp(language: String = "en", locale: String = "en_US") -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", locale]
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
         return app
     }
