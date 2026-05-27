@@ -67,4 +67,26 @@ final class ClothingItem {
     var seasons: [SeasonTag] { seasonRawValues.compactMap(SeasonTag.init(rawValue:)) }
     var resolvedStatus: ClothingStatus? { ClothingStatus(rawValue: statusRawValue) }
     var status: ClothingStatus { resolvedStatus ?? .inactive }
+
+    var displayColor: String {
+        ColorResolver.localizedDisplayColor(from: color) ?? color.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var displayStorageLocation: String {
+        let trimmedLocation = storageLocation.trimmingCharacters(in: .whitespacesAndNewlines)
+        if Self.seedStorageLocationAliases.contains(trimmedLocation) {
+            return L10n.text("seed.work_capsule.storage_location")
+        }
+
+        return trimmedLocation
+    }
+
+    var displayTitle: String {
+        "\(displayColor) \(type.displayName)"
+    }
+
+    private static let seedStorageLocationAliases: Set<String> = [
+        "Sample work capsule",
+        "示例通勤胶囊衣橱"
+    ]
 }

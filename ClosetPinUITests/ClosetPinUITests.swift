@@ -93,7 +93,8 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["saveItemButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Main wardrobe"].exists)
+        let storageLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Main wardrobe")).firstMatch
+        XCTAssertTrue(storageLabel.exists)
     }
 
     private func makeApp() -> XCUIApplication {

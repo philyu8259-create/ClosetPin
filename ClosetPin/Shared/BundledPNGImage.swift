@@ -101,7 +101,7 @@ struct OutfitVisualItem: Identifiable, Equatable {
             OutfitVisualItem(
                 id: item.id,
                 type: item.type,
-                color: item.color,
+                color: item.displayColor,
                 photoLocalPath: item.photoLocalPath,
                 item: item
             )

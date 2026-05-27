@@ -48,7 +48,7 @@
 "closet.photo.auto_cropped" = "Auto-cropped display photo";
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
-"closet.photo.editorial_title" = "New Piece";
+"closet.photo.editorial_title" = "Item Photo";
 "closet.photo.editorial_help" = "Capture the garment clearly. ClosetPin will suggest the edit, and every field stays adjustable.";
 "closet.photo.ai_suggestion.format" = "Suggested %@ %@. You can edit every field.";
 "closet.photo.save_failed" = "The photo could not be saved. Please try again.";

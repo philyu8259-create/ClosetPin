@@ -183,10 +183,10 @@ struct ClosetView: View {
                 if $0.createdAt != $1.createdAt {
                     return $0.createdAt > $1.createdAt
                 }
-                if $0.color.localizedCaseInsensitiveCompare($1.color) == .orderedSame {
-                    return $0.storageLocation.localizedCaseInsensitiveCompare($1.storageLocation) == .orderedAscending
+                if $0.displayColor.localizedCaseInsensitiveCompare($1.displayColor) == .orderedSame {
+                    return $0.displayStorageLocation.localizedCaseInsensitiveCompare($1.displayStorageLocation) == .orderedAscending
                 }
-                return $0.color.localizedCaseInsensitiveCompare($1.color) == .orderedAscending
+                return $0.displayColor.localizedCaseInsensitiveCompare($1.displayColor) == .orderedAscending
             }
     }
 
@@ -223,32 +223,49 @@ private struct GarmentGridCard: View {
     let item: ClothingItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+        ZStack(alignment: .bottomLeading) {
             WardrobePhotoThumbnail(item: item, cornerRadius: DesignSystem.Radius.md)
-                .aspectRatio(0.78, contentMode: .fit)
+                .aspectRatio(0.86, contentMode: .fit)
+
+            LinearGradient(
+                colors: [
+                    .clear,
+                    .black.opacity(0.1),
+                    .black.opacity(0.72)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .allowsHitTesting(false)
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                Text(item.color)
+                Text(item.displayColor)
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.ink)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
-                Text(item.type.displayName)
-                    .font(.subheadline)
-                    .foregroundStyle(DesignSystem.secondaryInk)
+                Text("\(item.type.displayName) · \(item.displayStorageLocation)")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.82))
                     .lineLimit(1)
 
-                Text(item.storageLocation)
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .lineLimit(1)
-
-                StatusChip(status: item.status)
-                    .padding(.top, 2)
+                Text(item.status.displayName)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.white.opacity(0.18))
+                    .clipShape(Capsule(style: .continuous))
             }
+            .padding(DesignSystem.Spacing.md)
         }
-        .padding(DesignSystem.Spacing.sm)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
+                .stroke(.white.opacity(0.52), lineWidth: 1)
+        }
+        .padding(6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.surface.opacity(0.82))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
@@ -259,7 +276,7 @@ private struct GarmentGridCard: View {
 
     private var accessibilityLabel: String {
         let seasons = item.seasons.map(\.displayName).joined(separator: ", ")
-        return "\(item.color) \(item.type.displayName), \(item.status.displayName), \(seasons), \(L10n.text("closet.formality.label")) \(item.formalityLevel)"
+        return "\(item.displayTitle), \(item.status.displayName), \(seasons), \(L10n.text("closet.formality.label")) \(item.formalityLevel)"
     }
 }
 
@@ -290,7 +307,7 @@ private struct ClosetItemRow: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
-                    Text(item.color)
+                    Text(item.displayColor)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(DesignSystem.ink)
                     Text(item.type.displayName)
@@ -306,7 +323,7 @@ private struct ClosetItemRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
 
-                Text(item.storageLocation)
+                Text(item.displayStorageLocation)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -367,8 +384,8 @@ struct ClosetItemDetailView: View {
 
             Section(L10n.text("closet.details.section")) {
                 detailRow(title: L10n.text("closet.type.label"), value: item.type.displayName)
-                detailRow(title: L10n.text("closet.color.label"), value: item.color)
-                detailRow(title: L10n.text("closet.storage_location.label"), value: item.storageLocation)
+                detailRow(title: L10n.text("closet.color.label"), value: item.displayColor)
+                detailRow(title: L10n.text("closet.storage_location.label"), value: item.displayStorageLocation)
                 detailRow(title: L10n.text("closet.status.label"), value: item.status.displayName)
             }
 
@@ -392,7 +409,7 @@ struct ClosetItemDetailView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(DesignSystem.background)
-        .navigationTitle("\(item.color) \(item.type.displayName)")
+        .navigationTitle(item.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {

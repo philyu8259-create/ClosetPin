@@ -28,11 +28,11 @@ struct AddEditItemDraft {
         photoLocalPath = item.photoLocalPath
         originalPhotoLocalPath = item.originalPhotoLocalPath
         type = item.type
-        color = item.color
+        color = item.displayColor
         selectedSeasons = Set(item.seasons)
         formalityLevel = item.formalityLevel
         warmthLevel = item.warmthLevel
-        storageLocation = item.storageLocation
+        storageLocation = item.displayStorageLocation
         status = item.status
         notes = item.notes
     }
@@ -201,9 +201,9 @@ struct AddEditItemView: View {
         Section(L10n.text("closet.photo.editorial_title")) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {
-                    if let image = displayPreviewImage {
+                    if displayPreviewImage != nil || draft.hasPhoto {
                         WardrobePhotoThumbnail(
-                            image: image,
+                            image: displayPreviewImage,
                             fallbackColor: ColorResolver.swatchColor(for: draft.color),
                             cornerRadius: DesignSystem.Radius.editorialHero
                         )

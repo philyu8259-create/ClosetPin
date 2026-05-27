@@ -69,8 +69,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
     ) -> String {
         let names = itemIds.compactMap { itemID -> String? in
             guard let item = itemsByID[itemID] else { return nil }
-            let color = ColorResolver.localizedDisplayColor(from: item.color) ?? item.color
-            return "\(color) \(item.type.displayName)"
+            return item.displayTitle
         }
 
         guard !names.isEmpty else {

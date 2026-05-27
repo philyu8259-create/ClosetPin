@@ -37,6 +37,25 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertNil(item.lastWornAt)
     }
 
+    func testClothingItemDisplayTextUsesLocalizedKnownValues() {
+        let item = ClothingItem(
+            photoLocalPath: "wardrobe/shoes.jpg",
+            type: .shoes,
+            color: "Black",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Sample work capsule"
+        )
+
+        XCTAssertEqual(item.displayColor, localizedColor("Black"))
+        XCTAssertEqual(item.displayStorageLocation, L10n.text("seed.work_capsule.storage_location"))
+        XCTAssertEqual(item.displayTitle, "\(localizedColor("Black")) \(ClothingType.shoes.displayName)")
+
+        let draft = AddEditItemDraft(item: item)
+        XCTAssertEqual(draft.color, item.displayColor)
+        XCTAssertEqual(draft.storageLocation, item.displayStorageLocation)
+    }
+
     func testModelTypedAccessorsFallBackForUnknownRawValues() {
         let item = ClothingItem(
             photoLocalPath: "wardrobe/unknown.jpg",
