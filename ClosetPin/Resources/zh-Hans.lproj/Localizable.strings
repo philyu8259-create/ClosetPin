@@ -137,6 +137,10 @@
 "looks.archive.title" = "穿搭档案";
 "looks.archive.latest.format" = "最近：%@";
 "looks.items.unavailable" = "单品不可用";
+"looks.context.saved.title" = "从今日保存";
+"looks.context.saved.body" = "用于之后复穿、规划，或和后续推荐做对比。";
+"looks.context.worn.title" = "真实穿过";
+"looks.context.worn.body" = "会作为真实反馈，帮助 ClosetPin 学习哪些搭配适合你的工作周。";
 "looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配真正适合你的工作周。";
 "closet.archive.kicker" = "衣橱档案";
 "closet.archive.title" = "职业衣橱";

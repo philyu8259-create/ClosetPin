@@ -149,6 +149,8 @@ private struct LooksHistoryCard: View {
                 }
             }
 
+            LooksContextCallout(kind: entry.kind)
+
             Text(entry.itemSummary)
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(DesignSystem.ink)
@@ -187,6 +189,37 @@ private struct LooksHistoryCard: View {
         }
         .shadow(color: .black.opacity(0.06), radius: 18, x: 0, y: 10)
         .accessibilityIdentifier("looksHistoryCard")
+    }
+}
+
+private struct LooksContextCallout: View {
+    let kind: LooksHistoryEntry.Kind
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: kind.systemImage)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(kind.foregroundColor)
+                .frame(width: 24, height: 24)
+                .background(kind.tintColor.opacity(0.14))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(kind.contextTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(kind.contextBody)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(DesignSystem.Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(kind.tintColor.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .accessibilityIdentifier("looksContextCallout_\(kind.rawValue)")
     }
 }
 
@@ -292,6 +325,24 @@ private extension LooksHistoryEntry.Kind {
             DesignSystem.wine
         case .worn:
             DesignSystem.accent
+        }
+    }
+
+    var contextTitle: String {
+        switch self {
+        case .saved:
+            L10n.text("looks.context.saved.title")
+        case .worn:
+            L10n.text("looks.context.worn.title")
+        }
+    }
+
+    var contextBody: String {
+        switch self {
+        case .saved:
+            L10n.text("looks.context.saved.body")
+        case .worn:
+            L10n.text("looks.context.worn.body")
         }
     }
 }

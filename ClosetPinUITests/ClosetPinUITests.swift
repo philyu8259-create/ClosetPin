@@ -76,6 +76,7 @@ final class ClosetPinUITests: XCTestCase {
         viewLooksButton.tap()
 
         XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Saved from Today"].waitForExistence(timeout: 3))
     }
 
     func testEmptyLooksCanReturnToToday() {
@@ -93,6 +94,24 @@ final class ClosetPinUITests: XCTestCase {
         openTodayButton.tap()
 
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+    }
+
+    func testWornOutfitCanOpenLooksWithContext() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let woreButton = app.buttons["todayFeedback_wore_0"]
+        XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
+        woreButton.tap()
+
+        let viewLooksButton = app.buttons["todayFeedbackViewLooksButton"]
+        XCTAssertTrue(viewLooksButton.waitForExistence(timeout: 3))
+        viewLooksButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Actually worn"].waitForExistence(timeout: 3))
     }
 
     func testSettingsPreferenceAppliesToTodayRecommendation() {
