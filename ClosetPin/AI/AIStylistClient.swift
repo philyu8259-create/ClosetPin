@@ -50,6 +50,17 @@ struct ClothingPhotoTagSuggestion: Equatable, Sendable {
     }
 }
 
+struct PhotoTaggingOutcome: Equatable, Sendable {
+    enum Delivery: Equatable, Sendable {
+        case localOnly
+        case remoteAI
+        case localAfterCloudUnavailable
+    }
+
+    let suggestion: ClothingPhotoTagSuggestion
+    let delivery: Delivery
+}
+
 struct PhotoTaggingPipeline: Sendable {
     let localClient: any ClothingPhotoTaggingClient
     let cloudClient: (any AsyncClothingPhotoTaggingClient)?
@@ -64,17 +75,28 @@ struct PhotoTaggingPipeline: Sendable {
     }
 
     func suggestTags(for image: UIImage, allowsCloudRecognition: Bool) async -> ClothingPhotoTagSuggestion? {
+        await suggestionOutcome(for: image, allowsCloudRecognition: allowsCloudRecognition)?.suggestion
+    }
+
+    func suggestionOutcome(for image: UIImage, allowsCloudRecognition: Bool) async -> PhotoTaggingOutcome? {
         if allowsCloudRecognition, let cloudClient {
             do {
                 if let suggestion = try await cloudClient.suggestTags(for: image) {
-                    return suggestion
+                    return PhotoTaggingOutcome(suggestion: suggestion, delivery: .remoteAI)
                 }
             } catch {
                 // Cloud recognition is optional; keep item capture usable with local suggestions.
             }
+
+            return localClient.suggestTags(for: image).map {
+                PhotoTaggingOutcome(suggestion: $0, delivery: .localAfterCloudUnavailable)
+            }
         }
 
-        return localClient.suggestTags(for: image)
+        let localDelivery: PhotoTaggingOutcome.Delivery = allowsCloudRecognition ? .localAfterCloudUnavailable : .localOnly
+        return localClient.suggestTags(for: image).map {
+            PhotoTaggingOutcome(suggestion: $0, delivery: localDelivery)
+        }
     }
 }
 

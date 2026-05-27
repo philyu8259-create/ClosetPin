@@ -50,7 +50,9 @@
 "closet.photo.view_original" = "View Original";
 "closet.photo.editorial_title" = "Item Photo";
 "closet.photo.editorial_help" = "Capture the garment clearly. ClosetPin will suggest the edit, and every field stays adjustable.";
-"closet.photo.ai_suggestion.format" = "Suggested %@ %@. You can edit every field.";
+"closet.photo.ai_suggestion.local.format" = "Local suggestion: %@ %@. You can edit every field.";
+"closet.photo.ai_suggestion.cloud.format" = "Cloud suggestion: %@ %@. You can edit every field.";
+"closet.photo.ai_suggestion.cloud_fallback.format" = "Cloud unavailable; used local suggestion: %@ %@. You can edit every field.";
 "closet.photo.save_failed" = "The photo could not be saved. Please try again.";
 "closet.photo.selected_load_failed" = "The selected photo could not be loaded.";
 "closet.photo.selected_read_failed" = "The selected photo could not be read.";

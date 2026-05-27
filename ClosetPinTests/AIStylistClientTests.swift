@@ -113,9 +113,10 @@ final class AIStylistClientTests: XCTestCase {
             cloudClient: StubAsyncPhotoTaggingClient(suggestion: remoteSuggestion)
         )
 
-        let suggestion = await pipeline.suggestTags(for: makeSolidImage(color: .systemBlue), allowsCloudRecognition: true)
+        let outcome = await pipeline.suggestionOutcome(for: makeSolidImage(color: .systemBlue), allowsCloudRecognition: true)
 
-        XCTAssertEqual(suggestion, remoteSuggestion)
+        XCTAssertEqual(outcome?.suggestion, remoteSuggestion)
+        XCTAssertEqual(outcome?.delivery, .remoteAI)
     }
 
     func testPhotoTaggingPipelineFallsBackToLocalWhenCloudIsDisabledOrFails() async throws {
@@ -124,19 +125,37 @@ final class AIStylistClientTests: XCTestCase {
             cloudClient: FailingAsyncPhotoTaggingClient()
         )
 
-        let disabledSuggestionResult = await pipeline.suggestTags(
+        let disabledOutcomeResult = await pipeline.suggestionOutcome(
             for: makeSolidImage(color: .systemBlue),
             allowsCloudRecognition: false
         )
-        let failedSuggestionResult = await pipeline.suggestTags(
+        let failedOutcomeResult = await pipeline.suggestionOutcome(
             for: makeSolidImage(color: .systemBlue),
             allowsCloudRecognition: true
         )
-        let disabledSuggestion = try XCTUnwrap(disabledSuggestionResult)
-        let failedSuggestion = try XCTUnwrap(failedSuggestionResult)
+        let disabledOutcome = try XCTUnwrap(disabledOutcomeResult)
+        let failedOutcome = try XCTUnwrap(failedOutcomeResult)
 
-        XCTAssertEqual(disabledSuggestion.source, .localHeuristic)
-        XCTAssertEqual(failedSuggestion.source, .localHeuristic)
+        XCTAssertEqual(disabledOutcome.suggestion.source, .localHeuristic)
+        XCTAssertEqual(disabledOutcome.delivery, .localOnly)
+        XCTAssertEqual(failedOutcome.suggestion.source, .localHeuristic)
+        XCTAssertEqual(failedOutcome.delivery, .localAfterCloudUnavailable)
+    }
+
+    func testPhotoTaggingPipelineReportsLocalFallbackWhenCloudIsEnabledButNotConfigured() async throws {
+        let pipeline = PhotoTaggingPipeline(
+            localClient: LocalPhotoIntelligenceClient(),
+            cloudClient: nil
+        )
+
+        let outcomeResult = await pipeline.suggestionOutcome(
+            for: makeSolidImage(color: .systemBlue),
+            allowsCloudRecognition: true
+        )
+        let outcome = try XCTUnwrap(outcomeResult)
+
+        XCTAssertEqual(outcome.suggestion.source, .localHeuristic)
+        XCTAssertEqual(outcome.delivery, .localAfterCloudUnavailable)
     }
 
     func testFallbackExplanationMentionsProvidedItemColorsAndTypes() async throws {

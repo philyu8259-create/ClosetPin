@@ -135,7 +135,7 @@ struct AddEditItemView: View {
     @State private var saveError: String?
     @State private var photoError: String?
     @State private var photoPreview: PhotoPreviewSheet?
-    @State private var photoSuggestion: ClothingPhotoTagSuggestion?
+    @State private var photoTaggingOutcome: PhotoTaggingOutcome?
     @State private var showsOptionalDetails = false
 
     init(
@@ -309,8 +309,8 @@ struct AddEditItemView: View {
                     .foregroundStyle(DesignSystem.accent)
             }
 
-            if let photoSuggestion {
-                Label(suggestionStatusText(for: photoSuggestion), systemImage: "sparkles")
+            if let photoTaggingOutcome {
+                Label(suggestionStatusText(for: photoTaggingOutcome), systemImage: suggestionStatusIcon(for: photoTaggingOutcome))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
@@ -342,10 +342,10 @@ struct AddEditItemView: View {
         Section(L10n.text("closet.ai_edit.section")) {
             EssentialsChecklistGrid(draft: draft)
 
-            if let photoSuggestion {
-                Label(suggestionStatusText(for: photoSuggestion), systemImage: "sparkles")
+            if let photoTaggingOutcome {
+                Label(suggestionStatusText(for: photoTaggingOutcome), systemImage: suggestionStatusIcon(for: photoTaggingOutcome))
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(DesignSystem.premiumGold)
+                    .foregroundStyle(suggestionStatusColor(for: photoTaggingOutcome))
                     .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
             }
 
@@ -523,28 +523,59 @@ struct AddEditItemView: View {
     @MainActor
     private func applyPhotoIntelligenceIfAvailable(from data: Data) async {
         guard let image = UIImage(data: data) else {
-            photoSuggestion = nil
+            photoTaggingOutcome = nil
             return
         }
 
-        guard let suggestion = await photoTaggingPipeline.suggestTags(
+        guard let outcome = await photoTaggingPipeline.suggestionOutcome(
             for: image,
             allowsCloudRecognition: allowsCloudPhotoRecognition
         ) else {
-            photoSuggestion = nil
+            photoTaggingOutcome = nil
             return
         }
 
-        suggestion.apply(to: &draft)
-        photoSuggestion = suggestion
+        outcome.suggestion.apply(to: &draft)
+        photoTaggingOutcome = outcome
     }
 
     private var allowsCloudPhotoRecognition: Bool {
         preferences.first?.cloudPhotoRecognitionEnabled ?? false
     }
 
-    private func suggestionStatusText(for suggestion: ClothingPhotoTagSuggestion) -> String {
-        L10n.string("closet.photo.ai_suggestion.format", arguments: suggestion.color, suggestion.type.displayName)
+    private func suggestionStatusText(for outcome: PhotoTaggingOutcome) -> String {
+        let suggestion = outcome.suggestion
+        let key = switch outcome.delivery {
+        case .localOnly:
+            "closet.photo.ai_suggestion.local.format"
+        case .remoteAI:
+            "closet.photo.ai_suggestion.cloud.format"
+        case .localAfterCloudUnavailable:
+            "closet.photo.ai_suggestion.cloud_fallback.format"
+        }
+        return L10n.string(key, arguments: suggestion.color, suggestion.type.displayName)
+    }
+
+    private func suggestionStatusIcon(for outcome: PhotoTaggingOutcome) -> String {
+        switch outcome.delivery {
+        case .localOnly:
+            "wand.and.stars"
+        case .remoteAI:
+            "sparkles"
+        case .localAfterCloudUnavailable:
+            "wifi.slash"
+        }
+    }
+
+    private func suggestionStatusColor(for outcome: PhotoTaggingOutcome) -> Color {
+        switch outcome.delivery {
+        case .localOnly:
+            DesignSystem.accent
+        case .remoteAI:
+            DesignSystem.premiumGold
+        case .localAfterCloudUnavailable:
+            DesignSystem.wine
+        }
     }
 }
 
