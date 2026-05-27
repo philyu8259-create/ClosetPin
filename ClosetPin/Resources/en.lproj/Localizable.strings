@@ -80,8 +80,10 @@
 "closet.save_checklist.storage" = "Add a storage location";
 "closet.formality.label" = "Formality";
 "closet.formality.format" = "Formality: %d";
+"closet.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
 "closet.warmth.label" = "Warmth";
 "closet.warmth.format" = "Warmth: %d";
+"closet.warmth.scale" = "Light 1 · Layered 3 · Warm 5";
 "closet.notes.section" = "Notes";
 "closet.notes.placeholder" = "Optional notes";
 

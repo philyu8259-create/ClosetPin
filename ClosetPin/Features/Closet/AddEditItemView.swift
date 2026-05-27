@@ -371,19 +371,29 @@ struct AddEditItemView: View {
                 seasonGrid
             }
             .padding(.vertical, 4)
+
+            StatusSelectionGrid(selection: $draft.status)
+
+            LevelControl(
+                title: L10n.string("closet.formality.format", arguments: draft.formalityLevel),
+                subtitle: L10n.text("closet.formality.scale"),
+                value: $draft.formalityLevel,
+                decreaseIdentifier: "formalityDecreaseButton",
+                increaseIdentifier: "formalityIncreaseButton"
+            )
         }
     }
 
     private var optionalDetailsSection: some View {
         Section {
             DisclosureGroup(isExpanded: $showsOptionalDetails) {
-                Picker(L10n.text("closet.status.label"), selection: $draft.status) {
-                    ForEach(ClothingStatus.allCases) { status in
-                        Text(status.displayName).tag(status)
-                    }
-                }
-                Stepper(L10n.string("closet.formality.format", arguments: draft.formalityLevel), value: $draft.formalityLevel, in: 1...5)
-                Stepper(L10n.string("closet.warmth.format", arguments: draft.warmthLevel), value: $draft.warmthLevel, in: 1...5)
+                LevelControl(
+                    title: L10n.string("closet.warmth.format", arguments: draft.warmthLevel),
+                    subtitle: L10n.text("closet.warmth.scale"),
+                    value: $draft.warmthLevel,
+                    decreaseIdentifier: "warmthDecreaseButton",
+                    increaseIdentifier: "warmthIncreaseButton"
+                )
 
                 TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
                     .lineLimit(2...4)
@@ -620,6 +630,125 @@ private struct EssentialsChecklistChip: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(isComplete ? DesignSystem.accent.opacity(0.18) : DesignSystem.border.opacity(0.4), lineWidth: 1)
         }
+    }
+}
+
+private struct StatusSelectionGrid: View {
+    @Binding var selection: ClothingStatus
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(L10n.text("closet.status.label"))
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                ForEach(ClothingStatus.allCases) { status in
+                    let isSelected = selection == status
+                    Button {
+                        selection = status
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: status.systemImage)
+                                .font(.subheadline.weight(.semibold))
+                            Text(status.displayName)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 10)
+                        .foregroundStyle(isSelected ? .white : DesignSystem.ink)
+                        .background(isSelected ? statusColor(for: status) : DesignSystem.paper)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(statusColor(for: status).opacity(isSelected ? 0.16 : 0.24), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("statusOption_\(status.rawValue)")
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func statusColor(for status: ClothingStatus) -> Color {
+        DesignSystem.statusColor(for: status)
+    }
+}
+
+private struct LevelControl: View {
+    let title: String
+    let subtitle: String
+    @Binding var value: Int
+    let decreaseIdentifier: String
+    let increaseIdentifier: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(title)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+
+            HStack(spacing: DesignSystem.Spacing.md) {
+                LevelButton(
+                    systemImage: "minus",
+                    accessibilityIdentifier: decreaseIdentifier,
+                    isDisabled: value <= 1
+                ) {
+                    value = max(1, value - 1)
+                }
+
+                VStack(spacing: 4) {
+                    Text("\(value)")
+                        .font(DesignSystem.editorialSectionFont(size: 28))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(DesignSystem.surface.opacity(0.86))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+
+                LevelButton(
+                    systemImage: "plus",
+                    accessibilityIdentifier: increaseIdentifier,
+                    isDisabled: value >= 5
+                ) {
+                    value = min(5, value + 1)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct LevelButton: View {
+    let systemImage: String
+    let accessibilityIdentifier: String
+    let isDisabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.headline.weight(.bold))
+                .frame(width: 40, height: 40)
+                .foregroundStyle(isDisabled ? DesignSystem.secondaryInk.opacity(0.45) : .white)
+                .background(isDisabled ? DesignSystem.border.opacity(0.55) : DesignSystem.accent)
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }
 

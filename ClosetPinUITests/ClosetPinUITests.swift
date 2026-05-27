@@ -135,6 +135,39 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(storageLabel.exists)
     }
 
+    func testClosetItemCanEditStatusAndFormality() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+
+        let whiteShirtCard = app.buttons["closetItemCard_11111111-1111-1111-1111-111111111111"]
+        XCTAssertTrue(whiteShirtCard.waitForExistence(timeout: 3))
+        whiteShirtCard.tap()
+
+        XCTAssertTrue(app.buttons["editItemButton"].waitForExistence(timeout: 3))
+        app.buttons["editItemButton"].tap()
+        app.swipeUp()
+        app.swipeUp()
+
+        let needsWashOption = app.buttons["statusOption_needsWash"]
+        XCTAssertTrue(needsWashOption.waitForExistence(timeout: 3))
+        needsWashOption.tap()
+
+        let formalityIncreaseButton = app.buttons["formalityIncreaseButton"]
+        XCTAssertTrue(formalityIncreaseButton.waitForExistence(timeout: 3))
+        formalityIncreaseButton.tap()
+
+        app.buttons["saveItemButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Needs Wash"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["5"].waitForExistence(timeout: 3))
+    }
+
     private func makeApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]

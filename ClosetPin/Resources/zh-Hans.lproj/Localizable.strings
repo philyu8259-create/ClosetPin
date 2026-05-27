@@ -80,8 +80,10 @@
 "closet.save_checklist.storage" = "填写收纳位置";
 "closet.formality.label" = "正式度";
 "closet.formality.format" = "正式度：%d";
+"closet.formality.scale" = "休闲 1 · 平衡 3 · 精致 5";
 "closet.warmth.label" = "保暖度";
 "closet.warmth.format" = "保暖度：%d";
+"closet.warmth.scale" = "轻薄 1 · 叠穿 3 · 保暖 5";
 "closet.notes.section" = "备注";
 "closet.notes.placeholder" = "可选备注";
 
