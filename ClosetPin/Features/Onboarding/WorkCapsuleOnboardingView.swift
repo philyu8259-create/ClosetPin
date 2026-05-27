@@ -3,7 +3,7 @@ import SwiftUI
 
 struct WorkCapsuleOnboardingView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var entryMessage: String?
+    @State private var activeSheet: OnboardingSheet?
     @State private var saveError: String?
 
     private let checklistItems = [
@@ -35,6 +35,12 @@ struct WorkCapsuleOnboardingView: View {
                 Button(L10n.text("common.ok"), role: .cancel) {}
             } message: {
                 Text(saveError ?? L10n.text("common.try_again"))
+            }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .addItem:
+                    AddEditItemView()
+                }
             }
         }
     }
@@ -91,7 +97,7 @@ struct WorkCapsuleOnboardingView: View {
     private var actions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Button {
-                entryMessage = L10n.text("onboarding.entry_coming")
+                activeSheet = .addItem
             } label: {
                 Label(L10n.text("onboarding.start_adding"), systemImage: "plus")
                     .frame(maxWidth: .infinity)
@@ -110,13 +116,6 @@ struct WorkCapsuleOnboardingView: View {
             .buttonStyle(.bordered)
             .controlSize(.large)
             .accessibilityIdentifier("useSampleCapsuleButton")
-
-            if let entryMessage {
-                Text(entryMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 
@@ -125,6 +124,17 @@ struct WorkCapsuleOnboardingView: View {
             try WorkCapsuleSeeder.insertSampleCapsule(in: modelContext)
         } catch {
             saveError = error.localizedDescription
+        }
+    }
+}
+
+private enum OnboardingSheet: Identifiable {
+    case addItem
+
+    var id: String {
+        switch self {
+        case .addItem:
+            "addItem"
         }
     }
 }

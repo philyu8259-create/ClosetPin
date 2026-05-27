@@ -69,8 +69,13 @@
 "closet.season.selected" = "已选择";
 "closet.season.not_selected" = "未选择";
 "closet.levels.section" = "适合工作日";
-"closet.ai_edit.section" = "AI 编辑";
-"closet.ai_edit.confirmation_section" = "确认详情";
+"closet.ai_edit.section" = "主要信息";
+"closet.ai_edit.confirmation_section" = "更多信息";
+"closet.save_checklist.title" = "保存前还需要";
+"closet.save_checklist.photo" = "添加照片";
+"closet.save_checklist.color" = "填写颜色";
+"closet.save_checklist.season" = "选择季节";
+"closet.save_checklist.storage" = "填写收纳位置";
 "closet.formality.label" = "正式度";
 "closet.formality.format" = "正式度：%d";
 "closet.warmth.label" = "保暖度";

@@ -18,6 +18,18 @@ enum DesignSystem {
     static let editorialShadow = Color.black.opacity(0.18)
     static let editorialOverlayOpacity: Double = 0.54
 
+    static func editorialDisplayFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .semibold, design: .serif)
+    }
+
+    static func editorialSectionFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .medium, design: .serif)
+    }
+
+    static var tabLabelFont: Font {
+        .system(.caption2, design: .rounded).weight(.semibold)
+    }
+
     enum Radius {
         static let sm: CGFloat = 10
         static let md: CGFloat = 16
@@ -34,6 +46,7 @@ enum DesignSystem {
         static let xl: CGFloat = 24
         static let xxl: CGFloat = 32
         static let editorial: CGFloat = 40
+        static let tabBarClearance: CGFloat = 96
     }
 
     static func statusColor(for status: ClothingStatus) -> Color {

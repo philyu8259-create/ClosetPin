@@ -114,6 +114,7 @@ struct OutfitVisualItem: Identifiable, Equatable {
 
 struct OutfitVisualBoard: View {
     let visualItems: [OutfitVisualItem]
+    let allowsDetailNavigation: Bool
 
     private let columns = [
         GridItem(.flexible(), spacing: 8),
@@ -121,18 +122,20 @@ struct OutfitVisualBoard: View {
         GridItem(.flexible(), spacing: 8)
     ]
 
-    init(items: [ClothingItem]) {
+    init(items: [ClothingItem], allowsDetailNavigation: Bool = false) {
         self.visualItems = OutfitVisualItem.makeItems(from: items)
+        self.allowsDetailNavigation = allowsDetailNavigation
     }
 
-    init(visualItems: [OutfitVisualItem]) {
+    init(visualItems: [OutfitVisualItem], allowsDetailNavigation: Bool = false) {
         self.visualItems = visualItems
+        self.allowsDetailNavigation = allowsDetailNavigation
     }
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 8) {
             ForEach(visualItems) { visualItem in
-                if let item = visualItem.item {
+                if allowsDetailNavigation, let item = visualItem.item {
                     NavigationLink {
                         ClosetItemDetailView(item: item)
                     } label: {

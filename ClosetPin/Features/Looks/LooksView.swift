@@ -25,6 +25,7 @@ struct LooksView: View {
                     .padding(18)
                 }
             }
+            .safeAreaPadding(.bottom, DesignSystem.Spacing.tabBarClearance)
             .frame(maxWidth: .infinity)
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("looks.title"))

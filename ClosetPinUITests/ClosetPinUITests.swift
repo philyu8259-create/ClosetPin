@@ -20,6 +20,16 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testStartAddingFromOnboardingOpensAddItemFlow() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Work Capsule"].waitForExistence(timeout: 3))
+        app.buttons["startAddingClothesButton"].tap()
+
+        XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
+    }
+
     func testTodayRecommendationCanRecordWoreFeedback() {
         let app = makeApp()
         app.launch()
@@ -42,12 +52,14 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
 
-        app.tabBars.buttons["Closet"].tap()
+        app.buttons["appTab_closet"].tap()
         app.buttons["addItemButton"].tap()
 
         // System PhotosPicker library selection is not reliable in UI automation, so this
         // debug-only control persists a local test image through the same ImageStore path.
         app.buttons["useTestPhotoButton"].tap()
+        app.swipeUp()
+        app.swipeUp()
 
         let colorField = app.textFields["itemColorField"]
         XCTAssertTrue(colorField.waitForExistence(timeout: 3))

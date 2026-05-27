@@ -2,30 +2,178 @@ import SwiftData
 import SwiftUI
 
 struct AppRootView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var clothingItems: [ClothingItem]
+    @State private var debugSeedReady = false
+    @State private var selectedTab: AppTab = .today
 
     var body: some View {
-        if clothingItems.isEmpty {
-            WorkCapsuleOnboardingView()
+        if shouldAutoSeedDebugSampleCapsule {
+            Group {
+                if debugSeedReady {
+                    tabShell
+                } else {
+                    debugBootstrapView
+                }
+            }
+            .task {
+                prepareDebugSampleCapsuleIfNeeded()
+            }
         } else {
-            tabShell
+            if clothingItems.isEmpty {
+                WorkCapsuleOnboardingView()
+            } else {
+                tabShell
+            }
         }
     }
 
     private var tabShell: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             TodayView()
-                .tabItem { Label(L10n.text("tab.today"), systemImage: "sparkles") }
+                .tag(AppTab.today)
 
             ClosetView()
-                .tabItem { Label(L10n.text("tab.closet"), systemImage: "rectangle.grid.2x2") }
+                .tag(AppTab.closet)
 
             LooksView()
-                .tabItem { Label(L10n.text("tab.looks"), systemImage: "calendar") }
+                .tag(AppTab.looks)
 
             SettingsView()
-                .tabItem { Label(L10n.text("tab.settings"), systemImage: "gearshape") }
+                .tag(AppTab.settings)
         }
+        .toolbar(.hidden, for: .tabBar)
+        .safeAreaInset(edge: .bottom) {
+            EditorialTabBar(selection: $selectedTab)
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 10)
+        }
+    }
+
+    private var shouldAutoSeedDebugSampleCapsule: Bool {
+#if DEBUG
+        ProcessInfo.processInfo.environment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] == "1"
+#else
+        false
+#endif
+    }
+
+    private var debugBootstrapView: some View {
+        ZStack {
+            DesignSystem.background
+                .ignoresSafeArea()
+
+            ProgressView()
+                .tint(DesignSystem.accent)
+        }
+    }
+
+    @MainActor
+    private func prepareDebugSampleCapsuleIfNeeded() {
+#if DEBUG
+        guard shouldAutoSeedDebugSampleCapsule else { return }
+        guard !debugSeedReady else { return }
+
+        if clothingItems.isEmpty {
+            _ = try? WorkCapsuleSeeder.insertSampleCapsule(in: modelContext)
+        }
+
+        debugSeedReady = true
+#endif
+    }
+}
+
+private enum AppTab: String, CaseIterable, Identifiable {
+    case today
+    case closet
+    case looks
+    case settings
+
+    var id: String { rawValue }
+
+    var titleKey: String {
+        switch self {
+        case .today:
+            "tab.today"
+        case .closet:
+            "tab.closet"
+        case .looks:
+            "tab.looks"
+        case .settings:
+            "tab.settings"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .today:
+            "sparkles"
+        case .closet:
+            "square.grid.2x2.fill"
+        case .looks:
+            "calendar"
+        case .settings:
+            "gearshape.fill"
+        }
+    }
+
+    var accessibilityIdentifier: String {
+        "appTab_\(rawValue)"
+    }
+}
+
+private struct EditorialTabBar: View {
+    @Binding var selection: AppTab
+    @Namespace private var selectionAnimation
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(AppTab.allCases) { tab in
+                Button {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        selection = tab
+                    }
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: tab.systemImage)
+                            .font(.system(size: 16, weight: .semibold))
+
+                        Text(L10n.text(tab.titleKey))
+                            .font(DesignSystem.tabLabelFont)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(selection == tab ? DesignSystem.ink : DesignSystem.secondaryInk)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background {
+                        if selection == tab {
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .fill(DesignSystem.surfaceElevated.opacity(0.92))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                        .stroke(DesignSystem.premiumGold.opacity(0.35), lineWidth: 1)
+                                }
+                                .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 8)
+                                .matchedGeometryEffect(id: "tabSelection", in: selectionAnimation)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(tab.accessibilityIdentifier)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .stroke(DesignSystem.border.opacity(0.85), lineWidth: 1)
+                }
+        )
+        .shadow(color: .black.opacity(0.08), radius: 22, x: 0, y: 10)
     }
 }
 

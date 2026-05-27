@@ -69,8 +69,13 @@
 "closet.season.selected" = "Selected";
 "closet.season.not_selected" = "Not selected";
 "closet.levels.section" = "Fit For Workday";
-"closet.ai_edit.section" = "AI Edit";
-"closet.ai_edit.confirmation_section" = "Confirm Details";
+"closet.ai_edit.section" = "Main Details";
+"closet.ai_edit.confirmation_section" = "More Details";
+"closet.save_checklist.title" = "To save this piece";
+"closet.save_checklist.photo" = "Add a photo";
+"closet.save_checklist.color" = "Add a color";
+"closet.save_checklist.season" = "Choose a season";
+"closet.save_checklist.storage" = "Add a storage location";
 "closet.formality.label" = "Formality";
 "closet.formality.format" = "Formality: %d";
 "closet.warmth.label" = "Warmth";

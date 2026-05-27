@@ -58,6 +58,22 @@ struct AddEditItemDraft {
         validationMessages.isEmpty
     }
 
+    var hasPhoto: Bool {
+        normalized(photoLocalPath).isEmpty == false || pendingPhotoJPEGData != nil
+    }
+
+    var hasColor: Bool {
+        normalized(color).isEmpty == false
+    }
+
+    var hasStorageLocation: Bool {
+        normalized(storageLocation).isEmpty == false
+    }
+
+    var hasSeasonSelection: Bool {
+        selectedSeasons.isEmpty == false
+    }
+
     mutating func toggleSeason(_ season: SeasonTag) {
         if selectedSeasons.contains(season) {
             selectedSeasons.remove(season)
@@ -136,6 +152,7 @@ struct AddEditItemView: View {
         NavigationStack {
             Form {
                 editorialPhotoSection
+                saveReadinessSection
                 aiEditSection
                 advancedSection
 
@@ -181,6 +198,15 @@ struct AddEditItemView: View {
             .sheet(item: $photoPreview) { preview in
                 PhotoPreviewSheetView(preview: preview)
             }
+        }
+    }
+
+    private var saveReadinessSection: some View {
+        Section(L10n.text("closet.save_checklist.title")) {
+            SaveChecklistRow(title: L10n.text("closet.save_checklist.photo"), isComplete: draft.hasPhoto)
+            SaveChecklistRow(title: L10n.text("closet.save_checklist.color"), isComplete: draft.hasColor)
+            SaveChecklistRow(title: L10n.text("closet.save_checklist.season"), isComplete: draft.hasSeasonSelection)
+            SaveChecklistRow(title: L10n.text("closet.save_checklist.storage"), isComplete: draft.hasStorageLocation)
         }
     }
 
@@ -537,6 +563,28 @@ struct AddEditItemView: View {
 
     private func suggestionStatusText(for suggestion: ClothingPhotoTagSuggestion) -> String {
         L10n.string("closet.photo.ai_suggestion.format", arguments: suggestion.color, suggestion.type.displayName)
+    }
+}
+
+private struct SaveChecklistRow: View {
+    let title: String
+    let isComplete: Bool
+
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.sm) {
+            Image(systemName: isComplete ? "checkmark.circle.fill" : "circle.dashed")
+                .foregroundStyle(isComplete ? DesignSystem.accent : DesignSystem.secondaryInk)
+
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(DesignSystem.ink)
+
+            Spacer()
+
+            Text(isComplete ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
+                .font(.caption)
+                .foregroundStyle(DesignSystem.secondaryInk)
+        }
     }
 }
 

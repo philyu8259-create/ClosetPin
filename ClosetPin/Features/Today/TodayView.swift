@@ -39,6 +39,7 @@ struct TodayView: View {
                     }
                 }
                 .padding(18)
+                .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(DesignSystem.background)
@@ -225,7 +226,8 @@ private struct TodayEditorialHero: View {
                         .foregroundStyle(DesignSystem.premiumGold)
 
                     Text(title)
-                        .font(.largeTitle.weight(.semibold))
+                        .font(DesignSystem.editorialDisplayFont(size: 42))
+                        .tracking(-0.8)
                         .foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
 
