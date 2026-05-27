@@ -48,6 +48,8 @@
 "closet.photo.auto_cropped" = "Auto-cropped display photo";
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
+"closet.photo.editorial_title" = "New Piece";
+"closet.photo.editorial_help" = "Capture the garment clearly. ClosetPin will suggest the edit, and every field stays adjustable.";
 "closet.photo.ai_suggestion.format" = "Suggested %@ %@. You can edit every field.";
 "closet.photo.save_failed" = "The photo could not be saved. Please try again.";
 "closet.photo.selected_load_failed" = "The selected photo could not be loaded.";
@@ -67,6 +69,8 @@
 "closet.season.selected" = "Selected";
 "closet.season.not_selected" = "Not selected";
 "closet.levels.section" = "Fit For Workday";
+"closet.ai_edit.section" = "AI Edit";
+"closet.ai_edit.confirmation_section" = "Confirm Details";
 "closet.formality.label" = "Formality";
 "closet.formality.format" = "Formality: %d";
 "closet.warmth.label" = "Warmth";
@@ -79,6 +83,7 @@
 "today.subtitle" = "A quieter way to decide what works for your day.";
 "today.feedback_error_title" = "Feedback Was Not Saved";
 "today.context.title" = "Work context";
+"today.edit.kicker" = "Today's Edit";
 "today.scenario.label" = "Scenario";
 "today.season.label" = "Season";
 "today.recommended_for.format" = "Recommended for %@";
@@ -117,6 +122,9 @@
 "looks.item_count.format" = "%d items";
 "looks.items.unavailable" = "Items unavailable";
 "looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works in your week.";
+"closet.archive.kicker" = "Archive";
+"closet.archive.title" = "Work Closet";
+"closet.archive.count.format" = "%d pieces ready to style";
 "settings.title" = "Settings";
 "settings.preferences.section" = "Styling Preferences";
 "settings.default_scenario.label" = "Default Scenario";

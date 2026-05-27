@@ -283,6 +283,47 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertNotNil(emptyClosetURL.flatMap { UIImage(contentsOfFile: $0.path) })
     }
 
+    func testEditorialSeedCapsuleAssetsAreBundled() {
+        let assetNames = [
+            "editorial-white-shirt",
+            "editorial-light-blue-blouse",
+            "editorial-charcoal-knit",
+            "editorial-navy-bottom",
+            "editorial-black-bottom",
+            "editorial-charcoal-blazer",
+            "editorial-black-shoes",
+            "editorial-brown-loafers",
+            "editorial-work-bag"
+        ]
+
+        for name in assetNames {
+            let url = Bundle.main.url(forResource: name, withExtension: "png")
+            XCTAssertNotNil(url.flatMap { UIImage(contentsOfFile: $0.path) }, "Expected bundled image named \(name)")
+        }
+    }
+
+    func testSampleCapsuleUsesEditorialGeneratedPhotoPaths() {
+        let expectedPaths = [
+            "generated/editorial-white-shirt.png",
+            "generated/editorial-light-blue-blouse.png",
+            "generated/editorial-charcoal-knit.png",
+            "generated/editorial-navy-bottom.png",
+            "generated/editorial-black-bottom.png",
+            "generated/editorial-charcoal-blazer.png",
+            "generated/editorial-black-shoes.png",
+            "generated/editorial-brown-loafers.png",
+            "generated/editorial-work-bag.png"
+        ]
+
+        XCTAssertEqual(SeedData.workCapsuleItems().map(\.photoLocalPath), expectedPaths)
+    }
+
+    func testEditorialDesignTokensPreferSoftImageLedSurfaces() {
+        XCTAssertGreaterThan(DesignSystem.Radius.editorialHero, DesignSystem.Radius.lg)
+        XCTAssertGreaterThan(DesignSystem.Spacing.editorial, DesignSystem.Spacing.xl)
+        XCTAssertEqual(DesignSystem.editorialOverlayOpacity, 0.54, accuracy: 0.001)
+    }
+
     func testAddEditItemDraftRequiresColorSeasonStorageAndPhotoBeforeSaving() {
         var draft = AddEditItemDraft()
 

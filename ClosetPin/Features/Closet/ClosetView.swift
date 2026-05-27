@@ -51,6 +51,7 @@ struct ClosetView: View {
     private var closetGrid: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                archiveMasthead
                 filterBar
 
                 if filteredItems.isEmpty {
@@ -73,8 +74,30 @@ struct ClosetView: View {
         }
     }
 
+    private var archiveMasthead: some View {
+        EditorialImageSurface(
+            image: filteredItems.first.flatMap(WardrobePhoto.localImage(for:)),
+            height: 220
+        ) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                Text(L10n.text("closet.archive.kicker"))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(DesignSystem.premiumGold)
+                    .textCase(.uppercase)
+
+                Text(L10n.text("closet.archive.title"))
+                    .font(.largeTitle.weight(.semibold))
+                    .foregroundStyle(.white)
+
+                Text(L10n.string("closet.archive.count.format", arguments: filteredItems.count))
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.84))
+            }
+        }
+    }
+
     private var filterBar: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ContextChip(title: L10n.text("closet.filter.all"), value: ClosetTypeFilter.all, selection: $typeFilter)
@@ -130,12 +153,9 @@ struct ClosetView: View {
             .accessibilityIdentifier("addItemButton")
         }
         .padding(DesignSystem.Spacing.xl)
-        .background(DesignSystem.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous)
-                .stroke(DesignSystem.border, lineWidth: 1)
-        }
+        .background(DesignSystem.paper)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 20, x: 0, y: 12)
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
@@ -159,6 +179,9 @@ struct ClosetView: View {
                 }
             }
             .sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
                 if $0.color.localizedCaseInsensitiveCompare($1.color) == .orderedSame {
                     return $0.storageLocation.localizedCaseInsensitiveCompare($1.storageLocation) == .orderedAscending
                 }
@@ -201,7 +224,7 @@ private struct GarmentGridCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             WardrobePhotoThumbnail(item: item, cornerRadius: DesignSystem.Radius.md)
-                .aspectRatio(0.86, contentMode: .fit)
+                .aspectRatio(0.78, contentMode: .fit)
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                 Text(item.color)
@@ -226,12 +249,9 @@ private struct GarmentGridCard: View {
         }
         .padding(DesignSystem.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.surface)
+        .background(DesignSystem.surface.opacity(0.82))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
-                .stroke(DesignSystem.border, lineWidth: 1)
-        }
+        .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 12)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
     }

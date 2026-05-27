@@ -54,6 +54,12 @@ final class ImageStoreTests: XCTestCase {
         XCTAssertNil(image)
     }
 
+    func testWardrobePhotoLoadsBundledGeneratedPNGByLogicalPath() {
+        let image = WardrobePhoto.localImage(at: "generated/editorial-white-shirt.png")
+
+        XCTAssertNotNil(image)
+    }
+
     func testSavingSameUUIDOverwritesExistingJPEGData() throws {
         let directory = temporaryDirectory()
         let store = ImageStore(baseDirectory: directory)

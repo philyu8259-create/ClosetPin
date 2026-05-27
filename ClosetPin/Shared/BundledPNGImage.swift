@@ -17,8 +17,26 @@ struct BundledPNGImage: View {
 
 enum WardrobePhoto {
     static func localImage(at path: String) -> UIImage? {
-        guard !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-        return UIImage(contentsOfFile: path)
+        let trimmedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPath.isEmpty else { return nil }
+
+        if let image = UIImage(contentsOfFile: trimmedPath) {
+            return image
+        }
+
+        let filename = (trimmedPath as NSString).lastPathComponent as NSString
+        let resourceName = filename.deletingPathExtension
+        let resourceExtension = filename.pathExtension
+        guard !resourceName.isEmpty else { return nil }
+
+        guard let url = Bundle.main.url(
+            forResource: resourceName,
+            withExtension: resourceExtension.isEmpty ? nil : resourceExtension
+        ) else {
+            return nil
+        }
+
+        return UIImage(contentsOfFile: url.path)
     }
 
     static func localImage(for item: ClothingItem) -> UIImage? {

@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 enum DesignSystem {
     static let cornerRadius: CGFloat = Radius.md
     static let spacing: CGFloat = Spacing.lg
 
     static let background = Color(hex: "F7F2EA")
+    static let paper = Color(hex: "FCF8F1")
     static let surface = Color(hex: "FFFDF8")
     static let surfaceElevated = Color.white
     static let ink = Color(hex: "171513")
@@ -13,12 +15,15 @@ enum DesignSystem {
     static let premiumGold = Color(hex: "C8A96A")
     static let wine = Color(hex: "6B2E3A")
     static let border = Color(hex: "E7DED2")
+    static let editorialShadow = Color.black.opacity(0.18)
+    static let editorialOverlayOpacity: Double = 0.54
 
     enum Radius {
         static let sm: CGFloat = 10
         static let md: CGFloat = 16
         static let lg: CGFloat = 24
         static let xl: CGFloat = 32
+        static let editorialHero: CGFloat = 42
     }
 
     enum Spacing {
@@ -28,6 +33,7 @@ enum DesignSystem {
         static let lg: CGFloat = 16
         static let xl: CGFloat = 24
         static let xxl: CGFloat = 32
+        static let editorial: CGFloat = 40
     }
 
     static func statusColor(for status: ClothingStatus) -> Color {
@@ -75,18 +81,69 @@ struct LuxurySurfaceCard<Content: View>: View {
         content
             .padding(DesignSystem.Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(isElevated ? DesignSystem.surfaceElevated : DesignSystem.surface)
+            .background(isElevated ? DesignSystem.surfaceElevated : DesignSystem.paper)
             .clipShape(RoundedRectangle(cornerRadius: isElevated ? DesignSystem.Radius.lg : DesignSystem.Radius.md, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: isElevated ? DesignSystem.Radius.lg : DesignSystem.Radius.md, style: .continuous)
-                    .stroke(isElevated ? DesignSystem.premiumGold.opacity(0.55) : DesignSystem.border, lineWidth: 1)
+                    .stroke(isElevated ? DesignSystem.premiumGold.opacity(0.22) : DesignSystem.border.opacity(0.45), lineWidth: 1)
             }
             .shadow(
-                color: .black.opacity(isElevated ? 0.08 : 0.03),
-                radius: isElevated ? 16 : 6,
+                color: .black.opacity(isElevated ? 0.09 : 0.045),
+                radius: isElevated ? 20 : 10,
                 x: 0,
-                y: isElevated ? 8 : 3
+                y: isElevated ? 12 : 6
             )
+    }
+}
+
+struct EditorialImageSurface<Content: View>: View {
+    let image: UIImage?
+    let fallback: LinearGradient
+    let height: CGFloat
+    let content: Content
+
+    init(
+        image: UIImage?,
+        height: CGFloat,
+        fallback: LinearGradient = LinearGradient(
+            colors: [DesignSystem.surface, DesignSystem.border],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        @ViewBuilder content: () -> Content
+    ) {
+        self.image = image
+        self.height = height
+        self.fallback = fallback
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    fallback
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .clipped()
+
+            LinearGradient(
+                colors: [.clear, .black.opacity(DesignSystem.editorialOverlayOpacity)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+
+            content
+                .padding(DesignSystem.Spacing.xl)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
+        .shadow(color: DesignSystem.editorialShadow, radius: 28, x: 0, y: 18)
     }
 }
 
@@ -100,18 +157,18 @@ struct ContextChip<Value: Hashable>: View {
             selection = value
         } label: {
             Text(title)
-                .font(.callout.weight(.semibold))
+                .font(.footnote.weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
                 .padding(.horizontal, 13)
-                .padding(.vertical, 9)
-                .frame(minHeight: 38)
+                .padding(.vertical, 8)
+                .frame(minHeight: 34)
                 .foregroundStyle(isSelected ? .white : DesignSystem.ink)
-                .background(isSelected ? DesignSystem.accent : DesignSystem.surface)
+                .background(isSelected ? DesignSystem.accent : DesignSystem.paper.opacity(0.96))
                 .clipShape(Capsule(style: .continuous))
                 .overlay {
                     Capsule(style: .continuous)
-                        .stroke(isSelected ? DesignSystem.accent : DesignSystem.border, lineWidth: 1)
+                        .stroke(isSelected ? DesignSystem.accent.opacity(0.16) : DesignSystem.border.opacity(0.55), lineWidth: 1)
                 }
         }
         .buttonStyle(.plain)

@@ -48,6 +48,8 @@
 "closet.photo.auto_cropped" = "已自动裁切展示图";
 "closet.photo.original" = "原始照片";
 "closet.photo.view_original" = "查看原图";
+"closet.photo.editorial_title" = "新增单品";
+"closet.photo.editorial_help" = "清晰拍下衣物。ClosetPin 会给出编辑建议，所有字段仍可修改。";
 "closet.photo.ai_suggestion.format" = "已建议：%@%@。所有字段都可修改。";
 "closet.photo.save_failed" = "照片未能保存。请再试一次。";
 "closet.photo.selected_load_failed" = "无法加载所选照片。";
@@ -67,6 +69,8 @@
 "closet.season.selected" = "已选择";
 "closet.season.not_selected" = "未选择";
 "closet.levels.section" = "适合工作日";
+"closet.ai_edit.section" = "AI 编辑";
+"closet.ai_edit.confirmation_section" = "确认详情";
 "closet.formality.label" = "正式度";
 "closet.formality.format" = "正式度：%d";
 "closet.warmth.label" = "保暖度";
@@ -79,6 +83,7 @@
 "today.subtitle" = "用更安静的方式，决定今天穿什么。";
 "today.feedback_error_title" = "未能保存反馈";
 "today.context.title" = "工作场景";
+"today.edit.kicker" = "今日编辑";
 "today.scenario.label" = "场景";
 "today.season.label" = "季节";
 "today.recommended_for.format" = "推荐用于%@";
@@ -117,6 +122,9 @@
 "looks.item_count.format" = "%d 件单品";
 "looks.items.unavailable" = "单品不可用";
 "looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配真正适合你的工作周。";
+"closet.archive.kicker" = "衣橱档案";
+"closet.archive.title" = "职业衣橱";
+"closet.archive.count.format" = "%d 件单品可搭配";
 "settings.title" = "设置";
 "settings.preferences.section" = "搭配偏好";
 "settings.default_scenario.label" = "默认场景";

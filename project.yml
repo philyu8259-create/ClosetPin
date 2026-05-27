@@ -16,6 +16,24 @@ targets:
         buildPhase: resources
       - path: Assets/Generated/empty-closet.png
         buildPhase: resources
+      - path: Assets/Generated/editorial-white-shirt.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-light-blue-blouse.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-charcoal-knit.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-navy-bottom.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-black-bottom.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-charcoal-blazer.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-black-shoes.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-brown-loafers.png
+        buildPhase: resources
+      - path: Assets/Generated/editorial-work-bag.png
+        buildPhase: resources
     resources:
       - ClosetPin/Resources
     settings:

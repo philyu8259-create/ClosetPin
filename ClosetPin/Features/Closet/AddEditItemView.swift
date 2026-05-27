@@ -135,11 +135,9 @@ struct AddEditItemView: View {
     var body: some View {
         NavigationStack {
             Form {
-                photoSection
-                detailsSection
-                seasonsSection
-                levelsSection
-                notesSection
+                editorialPhotoSection
+                aiEditSection
+                advancedSection
 
                 if !draft.canSave {
                     validationSection
@@ -186,9 +184,40 @@ struct AddEditItemView: View {
         }
     }
 
-    private var photoSection: some View {
-        Section(L10n.text("closet.photo.section")) {
+    private var editorialPhotoSection: some View {
+        Section(L10n.text("closet.photo.editorial_title")) {
             VStack(alignment: .leading, spacing: 10) {
+                Group {
+                    if let image = displayPreviewImage {
+                        WardrobePhotoThumbnail(
+                            image: image,
+                            fallbackColor: ColorResolver.swatchColor(for: draft.color),
+                            cornerRadius: DesignSystem.Radius.editorialHero
+                        )
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 340)
+                        .accessibilityIdentifier("photoPreview")
+                    } else {
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous)
+                            .fill(DesignSystem.paper)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 240)
+                            .overlay {
+                                VStack(spacing: DesignSystem.Spacing.sm) {
+                                    Image(systemName: "camera.macro")
+                                        .font(.title2)
+                                        .foregroundStyle(DesignSystem.secondaryInk)
+
+                                    Text(L10n.text("closet.photo.help"))
+                                        .font(.footnote)
+                                        .foregroundStyle(DesignSystem.secondaryInk)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, DesignSystem.Spacing.xl)
+                                }
+                            }
+                    }
+                }
+
                 HStack(spacing: 10) {
                     Button {
                         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
@@ -221,40 +250,9 @@ struct AddEditItemView: View {
                 Text(L10n.text("closet.photo.help"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-
-            if let image = displayPreviewImage {
-                VStack(alignment: .leading, spacing: 8) {
-                    WardrobePhotoThumbnail(
-                        image: image,
-                        fallbackColor: ColorResolver.swatchColor(for: draft.color),
-                        cornerRadius: 8
-                    )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 220)
-
-                    HStack {
-                        Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-
-                        Spacer()
-
-                        if let originalPreviewImage {
-                            Button {
-                                photoPreview = PhotoPreviewSheet(
-                                    title: L10n.text("closet.photo.original"),
-                                    image: originalPreviewImage
-                                )
-                            } label: {
-                                Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
-                            }
-                            .font(.footnote.weight(.semibold))
-                            .buttonStyle(.borderless)
-                        }
-                    }
-                }
-                .accessibilityIdentifier("photoPreview")
+                Text(L10n.text("closet.photo.editorial_help"))
+                    .font(.footnote)
+                    .foregroundStyle(DesignSystem.secondaryInk)
             }
 
 #if DEBUG
@@ -267,6 +265,29 @@ struct AddEditItemView: View {
                 .accessibilityIdentifier("useTestPhotoButton")
             }
 #endif
+
+            if displayPreviewImage != nil {
+                HStack {
+                    Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    if let originalPreviewImage {
+                        Button {
+                            photoPreview = PhotoPreviewSheet(
+                                title: L10n.text("closet.photo.original"),
+                                image: originalPreviewImage
+                            )
+                        } label: {
+                            Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
+                        }
+                        .font(.footnote.weight(.semibold))
+                        .buttonStyle(.borderless)
+                    }
+                }
+            }
 
             if draft.pendingPhotoJPEGData != nil {
                 Label(L10n.text("closet.photo.ready"), systemImage: "checkmark.circle.fill")
@@ -307,8 +328,15 @@ struct AddEditItemView: View {
         return WardrobePhoto.localImage(at: draft.originalPhotoLocalPath)
     }
 
-    private var detailsSection: some View {
-        Section(L10n.text("closet.details.section")) {
+    private var aiEditSection: some View {
+        Section(L10n.text("closet.ai_edit.section")) {
+            if let photoSuggestion {
+                Label(suggestionStatusText(for: photoSuggestion), systemImage: "sparkles")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.premiumGold)
+                    .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
+            }
+
             Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
                     Text(type.displayName).tag(type)
@@ -319,6 +347,19 @@ struct AddEditItemView: View {
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemColorField")
 
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                Text(L10n.text("closet.seasons.section"))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                seasonGrid
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    private var advancedSection: some View {
+        Section(L10n.text("closet.ai_edit.confirmation_section")) {
             TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemStorageField")
@@ -328,49 +369,37 @@ struct AddEditItemView: View {
                     Text(status.displayName).tag(status)
                 }
             }
-        }
-    }
-
-    private var seasonsSection: some View {
-        Section(L10n.text("closet.seasons.section")) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
-                ForEach(SeasonTag.allCases) { season in
-                    let isSelected = draft.selectedSeasons.contains(season)
-                    Button {
-                        draft.toggleSeason(season)
-                    } label: {
-                        HStack {
-                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                            Text(season.displayName)
-                            Spacer(minLength: 0)
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity)
-                        .background(isSelected ? DesignSystem.accent.opacity(0.14) : Color(.tertiarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("seasonToggle_\(season.rawValue)")
-                    .accessibilityValue(isSelected ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
-                }
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    private var levelsSection: some View {
-        Section(L10n.text("closet.levels.section")) {
             Stepper(L10n.string("closet.formality.format", arguments: draft.formalityLevel), value: $draft.formalityLevel, in: 1...5)
             Stepper(L10n.string("closet.warmth.format", arguments: draft.warmthLevel), value: $draft.warmthLevel, in: 1...5)
+
+            TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
+                .lineLimit(2...4)
         }
     }
 
-    private var notesSection: some View {
-        Section(L10n.text("closet.notes.section")) {
-            TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
-                .lineLimit(2...4)
+    private var seasonGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
+            ForEach(SeasonTag.allCases) { season in
+                let isSelected = draft.selectedSeasons.contains(season)
+                Button {
+                    draft.toggleSeason(season)
+                } label: {
+                    HStack {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        Text(season.displayName)
+                        Spacer(minLength: 0)
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(isSelected ? DesignSystem.accent.opacity(0.14) : DesignSystem.paper)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("seasonToggle_\(season.rawValue)")
+                .accessibilityValue(isSelected ? L10n.text("closet.season.selected") : L10n.text("closet.season.not_selected"))
+            }
         }
     }
 

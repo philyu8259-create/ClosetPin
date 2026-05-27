@@ -8,7 +8,7 @@ enum SeedData {
         return [
             workItem(
                 id: "11111111-1111-1111-1111-111111111111",
-                photoLocalPath: "seed/work-capsule/white-shirt",
+                photoLocalPath: "generated/editorial-white-shirt.png",
                 type: .top,
                 colorKey: "seed.work_capsule.white_shirt.color",
                 styleTags: ["shirt", "office"],
@@ -19,7 +19,7 @@ enum SeedData {
             ),
             workItem(
                 id: "22222222-2222-2222-2222-222222222222",
-                photoLocalPath: "seed/work-capsule/light-blue-blouse",
+                photoLocalPath: "generated/editorial-light-blue-blouse.png",
                 type: .top,
                 colorKey: "seed.work_capsule.light_blue_blouse.color",
                 styleTags: ["blouse", "meeting"],
@@ -30,7 +30,7 @@ enum SeedData {
             ),
             workItem(
                 id: "33333333-3333-3333-3333-333333333333",
-                photoLocalPath: "seed/work-capsule/charcoal-polo",
+                photoLocalPath: "generated/editorial-charcoal-knit.png",
                 type: .top,
                 colorKey: "seed.work_capsule.charcoal_polo.color",
                 styleTags: ["polo", "office"],
@@ -41,7 +41,7 @@ enum SeedData {
             ),
             workItem(
                 id: "44444444-4444-4444-4444-444444444444",
-                photoLocalPath: "seed/work-capsule/navy-bottom",
+                photoLocalPath: "generated/editorial-navy-bottom.png",
                 type: .bottom,
                 colorKey: "seed.work_capsule.navy_bottom.color",
                 styleTags: ["pants/skirt", "office"],
@@ -52,7 +52,7 @@ enum SeedData {
             ),
             workItem(
                 id: "55555555-5555-5555-5555-555555555555",
-                photoLocalPath: "seed/work-capsule/black-bottom",
+                photoLocalPath: "generated/editorial-black-bottom.png",
                 type: .bottom,
                 colorKey: "seed.work_capsule.black_bottom.color",
                 styleTags: ["pants/skirt", "meeting"],
@@ -63,7 +63,7 @@ enum SeedData {
             ),
             workItem(
                 id: "66666666-6666-6666-6666-666666666666",
-                photoLocalPath: "seed/work-capsule/charcoal-blazer",
+                photoLocalPath: "generated/editorial-charcoal-blazer.png",
                 type: .blazer,
                 colorKey: "seed.work_capsule.charcoal_blazer.color",
                 styleTags: ["blazer", "work layer"],
@@ -74,7 +74,7 @@ enum SeedData {
             ),
             workItem(
                 id: "77777777-7777-7777-7777-777777777777",
-                photoLocalPath: "seed/work-capsule/black-shoes",
+                photoLocalPath: "generated/editorial-black-shoes.png",
                 type: .shoes,
                 colorKey: "seed.work_capsule.black_shoes.color",
                 styleTags: ["shoes", "office"],
@@ -85,7 +85,7 @@ enum SeedData {
             ),
             workItem(
                 id: "88888888-8888-8888-8888-888888888888",
-                photoLocalPath: "seed/work-capsule/brown-shoes",
+                photoLocalPath: "generated/editorial-brown-loafers.png",
                 type: .shoes,
                 colorKey: "seed.work_capsule.brown_shoes.color",
                 styleTags: ["shoes", "meeting"],
@@ -96,7 +96,7 @@ enum SeedData {
             ),
             workItem(
                 id: "99999999-9999-9999-9999-999999999999",
-                photoLocalPath: "seed/work-capsule/work-bag",
+                photoLocalPath: "generated/editorial-work-bag.png",
                 type: .bag,
                 colorKey: "seed.work_capsule.work_bag.color",
                 styleTags: ["bag", "work"],
