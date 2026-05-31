@@ -2,6 +2,30 @@ import XCTest
 @testable import ClosetPin
 
 final class RecommendationEngineTests: XCTestCase {
+    func testTomorrowWeatherPreviewParsesRainyCommutePreset() throws {
+        let context = try XCTUnwrap(TomorrowWeatherPreview.context(from: "rainy_commute"))
+
+        XCTAssertEqual(context.condition, .rain)
+        XCTAssertEqual(context.minTemperatureCelsius, 11)
+        XCTAssertEqual(context.maxTemperatureCelsius, 18)
+        XCTAssertEqual(context.precipitationProbability, 70)
+        XCTAssertTrue(context.isRainLikely)
+    }
+
+    func testTomorrowWeatherPreviewParsesJSONPayload() throws {
+        let payload = """
+        {"condition":"light_rain","minTemperatureCelsius":9,"maxTemperatureCelsius":14,"precipitationProbability":55,"windSpeedKph":31}
+        """
+
+        let context = try XCTUnwrap(TomorrowWeatherPreview.context(from: payload))
+
+        XCTAssertEqual(context.condition, .lightRain)
+        XCTAssertEqual(context.minTemperatureCelsius, 9)
+        XCTAssertEqual(context.maxTemperatureCelsius, 14)
+        XCTAssertTrue(context.isRainLikely)
+        XCTAssertTrue(context.isWindy)
+    }
+
     func testExcludesUnavailableItems() {
         let items = [
             clothingItem(type: .top, status: .needsWash),

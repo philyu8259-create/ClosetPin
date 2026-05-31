@@ -8,6 +8,7 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.otherElements["tomorrowPrepCard"].exists)
     }
 
     func testUseSampleCapsuleRoutesToToday() {
@@ -233,7 +234,10 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["5"].waitForExistence(timeout: 3))
     }
 
-    private func makeApp(language: String = "en", locale: String = "en_US") -> XCUIApplication {
+    private func makeApp(
+        language: String = "en",
+        locale: String = "en_US"
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", locale]
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
