@@ -82,6 +82,14 @@ struct AddEditItemDraft {
         }
     }
 
+    mutating func selectCurrentSeason(date: Date = Date(), calendar: Calendar = .current) {
+        selectedSeasons = [SeasonResolver.currentSeason(date: date, calendar: calendar)]
+    }
+
+    mutating func selectYearRound() {
+        selectedSeasons = Set(SeasonTag.allCases)
+    }
+
     func makeItem() -> ClothingItem {
         ClothingItem(
             id: itemID,
@@ -342,6 +350,10 @@ struct AddEditItemView: View {
         Section(L10n.text("closet.ai_edit.section")) {
             EssentialsChecklistGrid(draft: draft)
 
+            Text(L10n.text("closet.ai_edit.helper"))
+                .font(.caption)
+                .foregroundStyle(DesignSystem.secondaryInk)
+
             Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
                     Text(type.displayName).tag(type)
@@ -361,25 +373,30 @@ struct AddEditItemView: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(DesignSystem.secondaryInk)
 
+                SeasonShortcutRow(
+                    selectCurrentSeason: { draft.selectCurrentSeason() },
+                    selectYearRound: { draft.selectYearRound() }
+                )
+
                 seasonGrid
             }
             .padding(.vertical, 4)
-
-            StatusSelectionGrid(selection: $draft.status)
-
-            LevelControl(
-                title: L10n.string("closet.formality.format", arguments: draft.formalityLevel),
-                subtitle: L10n.text("closet.formality.scale"),
-                value: $draft.formalityLevel,
-                decreaseIdentifier: "formalityDecreaseButton",
-                increaseIdentifier: "formalityIncreaseButton"
-            )
         }
     }
 
     private var optionalDetailsSection: some View {
         Section {
             DisclosureGroup(isExpanded: $showsOptionalDetails) {
+                StatusSelectionGrid(selection: $draft.status)
+
+                LevelControl(
+                    title: L10n.string("closet.formality.format", arguments: draft.formalityLevel),
+                    subtitle: L10n.text("closet.formality.scale"),
+                    value: $draft.formalityLevel,
+                    decreaseIdentifier: "formalityDecreaseButton",
+                    increaseIdentifier: "formalityIncreaseButton"
+                )
+
                 LevelControl(
                     title: L10n.string("closet.warmth.format", arguments: draft.warmthLevel),
                     subtitle: L10n.text("closet.warmth.scale"),
@@ -391,9 +408,17 @@ struct AddEditItemView: View {
                 TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
                     .lineLimit(2...4)
             } label: {
-                Text(L10n.text("closet.ai_edit.confirmation_section"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.ink)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(L10n.text("closet.ai_edit.confirmation_section"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(L10n.text("closet.optional_details.helper"))
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("optionalDetailsDisclosure")
             }
         }
     }
@@ -579,6 +604,50 @@ struct AddEditItemView: View {
         case .localAfterCloudUnavailable:
             DesignSystem.wine
         }
+    }
+}
+
+private struct SeasonShortcutRow: View {
+    let selectCurrentSeason: () -> Void
+    let selectYearRound: () -> Void
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+            SeasonShortcutButton(
+                title: L10n.text("closet.season.current_shortcut"),
+                systemImage: "calendar.badge.clock",
+                accessibilityIdentifier: "seasonShortcut_current",
+                action: selectCurrentSeason
+            )
+
+            SeasonShortcutButton(
+                title: L10n.text("closet.season.year_round_shortcut"),
+                systemImage: "arrow.triangle.2.circlepath",
+                accessibilityIdentifier: "seasonShortcut_yearRound",
+                action: selectYearRound
+            )
+        }
+    }
+}
+
+private struct SeasonShortcutButton: View {
+    let title: String
+    let systemImage: String
+    let accessibilityIdentifier: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundStyle(DesignSystem.accent)
+                .background(DesignSystem.accent.opacity(0.1))
+                .clipShape(Capsule(style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }
 

@@ -70,9 +70,13 @@
 "closet.seasons.section" = "Seasons";
 "closet.season.selected" = "Selected";
 "closet.season.not_selected" = "Not selected";
+"closet.season.current_shortcut" = "Use current season";
+"closet.season.year_round_shortcut" = "Year-round";
 "closet.levels.section" = "Style Range";
 "closet.ai_edit.section" = "Main Details";
-"closet.ai_edit.confirmation_section" = "Optional Details";
+"closet.ai_edit.helper" = "Start with the basics. AI can prefill photo clues, and you can still edit every field.";
+"closet.ai_edit.confirmation_section" = "Advanced details";
+"closet.optional_details.helper" = "Status, formality, warmth, and notes can wait.";
 "closet.save_checklist.title" = "To save this piece";
 "closet.save_checklist.ready" = "Ready to save.";
 "closet.save_checklist.photo" = "Add a photo";

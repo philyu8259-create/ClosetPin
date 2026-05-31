@@ -55,6 +55,24 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
     }
 
+    func testAddItemFlowPrioritizesSeasonShortcutOverAdvancedStyling() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        app.buttons["addItemButton"].tap()
+        app.buttons["useTestPhotoButton"].tap()
+        app.swipeUp()
+
+        XCTAssertTrue(app.buttons["seasonShortcut_current"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["seasonShortcut_yearRound"].exists)
+        XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
+    }
+
     func testTodayRecommendationCanRecordWoreFeedback() {
         let app = makeApp()
         app.launch()
@@ -208,7 +226,6 @@ final class ClosetPinUITests: XCTestCase {
         // debug-only control persists a local test image through the same ImageStore path.
         app.buttons["useTestPhotoButton"].tap()
         app.swipeUp()
-        app.swipeUp()
 
         let colorField = app.textFields["itemColorField"]
         XCTAssertTrue(colorField.waitForExistence(timeout: 3))
@@ -219,7 +236,7 @@ final class ClosetPinUITests: XCTestCase {
         storageField.tap()
         storageField.typeText("Main wardrobe")
 
-        app.buttons["seasonToggle_spring"].tap()
+        app.buttons["seasonShortcut_current"].tap()
 
         app.buttons["saveItemButton"].tap()
 
@@ -247,9 +264,14 @@ final class ClosetPinUITests: XCTestCase {
         app.swipeUp()
         app.swipeUp()
 
+        let optionalDetails = app.buttons["optionalDetailsDisclosure"]
+        XCTAssertTrue(optionalDetails.waitForExistence(timeout: 3))
+        optionalDetails.tap()
+
         let needsWashOption = app.buttons["statusOption_needsWash"]
         XCTAssertTrue(needsWashOption.waitForExistence(timeout: 3))
         needsWashOption.tap()
+        app.swipeUp()
 
         let formalityIncreaseButton = app.buttons["formalityIncreaseButton"]
         XCTAssertTrue(formalityIncreaseButton.waitForExistence(timeout: 3))

@@ -397,6 +397,25 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(draft.canSave)
     }
 
+    func testAddEditItemDraftCanSelectCurrentSeasonFromSystemDate() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let mayDate = date(month: 5, calendar: calendar)
+        var draft = AddEditItemDraft()
+
+        draft.selectCurrentSeason(date: mayDate, calendar: calendar)
+
+        XCTAssertEqual(draft.selectedSeasons, [.spring])
+    }
+
+    func testAddEditItemDraftCanMarkItemAsYearRound() {
+        var draft = AddEditItemDraft()
+
+        draft.selectYearRound()
+
+        XCTAssertEqual(draft.selectedSeasons, Set(SeasonTag.allCases))
+    }
+
     func testAddEditItemDraftAllowsStagedJPEGPhotoBeforeFinalPathExists() {
         var draft = AddEditItemDraft()
         draft.color = "Ivory"

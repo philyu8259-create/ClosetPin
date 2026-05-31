@@ -70,9 +70,13 @@
 "closet.seasons.section" = "季节";
 "closet.season.selected" = "已选择";
 "closet.season.not_selected" = "未选择";
+"closet.season.current_shortcut" = "使用当前季节";
+"closet.season.year_round_shortcut" = "全年可穿";
 "closet.levels.section" = "风格范围";
 "closet.ai_edit.section" = "基本信息";
-"closet.ai_edit.confirmation_section" = "可选信息";
+"closet.ai_edit.helper" = "先填最必要的信息。AI 会帮你从照片提取线索，所有字段都能再改。";
+"closet.ai_edit.confirmation_section" = "高级细节";
+"closet.optional_details.helper" = "状态、正式度、保暖度和备注可以之后再调。";
 "closet.save_checklist.title" = "保存前还需要";
 "closet.save_checklist.ready" = "现在可以保存了。";
 "closet.save_checklist.photo" = "添加照片";
