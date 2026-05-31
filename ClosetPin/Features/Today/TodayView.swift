@@ -8,6 +8,8 @@ struct TodayView: View {
     @Query(sort: \OutfitFeedback.createdAt, order: .reverse) private var feedback: [OutfitFeedback]
     @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
+    private static let confirmationDismissDelay: Duration = .seconds(3)
+
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = SeasonResolver.currentSeason()
     @State private var pendingActionIDs: Set<String> = []
@@ -362,11 +364,22 @@ struct TodayView: View {
                 in: modelContext
             )
 
+            let nextConfirmation = TodayConfirmation(
+                message: action.confirmation(for: action.feedbackType, outcome: result.outcome),
+                showsLookbookAction: action.showsLookbookAction
+            )
             withAnimation(.snappy) {
-                confirmation = TodayConfirmation(
-                    message: action.confirmation(for: action.feedbackType, outcome: result.outcome),
-                    showsLookbookAction: action.showsLookbookAction
-                )
+                confirmation = nextConfirmation
+            }
+
+            Task {
+                try? await Task.sleep(for: Self.confirmationDismissDelay)
+                await MainActor.run {
+                    guard confirmation == nextConfirmation else { return }
+                    withAnimation(.snappy(duration: 0.22)) {
+                        confirmation = nil
+                    }
+                }
             }
         } catch {
             saveError = error.localizedDescription

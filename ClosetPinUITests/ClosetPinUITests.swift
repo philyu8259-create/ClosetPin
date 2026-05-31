@@ -263,6 +263,39 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testTodayFeedbackConfirmationDoesNotBlockTabNavigation() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let saveButton = app.buttons["todayFeedback_saved_0"]
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 3))
+        saveButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Saved to Looks."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["appTab_settings"].isHittable)
+        app.buttons["appTab_settings"].tap()
+
+        XCTAssertTrue(app.staticTexts["Style brief"].waitForExistence(timeout: 3))
+    }
+
+    func testTodayFeedbackConfirmationAutoDismisses() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let woreButton = app.buttons["todayFeedback_wore_0"]
+        XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
+        woreButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForNonExistence(timeout: 4))
+    }
+
     func testEmptyLooksCanReturnToToday() {
         let app = makeApp()
         app.launch()
