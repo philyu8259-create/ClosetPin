@@ -23,8 +23,8 @@
 "onboarding.checklist.1_blazer_or_work_layer" = "1 blazer or polished layer";
 "onboarding.checklist.2_shoes" = "2 shoes";
 "onboarding.checklist.1_bag" = "1 bag";
-"onboarding.start_adding" = "Start Adding Clothes";
-"onboarding.use_sample" = "Use Sample Capsule";
+"onboarding.start_adding" = "Add My Clothes";
+"onboarding.use_sample" = "Preview Recommendations";
 "onboarding.entry_coming" = "Clothing entry is coming next. Use Sample Capsule to explore recommendations now.";
 "onboarding.sample_error_title" = "Sample Capsule Was Not Added";
 

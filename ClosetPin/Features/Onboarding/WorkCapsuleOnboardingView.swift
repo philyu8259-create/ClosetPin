@@ -133,25 +133,25 @@ struct WorkCapsuleOnboardingView: View {
     private var actions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Button {
-                activeSheet = .addItem
-            } label: {
-                Label(L10n.text("onboarding.start_adding"), systemImage: "plus")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .tint(DesignSystem.accent)
-            .accessibilityIdentifier("startAddingClothesButton")
-
-            Button {
                 addSampleCapsule()
             } label: {
                 Label(L10n.text("onboarding.use_sample"), systemImage: "sparkles")
                     .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(DesignSystem.accent)
+            .accessibilityIdentifier("useSampleCapsuleButton")
+
+            Button {
+                activeSheet = .addItem
+            } label: {
+                Label(L10n.text("onboarding.start_adding"), systemImage: "plus")
+                    .frame(maxWidth: .infinity)
+            }
             .buttonStyle(.bordered)
             .controlSize(.large)
-            .accessibilityIdentifier("useSampleCapsuleButton")
+            .accessibilityIdentifier("startAddingClothesButton")
         }
     }
 
