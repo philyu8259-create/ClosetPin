@@ -147,6 +147,8 @@ struct TodayView: View {
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
 
+            TodayDecisionGuideCard()
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(OutfitScenario.allCases) { scenario in
@@ -594,6 +596,49 @@ private extension TomorrowWeatherCondition {
             self = .unknown
             return
         }
+    }
+}
+
+private struct TodayDecisionGuideCard: View {
+    private let steps: [(titleKey: String, bodyKey: String, icon: String)] = [
+        ("today.decision.user.title", "today.decision.user.body", "hand.tap.fill"),
+        ("today.decision.ai.title", "today.decision.ai.body", "sparkles"),
+        ("today.decision.final.title", "today.decision.final.body", "checkmark.seal.fill")
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            ForEach(steps, id: \.titleKey) { step in
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: step.icon)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(DesignSystem.premiumGold)
+                        .frame(width: 22, height: 22)
+                        .background(DesignSystem.premiumGold.opacity(0.14))
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n.text(step.titleKey))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+
+                        Text(L10n.text(step.bodyKey))
+                            .font(.caption2)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(DesignSystem.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.paper.opacity(0.88))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
+        }
+        .accessibilityIdentifier("todayDecisionGuide")
     }
 }
 

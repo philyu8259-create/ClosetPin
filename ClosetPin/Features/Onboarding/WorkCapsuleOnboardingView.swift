@@ -14,14 +14,21 @@ struct WorkCapsuleOnboardingView: View {
         "onboarding.checklist.1_bag"
     ]
 
+    private let occasionItems: [(titleKey: String, icon: String)] = [
+        ("onboarding.occasion.workdays", "briefcase.fill"),
+        ("onboarding.occasion.meetings", "person.2.fill"),
+        ("onboarding.occasion.banquets", "sparkles"),
+        ("onboarding.occasion.weekends", "sun.max.fill")
+    ]
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     onboardingImage
                     header
-                    checklist
                     actions
+                    checklist
                 }
                 .padding(22)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -56,14 +63,43 @@ struct WorkCapsuleOnboardingView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            occasionPromise
         }
+    }
+
+    private var occasionPromise: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Label(L10n.text("onboarding.occasion.title"), systemImage: "square.grid.2x2.fill")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.ink)
+
+            Text(L10n.text("onboarding.occasion.body"))
+                .font(.caption)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                ForEach(occasionItems, id: \.titleKey) { item in
+                    OnboardingOccasionPill(title: L10n.text(item.titleKey), systemImage: item.icon)
+                }
+            }
+        }
+        .padding(DesignSystem.Spacing.md)
+        .background(DesignSystem.paper.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
+        }
+        .accessibilityIdentifier("onboardingOccasionPromise")
     }
 
     private var onboardingImage: some View {
         BundledPNGImage(name: "work-capsule-onboarding")
             .scaledToFill()
             .frame(maxWidth: .infinity)
-            .frame(height: 180)
+            .frame(height: 150)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.cornerRadius, style: .continuous))
             .accessibilityHidden(true)
     }
@@ -125,6 +161,25 @@ struct WorkCapsuleOnboardingView: View {
         } catch {
             saveError = error.localizedDescription
         }
+    }
+}
+
+private struct OnboardingOccasionPill: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+            .foregroundStyle(DesignSystem.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignSystem.accent.opacity(0.09))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.sm, style: .continuous))
+            .accessibilityElement(children: .combine)
     }
 }
 

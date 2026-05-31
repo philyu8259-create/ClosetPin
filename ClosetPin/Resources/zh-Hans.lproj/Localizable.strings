@@ -11,6 +11,12 @@
 "onboarding.nav_title" = "入门衣橱";
 "onboarding.title" = "10 分钟入门衣橱";
 "onboarding.subtitle" = "先从一组可直接搭配的小衣橱开始，覆盖工作日、宴会、周末休闲，以及那些需要省心的日子。";
+"onboarding.occasion.title" = "一个衣橱，多种安排";
+"onboarding.occasion.body" = "ClosetPin 不只服务工作：你选当天场合，AI 再帮你收窄到合适穿搭。";
+"onboarding.occasion.workdays" = "工作日";
+"onboarding.occasion.meetings" = "会议";
+"onboarding.occasion.banquets" = "宴会";
+"onboarding.occasion.weekends" = "周末";
 "onboarding.checklist.title" = "推荐起步组合";
 "onboarding.checklist.3_tops" = "3 件上衣";
 "onboarding.checklist.2_bottoms" = "2 件下装";
@@ -98,6 +104,12 @@
 "today.feedback_error_title" = "未能保存反馈";
 "today.context.title" = "场合";
 "today.ai_assist.body" = "先选场合和季节；ClosetPin 帮你排序，最后穿哪套仍然由你决定。";
+"today.decision.user.title" = "你来选择";
+"today.decision.user.body" = "选择今天的场合和季节。";
+"today.decision.ai.title" = "AI 排序";
+"today.decision.ai.body" = "ClosetPin 为可穿单品打分，并解释为什么推荐。";
+"today.decision.final.title" = "你来决定";
+"today.decision.final.body" = "直接穿、保存，或调整之后的推荐。";
 "today.season.auto_note" = "季节按系统日期自动选择；天气穿搭可在开启数据源后接入。";
 "today.edit.kicker" = "今日编辑";
 "today.tomorrow.prep.title" = "明日准备";

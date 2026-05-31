@@ -21,6 +21,30 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testOnboardingFramesClosetBeyondWork() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["One closet, many plans"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Workdays"].exists)
+        XCTAssertTrue(app.staticTexts["Meetings"].exists)
+        XCTAssertTrue(app.staticTexts["Banquets"].exists)
+        XCTAssertTrue(app.staticTexts["Weekends"].exists)
+        XCTAssertTrue(app.buttons["useSampleCapsuleButton"].isHittable)
+    }
+
+    func testTodayExplainsSimpleAiDecisionFlow() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["You choose"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["AI ranks"].exists)
+        XCTAssertTrue(app.staticTexts["You decide"].exists)
+    }
+
     func testSimplifiedChineseTabsAndTodayActionsFitPrimaryFlow() {
         let app = makeApp(language: "zh-Hans", locale: "zh_CN")
         app.launch()
@@ -33,6 +57,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
+        XCTAssertTrue(app.staticTexts["AI 排序"].exists)
         XCTAssertTrue(app.buttons["宴会"].exists)
 
         app.buttons["appTab_closet"].tap()

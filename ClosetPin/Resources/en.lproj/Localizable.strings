@@ -11,6 +11,12 @@
 "onboarding.nav_title" = "Starter Closet";
 "onboarding.title" = "10-Minute Starter Closet";
 "onboarding.subtitle" = "Start with a small ready-to-style closet for workdays, banquets, weekends, and the days that need to feel easy.";
+"onboarding.occasion.title" = "One closet, many plans";
+"onboarding.occasion.body" = "ClosetPin starts broad: pick the day, then let AI narrow the outfit.";
+"onboarding.occasion.workdays" = "Workdays";
+"onboarding.occasion.meetings" = "Meetings";
+"onboarding.occasion.banquets" = "Banquets";
+"onboarding.occasion.weekends" = "Weekends";
 "onboarding.checklist.title" = "Recommended starter set";
 "onboarding.checklist.3_tops" = "3 tops";
 "onboarding.checklist.2_bottoms" = "2 bottoms";
@@ -98,6 +104,12 @@
 "today.feedback_error_title" = "Feedback Was Not Saved";
 "today.context.title" = "Occasion";
 "today.ai_assist.body" = "Choose an occasion and season; ClosetPin ranks the looks, and you still decide what to wear.";
+"today.decision.user.title" = "You choose";
+"today.decision.user.body" = "Pick the occasion and season.";
+"today.decision.ai.title" = "AI ranks";
+"today.decision.ai.body" = "ClosetPin scores ready pieces and explains the best fit.";
+"today.decision.final.title" = "You decide";
+"today.decision.final.body" = "Wear it, save it, or tune future ideas.";
 "today.season.auto_note" = "Season starts from your system date; weather-aware planning can be added once a forecast source is enabled.";
 "today.edit.kicker" = "Today's Edit";
 "today.tomorrow.prep.title" = "Tomorrow Prep";
