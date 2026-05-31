@@ -56,7 +56,7 @@
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
 "closet.photo.editorial_title" = "Item Photo";
-"closet.photo.editorial_help" = "Capture the garment clearly. ClosetPin will suggest the edit, and every field stays adjustable.";
+"closet.photo.editorial_help" = "AI can suggest type and color after the photo; you can still edit everything.";
 "closet.photo.ai_suggestion.local.format" = "Local suggestion: %@ %@. You can edit every field.";
 "closet.photo.ai_suggestion.cloud.format" = "Cloud suggestion: %@ %@. You can edit every field.";
 "closet.photo.ai_suggestion.cloud_fallback.format" = "Cloud unavailable; used local suggestion: %@ %@. You can edit every field.";

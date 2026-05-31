@@ -152,6 +152,20 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
     }
 
+    func testAddItemExplainsPhotoAiHelpBeforeManualDetails() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["startAddingClothesButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Item Photo"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["AI can suggest type and color after the photo; you can still edit everything."].exists)
+        XCTAssertTrue(app.staticTexts["To save this piece"].exists)
+        XCTAssertTrue(app.staticTexts["Add a photo"].exists)
+        XCTAssertTrue(app.staticTexts["Add a color"].exists)
+    }
+
     func testAddItemFlowPrioritizesAutoSeasonOverAdvancedStyling() {
         let app = makeApp()
         app.launch()

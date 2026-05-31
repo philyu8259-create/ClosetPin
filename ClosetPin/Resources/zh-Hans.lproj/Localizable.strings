@@ -56,7 +56,7 @@
 "closet.photo.original" = "原始照片";
 "closet.photo.view_original" = "查看原图";
 "closet.photo.editorial_title" = "单品照片";
-"closet.photo.editorial_help" = "清晰拍下衣物。ClosetPin 会给出编辑建议，所有字段仍可修改。";
+"closet.photo.editorial_help" = "拍照后 AI 可建议类型和颜色；所有字段仍可修改。";
 "closet.photo.ai_suggestion.local.format" = "本地建议：%@%@。所有字段都可修改。";
 "closet.photo.ai_suggestion.cloud.format" = "云端建议：%@%@。所有字段都可修改。";
 "closet.photo.ai_suggestion.cloud_fallback.format" = "云端不可用，已改用本地建议：%@%@。所有字段都可修改。";
