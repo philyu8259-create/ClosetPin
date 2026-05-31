@@ -18,6 +18,7 @@ struct TodayView: View {
     @State private var tomorrowWeatherSnapshot: TomorrowWeatherSnapshot?
     @State private var tomorrowWeatherIsLoading = false
     @State private var tomorrowWeatherMessage: String?
+    @State private var seasonOverrideExpanded = false
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
@@ -74,8 +75,8 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.editorial) {
-                    contextStrip
                     tomorrowPrepSection
+                    contextStrip
                     editorialHero
 
                     if candidates.count > 1 {
@@ -147,8 +148,6 @@ struct TodayView: View {
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
 
-            TodayDecisionGuideCard()
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(OutfitScenario.allCases) { scenario in
@@ -159,20 +158,9 @@ struct TodayView: View {
             }
             .accessibilityIdentifier("todayScenarioPicker")
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(SeasonTag.allCases) { season in
-                        ContextChip(title: season.displayName, value: season, selection: $season)
-                    }
-                }
-                .padding(.vertical, 1)
-            }
-            .accessibilityIdentifier("todaySeasonPicker")
+            TodaySeasonAutoCard(season: $season, isExpanded: $seasonOverrideExpanded)
 
-            Text(L10n.text("today.season.auto_note"))
-                .font(.caption2)
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .fixedSize(horizontal: false, vertical: true)
+            TodayDecisionGuideCard()
         }
     }
 
@@ -208,6 +196,7 @@ struct TodayView: View {
             if let context = activeTomorrowWeatherContext {
                 TomorrowPrepCard(
                     weatherSummary: TomorrowWeatherPreview.weatherSummary(for: context),
+                    decisionSummary: L10n.text("today.tomorrow.decision_summary"),
                     recommendationName: tomorrowCandidate.map { _ in recommendationName },
                     recommendationReason: tomorrowCandidate.map { TodayRecommendationExplanation.text(for: $0, scenario: scenario) },
                     tips: TomorrowWeatherPreview.preparationTips(for: context),
@@ -642,8 +631,83 @@ private struct TodayDecisionGuideCard: View {
     }
 }
 
+private struct TodaySeasonAutoCard: View {
+    @Binding var season: SeasonTag
+    @Binding var isExpanded: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.sm) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .frame(width: 30, height: 30)
+                    .background(DesignSystem.accent.opacity(0.12))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L10n.text("today.season.auto.title"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+
+                    Text(L10n.string("today.season.auto.current.format", arguments: season.displayName))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+                }
+
+                Spacer(minLength: DesignSystem.Spacing.sm)
+            }
+
+            Text(L10n.text("today.season.auto_note"))
+                .font(.caption2)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                withAnimation(.snappy(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                Label(
+                    L10n.text("today.season.override.button"),
+                    systemImage: isExpanded ? "chevron.up" : "chevron.down"
+                )
+                .font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(DesignSystem.accent)
+            .accessibilityLabel(L10n.text("today.season.override.accessibility"))
+            .accessibilityIdentifier("todaySeasonOverrideButton")
+
+            if isExpanded {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        ForEach(SeasonTag.allCases) { season in
+                            ContextChip(title: season.displayName, value: season, selection: $season)
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
+                .accessibilityIdentifier("todaySeasonPicker")
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(DesignSystem.Spacing.md)
+        .background(DesignSystem.paper.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.52), lineWidth: 1)
+        }
+        .accessibilityIdentifier("todaySeasonAutoCard")
+    }
+}
+
 private struct TomorrowPrepCard: View {
     let weatherSummary: String
+    let decisionSummary: String
     let recommendationName: String?
     let recommendationReason: String?
     let tips: [String]
@@ -673,6 +737,12 @@ private struct TomorrowPrepCard: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
                     .accessibilityIdentifier("tomorrowPrepWeatherSummary")
+
+                Text(decisionSummary)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("tomorrowPrepDecisionSummary")
 
                 Divider()
 

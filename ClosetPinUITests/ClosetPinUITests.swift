@@ -45,6 +45,32 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["You decide"].exists)
     }
 
+    func testTodayKeepsSeasonAutomaticUnlessUserChangesIt() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Auto season"].waitForExistence(timeout: 3))
+        let systemDateNote = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "from system date")).firstMatch
+        XCTAssertTrue(systemDateNote.exists)
+        if !app.buttons["todaySeasonOverrideButton"].exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(app.buttons["Change season"].exists)
+    }
+
+    func testTomorrowPrepExplainsWeatherAwareDecision() {
+        let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] = "1"
+        app.launchEnvironment["CLOSETPIN_TOMORROW_WEATHER_PREVIEW"] = "rainy_commute"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Tomorrow Prep"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["AI is checking your occasion, auto season, and tomorrow forecast before ranking this plan."].exists)
+    }
+
     func testSimplifiedChineseTabsAndTodayActionsFitPrimaryFlow() {
         let app = makeApp(language: "zh-Hans", locale: "zh_CN")
         app.launch()
