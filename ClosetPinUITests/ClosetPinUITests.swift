@@ -45,6 +45,18 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["You decide"].exists)
     }
 
+    func testTodayPrimaryActionsAreVisibleWithoutExtraScroll() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].isHittable)
+        XCTAssertTrue(app.buttons["todayFeedback_saved_0"].isHittable)
+    }
+
     func testTodayKeepsSeasonAutomaticUnlessUserChangesIt() {
         let app = makeApp()
         app.launch()
@@ -69,6 +81,18 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Tomorrow Prep"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["AI is checking your occasion, auto season, and tomorrow forecast before ranking this plan."].exists)
+    }
+
+    func testTomorrowPrepDoesNotHidePrimaryTodayActions() {
+        let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] = "1"
+        app.launchEnvironment["CLOSETPIN_TOMORROW_WEATHER_PREVIEW"] = "rainy_commute"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Tomorrow Prep"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].isHittable)
+        XCTAssertTrue(app.buttons["todayFeedback_saved_0"].isHittable)
     }
 
     func testSimplifiedChineseTabsAndTodayActionsFitPrimaryFlow() {

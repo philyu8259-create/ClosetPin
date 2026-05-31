@@ -74,10 +74,10 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.editorial) {
-                    tomorrowPrepSection
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                     contextStrip
                     editorialHero
+                    tomorrowPrepSection
 
                     if candidates.count > 1 {
                         alternativesSection
@@ -197,8 +197,6 @@ struct TodayView: View {
                 TomorrowPrepCard(
                     weatherSummary: TomorrowWeatherPreview.weatherSummary(for: context),
                     decisionSummary: L10n.text("today.tomorrow.decision_summary"),
-                    recommendationName: tomorrowCandidate.map { _ in recommendationName },
-                    recommendationReason: tomorrowCandidate.map { TodayRecommendationExplanation.text(for: $0, scenario: scenario) },
                     tips: TomorrowWeatherPreview.preparationTips(for: context),
                     attributionName: tomorrowWeatherSnapshot?.attributionName,
                     attributionURL: tomorrowWeatherSnapshot?.attributionURL
@@ -596,30 +594,24 @@ private struct TodayDecisionGuideCard: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            ForEach(steps, id: \.titleKey) { step in
-                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
-                    Image(systemName: step.icon)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(DesignSystem.premiumGold)
-                        .frame(width: 22, height: 22)
-                        .background(DesignSystem.premiumGold.opacity(0.14))
-                        .clipShape(Circle())
+        HStack(spacing: DesignSystem.Spacing.sm) {
+            ForEach(Array(steps.enumerated()), id: \.element.titleKey) { index, step in
+                Label(L10n.text(step.titleKey), systemImage: step.icon)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(index == 1 ? DesignSystem.accent : DesignSystem.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(maxWidth: .infinity)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(L10n.text(step.titleKey))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(DesignSystem.ink)
-
-                        Text(L10n.text(step.bodyKey))
-                            .font(.caption2)
-                            .foregroundStyle(DesignSystem.secondaryInk)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                if index < steps.count - 1 {
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(DesignSystem.secondaryInk.opacity(0.65))
                 }
             }
         }
-        .padding(DesignSystem.Spacing.md)
+        .padding(.horizontal, DesignSystem.Spacing.md)
+        .padding(.vertical, DesignSystem.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.paper.opacity(0.88))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
@@ -708,15 +700,13 @@ private struct TodaySeasonAutoCard: View {
 private struct TomorrowPrepCard: View {
     let weatherSummary: String
     let decisionSummary: String
-    let recommendationName: String?
-    let recommendationReason: String?
     let tips: [String]
     let attributionName: String?
     let attributionURL: URL?
 
     var body: some View {
         LuxurySurfaceCard {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
                     Label(L10n.text("today.tomorrow.prep.title"), systemImage: "cloud.sun.fill")
                         .font(.caption.weight(.semibold))
@@ -736,48 +726,24 @@ private struct TomorrowPrepCard: View {
                 Text(weatherSummary)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("tomorrowPrepWeatherSummary")
 
                 Text(decisionSummary)
                     .font(.caption)
                     .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("tomorrowPrepDecisionSummary")
 
-                Divider()
-
-                if let recommendationName, let recommendationReason {
-                    Text(L10n.string("today.tomorrow.recommendation_name.format", arguments: recommendationName))
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(DesignSystem.ink)
-                        .accessibilityIdentifier("tomorrowPrepRecommendationName")
-
-                    Text(recommendationReason)
-                        .font(.subheadline)
-                        .foregroundStyle(DesignSystem.secondaryInk)
+                if let firstTip = tips.first {
+                    Label(firstTip, systemImage: "checkmark.circle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("tomorrowPrepRecommendationReason")
-                }
-
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                    Text(L10n.text("today.tomorrow.prep.tips_title"))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DesignSystem.secondaryInk)
-
-                    ForEach(Array(tips.enumerated()), id: \.offset) { index, tip in
-                        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(DesignSystem.accent)
-                                .font(.caption)
-
-                            Text(tip)
-                                .font(.subheadline)
-                                .foregroundStyle(DesignSystem.ink)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .accessibilityIdentifier("tomorrowPrepTip_\(index)")
-                    }
+                        .accessibilityIdentifier("tomorrowPrepTip_0")
                 }
 
                 if let attributionURL {
@@ -850,22 +816,22 @@ private struct TodayEditorialHero: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
             EditorialImageSurface(
                 image: coverImage,
-                height: 330
+                height: 220
             ) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                     Label(L10n.text("today.edit.kicker"), systemImage: "sparkles")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(DesignSystem.premiumGold)
 
                     Text(title)
-                        .font(DesignSystem.editorialDisplayFont(size: 42))
+                        .font(DesignSystem.editorialDisplayFont(size: 34))
                         .foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(explanation)
-                        .font(.callout)
+                        .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.86))
-                        .lineLimit(3)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
