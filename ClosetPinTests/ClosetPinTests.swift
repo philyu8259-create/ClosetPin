@@ -113,6 +113,8 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.avoidedStyles, [])
         XCTAssertEqual(preference.workplaceDressCode, "")
         XCTAssertFalse(preference.cloudPhotoRecognitionEnabled)
+        XCTAssertFalse(preference.tomorrowWeatherEnabled)
+        XCTAssertEqual(preference.tomorrowWeatherLocationName, "")
         XCTAssertLessThanOrEqual(abs(preference.createdAt.timeIntervalSinceNow), 1)
         XCTAssertLessThanOrEqual(abs(preference.updatedAt.timeIntervalSinceNow), 1)
     }
@@ -136,6 +138,8 @@ final class ClosetPinTests: XCTestCase {
             preferredFormality: 7,
             workplaceDressCode: "Business casual, client-facing",
             cloudPhotoRecognitionEnabled: true,
+            tomorrowWeatherEnabled: true,
+            tomorrowWeatherLocationName: "  Shanghai  ",
             updatedAt: updateDate
         )
 
@@ -143,7 +147,19 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.preferredFormality, 5)
         XCTAssertEqual(preference.workplaceDressCode, "Business casual, client-facing")
         XCTAssertTrue(preference.cloudPhotoRecognitionEnabled)
+        XCTAssertTrue(preference.tomorrowWeatherEnabled)
+        XCTAssertEqual(preference.tomorrowWeatherLocationName, "Shanghai")
         XCTAssertEqual(preference.updatedAt, updateDate)
+    }
+
+    func testTomorrowWeatherSettingsRequireEnabledAndLocation() {
+        let disabled = UserPreference(tomorrowWeatherEnabled: false, tomorrowWeatherLocationName: "Shanghai")
+        let missingLocation = UserPreference(tomorrowWeatherEnabled: true, tomorrowWeatherLocationName: "   ")
+        let ready = UserPreference(tomorrowWeatherEnabled: true, tomorrowWeatherLocationName: "Shanghai")
+
+        XCTAssertFalse(disabled.canRequestTomorrowWeather)
+        XCTAssertFalse(missingLocation.canRequestTomorrowWeather)
+        XCTAssertTrue(ready.canRequestTomorrowWeather)
     }
 
     func testStatusMetadataIncludesIconAndReadableLabel() {

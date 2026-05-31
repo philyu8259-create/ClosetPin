@@ -14,16 +14,26 @@ struct TodayView: View {
     @State private var confirmation: TodayConfirmation?
     @State private var saveError: String?
     @State private var lastAppliedPreferenceScenario: OutfitScenario?
+    @State private var forecastLocationKey = ""
+    @State private var tomorrowWeatherSnapshot: TomorrowWeatherSnapshot?
+    @State private var tomorrowWeatherIsLoading = false
+    @State private var tomorrowWeatherMessage: String?
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
+    private let tomorrowWeatherProvider: any TomorrowWeatherProviding
 
-    init(onOpenLooks: (() -> Void)? = nil, onOpenCloset: (() -> Void)? = nil) {
+    init(
+        onOpenLooks: (() -> Void)? = nil,
+        onOpenCloset: (() -> Void)? = nil,
+        tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider()
+    ) {
         self.onOpenLooks = onOpenLooks
         self.onOpenCloset = onOpenCloset
+        self.tomorrowWeatherProvider = tomorrowWeatherProvider
     }
 
     private var candidates: [OutfitCandidate] {
@@ -40,7 +50,7 @@ struct TodayView: View {
     }
 
     private var tomorrowCandidate: OutfitCandidate? {
-        guard let context = TomorrowWeatherPreview.context else { return nil }
+        guard let context = activeTomorrowWeatherContext else { return nil }
 
         let tomorrowRecommendation = engine.recommend(
             input: RecommendationInput(
@@ -82,6 +92,9 @@ struct TodayView: View {
             .onAppear(perform: applyPreferenceDefaultsIfNeeded)
             .onChange(of: currentPreference?.updatedAt) { _, _ in
                 applyPreferenceDefaultsIfNeeded()
+            }
+            .task(id: tomorrowWeatherRequestKey) {
+                await refreshTomorrowWeatherIfNeeded()
             }
             .safeAreaInset(edge: .bottom) {
                 if let confirmation {
@@ -190,15 +203,31 @@ struct TodayView: View {
 
     private var tomorrowPrepSection: some View {
         Group {
-            if let context = TomorrowWeatherPreview.context {
+            if let context = activeTomorrowWeatherContext {
                 TomorrowPrepCard(
                     weatherSummary: TomorrowWeatherPreview.weatherSummary(for: context),
                     recommendationName: tomorrowCandidate.map { _ in recommendationName },
                     recommendationReason: tomorrowCandidate.map { TodayRecommendationExplanation.text(for: $0, scenario: scenario) },
-                    tips: TomorrowWeatherPreview.preparationTips(for: context)
+                    tips: TomorrowWeatherPreview.preparationTips(for: context),
+                    attributionName: tomorrowWeatherSnapshot?.attributionName,
+                    attributionURL: tomorrowWeatherSnapshot?.attributionURL
+                )
+            } else if shouldShowTomorrowWeatherStatus {
+                TomorrowWeatherStatusCard(
+                    isLoading: tomorrowWeatherIsLoading,
+                    locationName: currentPreference?.tomorrowWeatherLocationName ?? "",
+                    message: tomorrowWeatherMessage ?? L10n.text("today.tomorrow.weather_missing_location")
                 )
             }
         }
+    }
+
+    private var activeTomorrowWeatherContext: TomorrowWeatherContext? {
+        tomorrowWeatherSnapshot?.context ?? TomorrowWeatherPreview.context
+    }
+
+    private var shouldShowTomorrowWeatherStatus: Bool {
+        currentPreference?.tomorrowWeatherEnabled == true
     }
 
     private var recommendationName: String {
@@ -218,6 +247,14 @@ struct TodayView: View {
         preferences.first
     }
 
+    private var tomorrowWeatherRequestKey: String {
+        guard let currentPreference else { return "none" }
+        return [
+            currentPreference.tomorrowWeatherEnabled ? "enabled" : "disabled",
+            currentPreference.tomorrowWeatherLocationName
+        ].joined(separator: ":")
+    }
+
     private func applyPreferenceDefaultsIfNeeded() {
         let preferredScenario = currentPreference?.defaultScenario ?? .dailyOffice
         guard lastAppliedPreferenceScenario == nil || scenario == lastAppliedPreferenceScenario else {
@@ -226,6 +263,44 @@ struct TodayView: View {
 
         scenario = preferredScenario
         lastAppliedPreferenceScenario = preferredScenario
+    }
+
+    @MainActor
+    private func refreshTomorrowWeatherIfNeeded() async {
+        guard let preference = currentPreference, preference.tomorrowWeatherEnabled else {
+            tomorrowWeatherSnapshot = nil
+            tomorrowWeatherIsLoading = false
+            tomorrowWeatherMessage = nil
+            forecastLocationKey = ""
+            return
+        }
+
+        guard preference.canRequestTomorrowWeather else {
+            tomorrowWeatherSnapshot = nil
+            tomorrowWeatherIsLoading = false
+            tomorrowWeatherMessage = L10n.text("today.tomorrow.weather_missing_location")
+            forecastLocationKey = ""
+            return
+        }
+
+        let locationName = preference.tomorrowWeatherLocationName
+        guard forecastLocationKey != locationName || tomorrowWeatherSnapshot == nil else { return }
+
+        forecastLocationKey = locationName
+        tomorrowWeatherSnapshot = nil
+        tomorrowWeatherMessage = nil
+        tomorrowWeatherIsLoading = true
+
+        do {
+            let snapshot = try await tomorrowWeatherProvider.tomorrowWeather(for: locationName, referenceDate: Date())
+            tomorrowWeatherSnapshot = snapshot
+            tomorrowWeatherMessage = nil
+        } catch {
+            tomorrowWeatherSnapshot = nil
+            tomorrowWeatherMessage = L10n.text("today.tomorrow.weather_unavailable")
+        }
+
+        tomorrowWeatherIsLoading = false
     }
 
     private var missingRecommendationMessage: String {
@@ -527,14 +602,25 @@ private struct TomorrowPrepCard: View {
     let recommendationName: String?
     let recommendationReason: String?
     let tips: [String]
+    let attributionName: String?
+    let attributionURL: URL?
 
     var body: some View {
         LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
                     Label(L10n.text("today.tomorrow.prep.title"), systemImage: "cloud.sun.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(DesignSystem.secondaryInk)
+
+                    Spacer(minLength: DesignSystem.Spacing.sm)
+
+                    if let attributionName {
+                        Text(L10n.string("today.tomorrow.attribution.format", arguments: attributionName))
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .lineLimit(1)
+                    }
                 }
                 .accessibilityIdentifier("tomorrowPrepTitle")
 
@@ -578,9 +664,63 @@ private struct TomorrowPrepCard: View {
                         .accessibilityIdentifier("tomorrowPrepTip_\(index)")
                     }
                 }
+
+                if let attributionURL {
+                    Link(L10n.text("today.tomorrow.attribution.link"), destination: attributionURL)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .accessibilityIdentifier("tomorrowPrepWeatherAttributionLink")
+                }
             }
         }
         .accessibilityIdentifier("tomorrowPrepCard")
+    }
+}
+
+private struct TomorrowWeatherStatusCard: View {
+    let isLoading: Bool
+    let locationName: String
+    let message: String
+
+    var body: some View {
+        LuxurySurfaceCard {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(DesignSystem.accent.opacity(0.12))
+                        .frame(width: 42, height: 42)
+
+                    if isLoading {
+                        ProgressView()
+                            .tint(DesignSystem.accent)
+                    } else {
+                        Image(systemName: "cloud.sun")
+                            .font(.headline)
+                            .foregroundStyle(DesignSystem.accent)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                    Text(L10n.text("today.tomorrow.weather_status.title"))
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(statusText)
+                        .font(.subheadline)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .accessibilityIdentifier("tomorrowWeatherStatusCard")
+    }
+
+    private var statusText: String {
+        if isLoading {
+            return L10n.string("today.tomorrow.weather_loading.format", arguments: locationName)
+        }
+
+        return message
     }
 }
 

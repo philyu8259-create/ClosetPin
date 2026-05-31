@@ -26,6 +26,17 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertTrue(context.isWindy)
     }
 
+    func testTomorrowWeatherConditionMapperHandlesWeatherKitStyleValues() {
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "heavyRain"), .rain)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "drizzle"), .lightRain)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "partlyCloudy"), .partlyCloudy)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "isolatedThunderstorms"), .thunderstorms)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "wintryMix"), .snow)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "breezy"), .wind)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "mostlyClear"), .clear)
+        XCTAssertEqual(TomorrowWeatherConditionMapper.condition(from: "unexpected"), .unknown)
+    }
+
     func testExcludesUnavailableItems() {
         let items = [
             clothingItem(type: .top, status: .needsWash),

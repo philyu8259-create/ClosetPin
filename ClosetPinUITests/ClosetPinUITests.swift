@@ -166,6 +166,33 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Executive Polish"].waitForExistence(timeout: 3))
     }
 
+    func testSettingsWeatherSuggestionsHaveSimpleCityFlow() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        app.buttons["appTab_settings"].tap()
+        if !app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 2) {
+            app.swipeUp()
+        }
+
+        XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Where AI steps in"].exists)
+
+        let weatherToggle = app.switches["tomorrowWeatherToggle"]
+        XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
+        weatherToggle.tap()
+
+        let locationField = app.textFields["tomorrowWeatherLocationField"]
+        XCTAssertTrue(locationField.waitForExistence(timeout: 3))
+        locationField.tap()
+        locationField.typeText("Shanghai")
+
+        XCTAssertTrue(app.staticTexts["No GPS required. Today will refresh the forecast from this city when available."].exists)
+    }
+
     func testAddClosetItemSmokeFlow() {
         let app = makeApp()
         app.launch()

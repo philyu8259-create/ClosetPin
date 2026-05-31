@@ -119,7 +119,7 @@ struct EditorialImageSurface<Content: View>: View {
         image: UIImage?,
         height: CGFloat,
         fallback: LinearGradient = LinearGradient(
-            colors: [DesignSystem.surface, DesignSystem.border],
+            colors: [DesignSystem.accent, DesignSystem.wine, DesignSystem.premiumGold],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         ),
@@ -147,9 +147,13 @@ struct EditorialImageSurface<Content: View>: View {
             .clipped()
 
             LinearGradient(
-                colors: [.clear, .black.opacity(DesignSystem.editorialOverlayOpacity)],
-                startPoint: .center,
-                endPoint: .bottom
+                colors: [
+                    DesignSystem.wine.opacity(0.14),
+                    .clear,
+                    .black.opacity(DesignSystem.editorialOverlayOpacity + 0.14)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
 
             content

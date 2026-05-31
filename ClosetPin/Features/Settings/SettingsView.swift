@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var preferredFormality = 3
     @State private var workplaceDressCode = ""
     @State private var cloudPhotoRecognitionEnabled = false
+    @State private var tomorrowWeatherEnabled = false
+    @State private var tomorrowWeatherLocationName = ""
     @State private var hasLoadedPreference = false
     @State private var currentPreferenceID: UUID?
     @State private var saveError: String?
@@ -56,6 +58,20 @@ struct SettingsView: View {
                         }
                     }
 
+                    LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                            SettingsSectionHeader(
+                                title: L10n.text("settings.weather.section"),
+                                subtitle: L10n.text("settings.weather.subtitle")
+                            )
+
+                            TomorrowWeatherSettingsCard(
+                                isEnabled: $tomorrowWeatherEnabled,
+                                locationName: $tomorrowWeatherLocationName
+                            )
+                        }
+                    }
+
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
@@ -92,6 +108,8 @@ struct SettingsView: View {
             .onChange(of: preferredFormality) { _, _ in savePreference() }
             .onChange(of: workplaceDressCode) { _, _ in savePreference() }
             .onChange(of: cloudPhotoRecognitionEnabled) { _, _ in savePreference() }
+            .onChange(of: tomorrowWeatherEnabled) { _, _ in savePreference() }
+            .onChange(of: tomorrowWeatherLocationName) { _, _ in savePreference() }
             .alert(L10n.text("settings.save_error_title"), isPresented: Binding(
                 get: { saveError != nil },
                 set: { if !$0 { saveError = nil } }
@@ -112,6 +130,8 @@ struct SettingsView: View {
         preferredFormality = preference.preferredFormality
         workplaceDressCode = preference.workplaceDressCode
         cloudPhotoRecognitionEnabled = preference.cloudPhotoRecognitionEnabled
+        tomorrowWeatherEnabled = preference.tomorrowWeatherEnabled
+        tomorrowWeatherLocationName = preference.tomorrowWeatherLocationName
         hasLoadedPreference = true
     }
 
@@ -135,7 +155,9 @@ struct SettingsView: View {
             defaultScenario: defaultScenario,
             preferredFormality: preferredFormality,
             workplaceDressCode: workplaceDressCode,
-            cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled
+            cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
+            tomorrowWeatherEnabled: tomorrowWeatherEnabled,
+            tomorrowWeatherLocationName: tomorrowWeatherLocationName
         )
 
         do {
@@ -316,6 +338,62 @@ private struct FormalityControl: View {
                     value = min(5, value + 1)
                 }
             }
+        }
+    }
+}
+
+private struct TomorrowWeatherSettingsCard: View {
+    @Binding var isEnabled: Bool
+    @Binding var locationName: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            Toggle(isOn: $isEnabled.animation(.snappy(duration: 0.22))) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L10n.text("settings.weather.enabled.title"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(L10n.text("settings.weather.enabled.body"))
+                        .font(.footnote)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .tint(DesignSystem.accent)
+            .accessibilityIdentifier("tomorrowWeatherToggle")
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "location.magnifyingglass")
+                        .foregroundStyle(isEnabled ? DesignSystem.accent : DesignSystem.secondaryInk)
+
+                    TextField(L10n.text("settings.weather.location.placeholder"), text: $locationName)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .disabled(!isEnabled)
+                        .accessibilityIdentifier("tomorrowWeatherLocationField")
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+                .padding(.vertical, 12)
+                .background(isEnabled ? DesignSystem.surface : DesignSystem.border.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                        .stroke(isEnabled ? DesignSystem.accent.opacity(0.28) : DesignSystem.border.opacity(0.5), lineWidth: 1)
+                }
+
+                Text(isEnabled ? L10n.text("settings.weather.location.helper") : L10n.text("settings.weather.disabled.helper"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            SettingsNoteRow(
+                systemImage: "sparkles.rectangle.stack",
+                title: L10n.text("settings.weather.ai.title"),
+                bodyText: L10n.text("settings.weather.ai.body")
+            )
         }
     }
 }

@@ -12,6 +12,8 @@ final class UserPreference {
     var avoidedStyles: [String]
     var workplaceDressCode: String
     var cloudPhotoRecognitionEnabled: Bool = false
+    var tomorrowWeatherEnabled: Bool = false
+    var tomorrowWeatherLocationName: String = ""
     var createdAt: Date
     var updatedAt: Date
 
@@ -25,6 +27,8 @@ final class UserPreference {
         avoidedStyles: [String] = [],
         workplaceDressCode: String = "",
         cloudPhotoRecognitionEnabled: Bool = false,
+        tomorrowWeatherEnabled: Bool = false,
+        tomorrowWeatherLocationName: String = "",
         createdAt: Date = Date(),
         updatedAt: Date? = nil
     ) {
@@ -37,23 +41,32 @@ final class UserPreference {
         self.avoidedStyles = avoidedStyles
         self.workplaceDressCode = workplaceDressCode
         self.cloudPhotoRecognitionEnabled = cloudPhotoRecognitionEnabled
+        self.tomorrowWeatherEnabled = tomorrowWeatherEnabled
+        self.tomorrowWeatherLocationName = tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines)
         self.createdAt = createdAt
         self.updatedAt = updatedAt ?? createdAt
     }
 
     var defaultScenario: OutfitScenario { OutfitScenario(rawValue: defaultScenarioRawValue) ?? .dailyOffice }
+    var canRequestTomorrowWeather: Bool {
+        tomorrowWeatherEnabled && !tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     func applySettings(
         defaultScenario: OutfitScenario,
         preferredFormality: Int,
         workplaceDressCode: String,
         cloudPhotoRecognitionEnabled: Bool,
+        tomorrowWeatherEnabled: Bool = false,
+        tomorrowWeatherLocationName: String = "",
         updatedAt: Date = Date()
     ) {
         self.defaultScenarioRawValue = defaultScenario.rawValue
         self.preferredFormality = min(max(preferredFormality, 1), 5)
         self.workplaceDressCode = workplaceDressCode.trimmingCharacters(in: .whitespacesAndNewlines)
         self.cloudPhotoRecognitionEnabled = cloudPhotoRecognitionEnabled
+        self.tomorrowWeatherEnabled = tomorrowWeatherEnabled
+        self.tomorrowWeatherLocationName = tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines)
         self.updatedAt = updatedAt
     }
 }
