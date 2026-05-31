@@ -109,7 +109,7 @@
 "today.subtitle" = "用更安静的方式，决定今天穿什么。";
 "today.feedback_error_title" = "未能保存反馈";
 "today.context.title" = "场合";
-"today.ai_assist.body" = "先选场合；ClosetPin 会使用自动季节帮你排序，最后穿哪套仍然由你决定。";
+"today.ai_assist.body" = "选场合，AI 排序，最后你决定。";
 "today.decision.user.title" = "你来选择";
 "today.decision.user.body" = "选择今天的场合；季节会自动判断。";
 "today.decision.ai.title" = "AI 排序";

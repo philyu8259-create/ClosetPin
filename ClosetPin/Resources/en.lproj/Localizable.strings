@@ -109,7 +109,7 @@
 "today.subtitle" = "A quieter way to decide what works for your day.";
 "today.feedback_error_title" = "Feedback Was Not Saved";
 "today.context.title" = "Occasion";
-"today.ai_assist.body" = "Choose the occasion; ClosetPin uses auto season, ranks the looks, and leaves the final choice to you.";
+"today.ai_assist.body" = "Pick an occasion. AI ranks the look; you decide.";
 "today.decision.user.title" = "You choose";
 "today.decision.user.body" = "Pick the occasion; season is selected automatically.";
 "today.decision.ai.title" = "AI ranks";
