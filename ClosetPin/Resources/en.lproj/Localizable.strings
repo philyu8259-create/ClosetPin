@@ -34,6 +34,7 @@
 "closet.empty.description" = "Start with 2 tops, 1 bottom, 1 polished layer, and a pair of shoes you can actually wear.";
 "closet.filter.all" = "All";
 "closet.filter.status_all" = "Any Status";
+"closet.filter.advanced" = "Advanced filters";
 "closet.filtered_empty.title" = "No pieces match";
 "closet.filtered_empty.description" = "Adjust the filters or add another item to complete this closet.";
 "closet.add_item" = "Add Item";
@@ -203,6 +204,9 @@
 "closet.archive.kicker" = "Archive";
 "closet.archive.title" = "Your Closet";
 "closet.archive.count.format" = "%d pieces ready to style";
+"closet.today_ready.title" = "Ready for Today";
+"closet.today_ready.body.format" = "%d wearable pieces can feed Today. Add or edit here, then choose an occasion.";
+"closet.today_ready.open_today" = "Open Today";
 "settings.title" = "Settings";
 "settings.summary.kicker" = "Style brief";
 "settings.summary.title.format" = "%@ · Formality %d";

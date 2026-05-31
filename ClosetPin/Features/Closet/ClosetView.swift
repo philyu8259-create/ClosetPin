@@ -6,6 +6,9 @@ struct ClosetView: View {
     @State private var activeSheet: ClosetSheet?
     @State private var typeFilter: ClosetTypeFilter = .all
     @State private var statusFilter: ClosetStatusFilter = .all
+    @State private var showsAdvancedFilters = false
+
+    var onOpenToday: () -> Void = {}
 
     private let categoryOrder: [ClothingType] = [
         .top,
@@ -52,6 +55,7 @@ struct ClosetView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                 archiveMasthead
+                todayReadinessCard
                 filterBar
 
                 if filteredItems.isEmpty {
@@ -65,6 +69,7 @@ struct ClosetView: View {
                                 GarmentGridCard(item: item)
                             }
                             .buttonStyle(.plain)
+                            .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
                             .accessibilityIdentifier("closetItemCard_\(item.id.uuidString)")
                         }
                     }
@@ -79,7 +84,7 @@ struct ClosetView: View {
     private var archiveMasthead: some View {
         EditorialImageSurface(
             image: filteredItems.first.flatMap(WardrobePhoto.localImage(for:)),
-            height: 220
+            height: 172
         ) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("closet.archive.kicker"))
@@ -88,12 +93,52 @@ struct ClosetView: View {
                     .textCase(.uppercase)
 
                 Text(L10n.text("closet.archive.title"))
-                    .font(DesignSystem.editorialDisplayFont(size: 38))
+                    .font(DesignSystem.editorialDisplayFont(size: 34))
                     .foregroundStyle(.white)
 
                 Text(L10n.string("closet.archive.count.format", arguments: filteredItems.count))
                     .font(.callout)
                     .foregroundStyle(.white.opacity(0.84))
+            }
+        }
+    }
+
+    private var todayReadinessCard: some View {
+        LuxurySurfaceCard {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "sparkles")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(DesignSystem.premiumGold)
+                        .frame(width: 30)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n.text("closet.today_ready.title"))
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+
+                        Text(L10n.string("closet.today_ready.body.format", arguments: availableItemCount))
+                            .font(.subheadline)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Button {
+                    onOpenToday()
+                } label: {
+                    Label(L10n.text("closet.today_ready.open_today"), systemImage: "arrow.right.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 4)
+                        .frame(height: 36)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignSystem.accent)
+                .accessibilityIdentifier("closetOpenTodayButton")
             }
         }
     }
@@ -111,15 +156,29 @@ struct ClosetView: View {
                 .padding(.vertical, 1)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ContextChip(title: L10n.text("closet.filter.status_all"), value: ClosetStatusFilter.all, selection: $statusFilter)
-
-                    ForEach(ClothingStatus.allCases) { status in
-                        ContextChip(title: status.displayName, value: ClosetStatusFilter.status(status), selection: $statusFilter)
-                    }
+            Button {
+                withAnimation(.snappy(duration: 0.22)) {
+                    showsAdvancedFilters.toggle()
                 }
-                .padding(.vertical, 1)
+            } label: {
+                Label(L10n.text("closet.filter.advanced"), systemImage: showsAdvancedFilters ? "chevron.up" : "slider.horizontal.3")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignSystem.secondaryInk)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("closetAdvancedFiltersButton")
+
+            if showsAdvancedFilters {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        ContextChip(title: L10n.text("closet.filter.status_all"), value: ClosetStatusFilter.all, selection: $statusFilter)
+
+                        ForEach(ClothingStatus.allCases) { status in
+                            ContextChip(title: status.displayName, value: ClosetStatusFilter.status(status), selection: $statusFilter)
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
             }
         }
     }
@@ -191,6 +250,10 @@ struct ClosetView: View {
             }
     }
 
+    private var availableItemCount: Int {
+        items.filter { $0.status == .available }.count
+    }
+
     private var gridColumns: [GridItem] {
         [
             GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
@@ -246,7 +309,7 @@ private struct GarmentGridCard: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
-                Text("\(item.type.displayName) · \(item.displayStorageLocation)")
+                Text(metadataText)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.white.opacity(0.82))
                     .lineLimit(1)
@@ -278,6 +341,12 @@ private struct GarmentGridCard: View {
     private var accessibilityLabel: String {
         let seasons = item.seasons.map(\.displayName).joined(separator: ", ")
         return "\(item.displayTitle), \(item.status.displayName), \(seasons), \(L10n.text("closet.formality.label")) \(item.formalityLevel)"
+    }
+
+    private var metadataText: String {
+        let storage = item.displayStorageLocation
+        guard !storage.isEmpty else { return item.type.displayName }
+        return "\(item.type.displayName) · \(storage)"
     }
 }
 
@@ -523,7 +592,9 @@ struct ClosetItemDetailView: View {
                         DetailSectionHeader(title: L10n.text("closet.details.section"), systemImage: "tag")
                         detailRow(title: L10n.text("closet.type.label"), value: item.type.displayName)
                         detailRow(title: L10n.text("closet.color.label"), value: item.displayColor)
-                        detailRow(title: L10n.text("closet.storage_location.label"), value: item.displayStorageLocation)
+                        if !item.displayStorageLocation.isEmpty {
+                            detailRow(title: L10n.text("closet.storage_location.label"), value: item.displayStorageLocation)
+                        }
                         detailRow(title: L10n.text("closet.status.label"), value: item.status.displayName)
                     }
                 }

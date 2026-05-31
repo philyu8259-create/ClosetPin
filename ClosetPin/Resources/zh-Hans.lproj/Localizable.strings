@@ -34,6 +34,7 @@
 "closet.empty.description" = "先添加 2 件上衣、1 件下装、1 件精致外搭，以及一双你真的会穿的鞋。";
 "closet.filter.all" = "全部";
 "closet.filter.status_all" = "全部状态";
+"closet.filter.advanced" = "高级筛选";
 "closet.filtered_empty.title" = "没有匹配单品";
 "closet.filtered_empty.description" = "调整筛选条件，或添加另一件单品来补齐衣橱。";
 "closet.add_item" = "添加单品";
@@ -203,6 +204,9 @@
 "closet.archive.kicker" = "衣橱档案";
 "closet.archive.title" = "你的衣橱";
 "closet.archive.count.format" = "%d 件单品可搭配";
+"closet.today_ready.title" = "可用于今日推荐";
+"closet.today_ready.body.format" = "%d 件可穿单品会参与推荐。添加或编辑后，回到「今日」选场合。";
+"closet.today_ready.open_today" = "打开今日";
 "settings.title" = "设置";
 "settings.summary.kicker" = "穿搭简报";
 "settings.summary.title.format" = "%@ · 正式度 %d";

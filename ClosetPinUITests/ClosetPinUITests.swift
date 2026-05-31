@@ -96,6 +96,24 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["穿搭简报"].waitForExistence(timeout: 3))
     }
 
+    func testClosetExplainsTodayReadinessWithoutDefaultAdvancedFilters() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+
+        XCTAssertTrue(app.staticTexts["Ready for Today"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["closetOpenTodayButton"].exists)
+        XCTAssertFalse(app.buttons["Any Status"].exists)
+
+        app.buttons["closetOpenTodayButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+    }
+
     func testStartAddingFromOnboardingOpensAddItemFlow() {
         let app = makeApp()
         app.launch()
@@ -323,9 +341,9 @@ final class ClosetPinUITests: XCTestCase {
 
         app.buttons["appTab_closet"].tap()
 
-        let whiteShirtCard = app.buttons["closetItemCard_11111111-1111-1111-1111-111111111111"]
-        XCTAssertTrue(whiteShirtCard.waitForExistence(timeout: 3))
-        whiteShirtCard.tap()
+        let visibleItemCard = app.buttons["closetItemCard_77777777-7777-7777-7777-777777777777"]
+        XCTAssertTrue(visibleItemCard.waitForExistence(timeout: 3))
+        visibleItemCard.tap()
 
         XCTAssertTrue(app.buttons["editItemButton"].waitForExistence(timeout: 3))
         app.buttons["editItemButton"].tap()
