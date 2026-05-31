@@ -24,6 +24,8 @@
 		583A2779FD5EE3B724ECE4E0 /* UserPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1455F84F2C8116E6F6D228E2 /* UserPreference.swift */; };
 		5963473D25A6DD11BA02DBE0 /* ColorResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA34D7124C32E8513FEBC82 /* ColorResolverTests.swift */; };
 		59F936BF9D10DD0BC453E3D3 /* ImageStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2D9874E30C341346C01C09 /* ImageStoreTests.swift */; };
+		5DC5706EAC2142FAB6BDC0C5 /* TomorrowRecommendationInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB43E072BA67FB7B4AE0099 /* TomorrowRecommendationInput.swift */; };
+		5E09159BF02842FF3E61E279 /* TomorrowWeatherContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */; };
 		6E03B115ED96960ECEEB2295 /* editorial-charcoal-blazer.png in Resources */ = {isa = PBXBuildFile; fileRef = 2795F83AC148DE69BD259B50 /* editorial-charcoal-blazer.png */; };
 		7682B9A97FDA6BB5381CB26E /* AIStylistClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48D80DA3A15B558323AD91C2 /* AIStylistClientTests.swift */; };
 		7FA3CCA8190DBC99D47F9958 /* editorial-charcoal-knit.png in Resources */ = {isa = PBXBuildFile; fileRef = 296CF2132B53E4F593A46D56 /* editorial-charcoal-knit.png */; };
@@ -101,6 +103,7 @@
 		581701A584770C17DC783A88 /* TodayRecommendationExplanation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayRecommendationExplanation.swift; sourceTree = "<group>"; };
 		5CA4E1C0FD19B09BFCC523B2 /* Outfit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outfit.swift; sourceTree = "<group>"; };
 		6EC74AA54C0434FFC1E558C9 /* WorkCapsuleOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkCapsuleOnboardingView.swift; sourceTree = "<group>"; };
+		6FB43E072BA67FB7B4AE0099 /* TomorrowRecommendationInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TomorrowRecommendationInput.swift; sourceTree = "<group>"; };
 		74E84EA8C06695AB1365D88C /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		781E7B811736C7608A900BCE /* ClosetPinUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClosetPinUITests.swift; sourceTree = "<group>"; };
 		7C5929B6A909117EC0CD6464 /* ClothingItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClothingItem.swift; sourceTree = "<group>"; };
@@ -123,6 +126,7 @@
 		B8166A173440743E1A3E9BBA /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		B862F19226649FA809122C8C /* LooksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LooksView.swift; sourceTree = "<group>"; };
 		BB2D9874E30C341346C01C09 /* ImageStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStoreTests.swift; sourceTree = "<group>"; };
+		BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TomorrowWeatherContext.swift; sourceTree = "<group>"; };
 		C22D3C89603FDF9ACBA3FF92 /* TodayFeedbackRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayFeedbackRecorder.swift; sourceTree = "<group>"; };
 		CD536F12EE5B2CA515CB80A7 /* editorial-white-shirt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-white-shirt.png"; sourceTree = "<group>"; };
 		D1B7AA169818AAB97CABB7DB /* empty-closet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "empty-closet.png"; sourceTree = "<group>"; };
@@ -275,6 +279,8 @@
 				35D7624E1D14529B81A91C33 /* OutfitCandidate.swift */,
 				3E7A3D5FF30D8C4425502465 /* RecommendationEngine.swift */,
 				7DFDD5DC2D19EF546AB00F79 /* RecommendationInput.swift */,
+				6FB43E072BA67FB7B4AE0099 /* TomorrowRecommendationInput.swift */,
+				BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */,
 			);
 			path = Recommendation;
 			sourceTree = "<group>";
@@ -513,6 +519,8 @@
 				D03FD08A7348A5D667C0D204 /* TodayFeedbackRecorder.swift in Sources */,
 				B64DB556579DA270D4F9B90B /* TodayRecommendationExplanation.swift in Sources */,
 				ACCB10B79DE1C5F80AB82EEE /* TodayView.swift in Sources */,
+				5DC5706EAC2142FAB6BDC0C5 /* TomorrowRecommendationInput.swift in Sources */,
+				5E09159BF02842FF3E61E279 /* TomorrowWeatherContext.swift in Sources */,
 				583A2779FD5EE3B724ECE4E0 /* UserPreference.swift in Sources */,
 				F17029415040017FA151B4CD /* WorkCapsuleOnboardingView.swift in Sources */,
 			);

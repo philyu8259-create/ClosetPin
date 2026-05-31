@@ -128,6 +128,145 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertEqual(candidates.first?.items.count, 3)
     }
 
+    func testColdTomorrowPrioritizesWarmerLayeringForDailyOffice() throws {
+        let warmTop = clothingItem(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000101")!,
+            type: .top,
+            color: "navy",
+            seasons: [.winter],
+            formalityLevel: 4,
+            warmthLevel: 5
+        )
+        let coolTop = clothingItem(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000102")!,
+            type: .top,
+            color: "grey",
+            seasons: [.winter],
+            formalityLevel: 4,
+            warmthLevel: 1
+        )
+        let itemSet = [
+            warmTop,
+            coolTop,
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000103")!, type: .bottom, color: "black", seasons: [.winter], formalityLevel: 4, warmthLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000104")!, type: .shoes, color: "brown", seasons: [.winter], formalityLevel: 4, warmthLevel: 1),
+            clothingItem(
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000105")!,
+                type: .outerwear,
+                color: "olive",
+                seasons: [.winter],
+                formalityLevel: 4,
+                warmthLevel: 5
+            )
+        ]
+
+        let tomorrow = TomorrowRecommendationInput(
+            weatherContext: TomorrowWeatherContext(
+                condition: .snow,
+                minTemperatureCelsius: 1,
+                maxTemperatureCelsius: 8,
+                precipitationProbability: 65,
+                windSpeedKph: 8
+            )
+        )
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .dailyOffice,
+                season: .winter,
+                tomorrow: tomorrow,
+                maximumResults: 1
+            ),
+            items: itemSet,
+            feedback: []
+        )
+
+        let candidate = try XCTUnwrap(candidates.first)
+        let candidateTop = candidate.items.first { $0.resolvedType == .top }
+        let hasOuterwear = candidate.items.contains { $0.resolvedType == .outerwear }
+        XCTAssertTrue(hasOuterwear)
+        XCTAssertEqual(candidateTop?.warmthLevel, 5)
+    }
+
+    func testRainTomorrowPrefersRainSafeShoes() throws {
+        let safeShoes = clothingItem(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000201")!,
+            type: .shoes,
+            color: "black",
+            seasons: [.autumn],
+            styleTags: ["waterproof"],
+            formalityLevel: 4,
+            warmthLevel: 1
+        )
+        let unsafeShoes = clothingItem(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000202")!,
+            type: .shoes,
+            color: "white",
+            seasons: [.autumn],
+            styleTags: ["canvas"],
+            formalityLevel: 4,
+            warmthLevel: 1
+        )
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000203")!, type: .top, color: "white", seasons: [.autumn], formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000204")!, type: .bottom, color: "black", seasons: [.autumn], formalityLevel: 4),
+            unsafeShoes,
+            safeShoes
+        ]
+        let tomorrow = TomorrowRecommendationInput(
+            weatherContext: TomorrowWeatherContext(
+                condition: .rain,
+                minTemperatureCelsius: 10,
+                maxTemperatureCelsius: 13,
+                precipitationProbability: 90,
+                windSpeedKph: 12
+            )
+        )
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .dailyOffice,
+                season: .autumn,
+                tomorrow: tomorrow,
+                maximumResults: 1
+            ),
+            items: items,
+            feedback: []
+        )
+
+        let candidate: OutfitCandidate = try XCTUnwrap(candidates.first)
+        let shoe: ClothingItem = try XCTUnwrap(candidate.items.first { $0.resolvedType == .shoes })
+        XCTAssertEqual(shoe.id, safeShoes.id)
+    }
+
+    func testHotTomorrowDoesNotForceBlazerInImportantMeeting() {
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .importantMeeting,
+                season: .summer,
+                tomorrow: TomorrowRecommendationInput(
+                    weatherContext: TomorrowWeatherContext(
+                        condition: .clear,
+                        minTemperatureCelsius: 28,
+                        maxTemperatureCelsius: 34,
+                        precipitationProbability: 5,
+                        windSpeedKph: 6
+                    )
+                ),
+                maximumResults: 2
+            ),
+            items: [
+                clothingItem(type: .top, color: "white", seasons: [.summer], formalityLevel: 4, warmthLevel: 1),
+                clothingItem(type: .bottom, color: "navy", seasons: [.summer], formalityLevel: 4, warmthLevel: 2),
+                clothingItem(type: .shoes, color: "black", seasons: [.summer], formalityLevel: 4, warmthLevel: 1),
+                clothingItem(type: .blazer, color: "charcoal", seasons: [.summer], formalityLevel: 4, warmthLevel: 3)
+            ],
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 1)
+        XCTAssertEqual(candidates[0].items.count, 3)
+        XCTAssertFalse(candidates[0].items.contains { $0.resolvedType == .blazer })
+    }
+
     func testMaximumResultsIsRespected() {
         let items = [
             clothingItem(type: .top, color: "white", formalityLevel: 4),
@@ -249,7 +388,9 @@ private extension RecommendationEngineTests {
         type: ClothingType,
         color: String = "navy",
         seasons: [SeasonTag] = [.spring],
+        styleTags: [String] = [],
         formalityLevel: Int = 3,
+        warmthLevel: Int = 2,
         status: ClothingStatus = .available
     ) -> ClothingItem {
         ClothingItem(
@@ -258,7 +399,9 @@ private extension RecommendationEngineTests {
             type: type,
             color: color,
             seasons: seasons,
+            styleTags: styleTags,
             formalityLevel: formalityLevel,
+            warmthLevel: warmthLevel,
             storageLocation: "closet",
             status: status
         )
