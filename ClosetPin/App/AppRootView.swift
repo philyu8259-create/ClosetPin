@@ -6,6 +6,7 @@ struct AppRootView: View {
     @Query private var clothingItems: [ClothingItem]
     @State private var debugSeedReady = false
     @State private var selectedTab: AppTab = .today
+    @State private var closetAddItemRequestID: UUID?
     @State private var debugSheet: DebugSheet?
 
     var body: some View {
@@ -50,10 +51,15 @@ struct AppRootView: View {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .closet
                 }
+            }, onAddClosetItem: {
+                closetAddItemRequestID = UUID()
+                withAnimation(.snappy(duration: 0.28)) {
+                    selectedTab = .closet
+                }
             })
                 .tag(AppTab.today)
 
-            ClosetView(onOpenToday: {
+            ClosetView(openAddItemRequest: closetAddItemRequestID, onOpenToday: {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .today
                 }

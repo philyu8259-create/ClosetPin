@@ -7,7 +7,9 @@ struct ClosetView: View {
     @State private var typeFilter: ClosetTypeFilter = .all
     @State private var statusFilter: ClosetStatusFilter = .all
     @State private var showsAdvancedFilters = false
+    @State private var handledAddItemRequest: UUID?
 
+    var openAddItemRequest: UUID?
     var onOpenToday: () -> Void = {}
 
     private let categoryOrder: [ClothingType] = [
@@ -48,7 +50,19 @@ struct ClosetView: View {
                     AddEditItemView()
                 }
             }
+            .onAppear {
+                handleAddItemRequest(openAddItemRequest)
+            }
+            .onChange(of: openAddItemRequest) { _, request in
+                handleAddItemRequest(request)
+            }
         }
+    }
+
+    private func handleAddItemRequest(_ request: UUID?) {
+        guard let request, request != handledAddItemRequest else { return }
+        handledAddItemRequest = request
+        activeSheet = .add
     }
 
     private var closetGrid: some View {

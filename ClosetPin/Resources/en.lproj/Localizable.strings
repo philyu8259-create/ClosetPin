@@ -168,6 +168,7 @@
 "today.option.format" = "Option %d";
 "today.score.accessibility.format" = "Score %d";
 "today.missing.title" = "Outfit ingredients needed";
+"today.missing.add_item" = "Add Missing Item";
 "today.missing.open_closet" = "Continue in Closet";
 "today.feedback.wore" = "Wear Today";
 "today.feedback.like" = "Good Fit";

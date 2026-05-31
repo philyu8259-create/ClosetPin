@@ -24,6 +24,7 @@ struct TodayView: View {
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
+    let onAddClosetItem: (() -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
@@ -32,10 +33,12 @@ struct TodayView: View {
     init(
         onOpenLooks: (() -> Void)? = nil,
         onOpenCloset: (() -> Void)? = nil,
+        onAddClosetItem: (() -> Void)? = nil,
         tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider()
     ) {
         self.onOpenLooks = onOpenLooks
         self.onOpenCloset = onOpenCloset
+        self.onAddClosetItem = onAddClosetItem
         self.tomorrowWeatherProvider = tomorrowWeatherProvider
     }
 
@@ -134,7 +137,11 @@ struct TodayView: View {
                     }
                 )
             } else {
-                MissingRecommendationView(message: missingRecommendationMessage, onOpenCloset: onOpenCloset)
+                MissingRecommendationView(
+                    message: missingRecommendationMessage,
+                    onOpenCloset: onOpenCloset,
+                    onAddClosetItem: onAddClosetItem
+                )
             }
         }
     }
@@ -1015,6 +1022,7 @@ private struct TodayActionPanel: View {
 private struct MissingRecommendationView: View {
     let message: String
     let onOpenCloset: (() -> Void)?
+    let onAddClosetItem: (() -> Void)?
 
     var body: some View {
         LuxurySurfaceCard {
@@ -1028,7 +1036,16 @@ private struct MissingRecommendationView: View {
                     .foregroundStyle(DesignSystem.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let onOpenCloset {
+                if let onAddClosetItem {
+                    Button(action: onAddClosetItem) {
+                        Label(L10n.text("today.missing.add_item"), systemImage: "plus.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("todayMissingAddItemButton")
+                } else if let onOpenCloset {
                     Button(action: onOpenCloset) {
                         Label(L10n.text("today.missing.open_closet"), systemImage: "square.grid.2x2.fill")
                             .frame(maxWidth: .infinity)
@@ -1040,7 +1057,6 @@ private struct MissingRecommendationView: View {
                 }
             }
         }
-        .accessibilityIdentifier("todayMissingRecommendation")
     }
 }
 

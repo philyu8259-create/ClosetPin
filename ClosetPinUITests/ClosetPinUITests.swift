@@ -209,6 +209,34 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
     }
 
+    func testTodayMissingRecommendationOpensAddItemDirectly() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["startAddingClothesButton"].tap()
+
+        XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
+        app.buttons["useTestPhotoButton"].tap()
+        app.swipeUp()
+
+        let colorField = app.textFields["itemColorField"]
+        XCTAssertTrue(colorField.waitForExistence(timeout: 3))
+        colorField.tap()
+        colorField.typeText("Ivory")
+
+        app.buttons["saveItemButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Add one bottom to generate office outfits."].exists)
+
+        let addMissingButton = app.buttons["todayMissingAddItemButton"]
+        XCTAssertTrue(addMissingButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(addMissingButton.isHittable)
+        addMissingButton.tap()
+
+        XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
+    }
+
     func testTodayRecommendationCanRecordWoreFeedback() {
         let app = makeApp()
         app.launch()
