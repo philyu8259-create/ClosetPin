@@ -286,12 +286,9 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useSampleCapsuleButton"].tap()
 
         app.buttons["appTab_settings"].tap()
-        if !app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 2) {
-            app.swipeUp()
-        }
-
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Where AI steps in"].exists)
+        XCTAssertFalse(app.textFields["tomorrowWeatherLocationField"].exists)
 
         let weatherToggle = app.switches["tomorrowWeatherToggle"]
         XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
@@ -303,6 +300,7 @@ final class ClosetPinUITests: XCTestCase {
         locationField.typeText("Shanghai")
 
         XCTAssertTrue(app.staticTexts["No GPS required. Today will refresh the forecast from this city when available."].exists)
+        XCTAssertTrue(app.staticTexts["Ready for Today: Shanghai"].waitForExistence(timeout: 3))
     }
 
     func testAddClosetItemSmokeFlow() {

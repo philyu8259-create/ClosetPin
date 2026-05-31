@@ -230,7 +230,9 @@
 "settings.weather.enabled.body" = "ClosetPin 只会用这个城市来准备明日推荐。";
 "settings.weather.location.placeholder" = "城市或区域，例如上海";
 "settings.weather.location.helper" = "无需开启 GPS。「今日」会在可用时按这个城市刷新天气。";
+"settings.weather.disabled.title" = "需要时再开启";
 "settings.weather.disabled.helper" = "如果你希望穿搭规划完全停留在本机，可以保持关闭。";
+"settings.weather.ready.format" = "已准备给「今日」使用：%@";
 "settings.weather.ai.title" = "AI 介入的位置";
 "settings.weather.ai.body" = "AI 会在知道场合、衣橱、季节和明日天气后排序搭配；最终穿哪套仍由你决定。";
 "settings.privacy.section" = "隐私";

@@ -21,6 +21,20 @@ struct SettingsView: View {
                 VStack(spacing: DesignSystem.Spacing.lg) {
                     SettingsSummaryCard(scenario: defaultScenario, formality: preferredFormality)
 
+                    LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                            SettingsSectionHeader(
+                                title: L10n.text("settings.weather.section"),
+                                subtitle: L10n.text("settings.weather.subtitle")
+                            )
+
+                            TomorrowWeatherSettingsCard(
+                                isEnabled: $tomorrowWeatherEnabled,
+                                locationName: $tomorrowWeatherLocationName
+                            )
+                        }
+                    }
+
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
@@ -55,20 +69,6 @@ struct SettingsView: View {
                                 )
                             )
                             .accessibilityIdentifier("settingsAppliedPreferenceNote")
-                        }
-                    }
-
-                    LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                            SettingsSectionHeader(
-                                title: L10n.text("settings.weather.section"),
-                                subtitle: L10n.text("settings.weather.subtitle")
-                            )
-
-                            TomorrowWeatherSettingsCard(
-                                isEnabled: $tomorrowWeatherEnabled,
-                                locationName: $tomorrowWeatherLocationName
-                            )
                         }
                     }
 
@@ -363,30 +363,44 @@ private struct TomorrowWeatherSettingsCard: View {
             .tint(DesignSystem.accent)
             .accessibilityIdentifier("tomorrowWeatherToggle")
 
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    Image(systemName: "location.magnifyingglass")
-                        .foregroundStyle(isEnabled ? DesignSystem.accent : DesignSystem.secondaryInk)
+            if isEnabled {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        Image(systemName: "location.magnifyingglass")
+                            .foregroundStyle(DesignSystem.accent)
 
-                    TextField(L10n.text("settings.weather.location.placeholder"), text: $locationName)
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
-                        .disabled(!isEnabled)
-                        .accessibilityIdentifier("tomorrowWeatherLocationField")
-                }
-                .padding(.horizontal, DesignSystem.Spacing.md)
-                .padding(.vertical, 12)
-                .background(isEnabled ? DesignSystem.surface : DesignSystem.border.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
-                        .stroke(isEnabled ? DesignSystem.accent.opacity(0.28) : DesignSystem.border.opacity(0.5), lineWidth: 1)
-                }
+                        TextField(L10n.text("settings.weather.location.placeholder"), text: $locationName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("tomorrowWeatherLocationField")
+                    }
+                    .padding(.horizontal, DesignSystem.Spacing.md)
+                    .padding(.vertical, 12)
+                    .background(DesignSystem.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                            .stroke(DesignSystem.accent.opacity(0.28), lineWidth: 1)
+                    }
 
-                Text(isEnabled ? L10n.text("settings.weather.location.helper") : L10n.text("settings.weather.disabled.helper"))
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text(L10n.text("settings.weather.location.helper"))
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !trimmedLocationName.isEmpty {
+                        Label(L10n.string("settings.weather.ready.format", arguments: trimmedLocationName), systemImage: "checkmark.circle.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DesignSystem.accent)
+                            .accessibilityIdentifier("tomorrowWeatherReadyNote")
+                    }
+                }
+            } else {
+                SettingsNoteRow(
+                    systemImage: "location.slash",
+                    title: L10n.text("settings.weather.disabled.title"),
+                    bodyText: L10n.text("settings.weather.disabled.helper")
+                )
             }
 
             SettingsNoteRow(
@@ -395,6 +409,10 @@ private struct TomorrowWeatherSettingsCard: View {
                 bodyText: L10n.text("settings.weather.ai.body")
             )
         }
+    }
+
+    private var trimmedLocationName: String {
+        locationName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

@@ -230,7 +230,9 @@
 "settings.weather.enabled.body" = "ClosetPin will use this city only when preparing tomorrow's recommendation.";
 "settings.weather.location.placeholder" = "City or area, e.g. Shanghai";
 "settings.weather.location.helper" = "No GPS required. Today will refresh the forecast from this city when available.";
+"settings.weather.disabled.title" = "Off until you need it";
 "settings.weather.disabled.helper" = "Keep this off if you prefer the app to stay fully local for outfit planning.";
+"settings.weather.ready.format" = "Ready for Today: %@";
 "settings.weather.ai.title" = "Where AI steps in";
 "settings.weather.ai.body" = "AI ranks the outfit after it knows your occasion, closet, season, and tomorrow forecast; you still make the final choice.";
 "settings.privacy.section" = "Privacy";
