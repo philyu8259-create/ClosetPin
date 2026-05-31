@@ -382,14 +382,13 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(DesignSystem.editorialOverlayOpacity, 0.54, accuracy: 0.001)
     }
 
-    func testAddEditItemDraftRequiresColorSeasonStorageAndPhotoBeforeSaving() {
+    func testAddEditItemDraftRequiresOnlyColorPhotoAndSeasonBeforeSaving() {
         var draft = AddEditItemDraft()
 
         XCTAssertFalse(draft.canSave)
+        XCTAssertFalse(draft.selectedSeasons.isEmpty)
 
         draft.color = "Ivory"
-        draft.selectedSeasons = [.spring]
-        draft.storageLocation = "Main wardrobe"
         XCTAssertFalse(draft.canSave)
 
         draft.photoLocalPath = "/tmp/photo.jpg"
@@ -419,8 +418,6 @@ final class ClosetPinTests: XCTestCase {
     func testAddEditItemDraftAllowsStagedJPEGPhotoBeforeFinalPathExists() {
         var draft = AddEditItemDraft()
         draft.color = "Ivory"
-        draft.selectedSeasons = [.spring]
-        draft.storageLocation = "Main wardrobe"
         draft.pendingPhotoJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
 
         XCTAssertTrue(draft.canSave)
@@ -431,12 +428,11 @@ final class ClosetPinTests: XCTestCase {
         var draft = AddEditItemDraft()
         draft.photoLocalPath = "/tmp/photo.jpg"
         draft.color = "   "
-        draft.selectedSeasons = [.spring]
         draft.storageLocation = "\n\t"
 
         XCTAssertFalse(draft.canSave)
         XCTAssertTrue(draft.validationMessages.contains(L10n.text("closet.validation.color_required")))
-        XCTAssertTrue(draft.validationMessages.contains(L10n.text("closet.validation.storage_required")))
+        XCTAssertFalse(draft.validationMessages.contains(L10n.text("closet.validation.storage_required")))
     }
 
     func testAddEditItemDraftUsesStableItemIDForCreatedItem() {

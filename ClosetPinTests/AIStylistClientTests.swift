@@ -41,6 +41,7 @@ final class AIStylistClientTests: XCTestCase {
         draft.type = .bag
         draft.color = "Ivory"
         draft.selectedSeasons = [.spring]
+        draft.seasonSelectionSource = .manual
         draft.formalityLevel = 5
         draft.warmthLevel = 1
         let suggestion = ClothingPhotoTagSuggestion(

@@ -106,7 +106,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
     }
 
-    func testAddItemFlowPrioritizesSeasonShortcutOverAdvancedStyling() {
+    func testAddItemFlowPrioritizesAutoSeasonOverAdvancedStyling() {
         let app = makeApp()
         app.launch()
 
@@ -119,9 +119,34 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useTestPhotoButton"].tap()
         app.swipeUp()
 
-        XCTAssertTrue(app.buttons["seasonShortcut_current"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["seasonShortcut_yearRound"].exists)
+        XCTAssertTrue(app.staticTexts["Auto season"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["closetSeasonChangeButton"].exists)
+        XCTAssertFalse(app.buttons["seasonShortcut_current"].exists)
         XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
+    }
+
+    func testAddItemCanSaveWithPhotoColorAndAutoSeason() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        app.buttons["addItemButton"].tap()
+        app.buttons["useTestPhotoButton"].tap()
+        app.swipeUp()
+
+        let colorField = app.textFields["itemColorField"]
+        XCTAssertTrue(colorField.waitForExistence(timeout: 3))
+        colorField.tap()
+        colorField.typeText("Ivory")
+
+        XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
+        app.buttons["saveItemButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
     }
 
     func testTodayRecommendationCanRecordWoreFeedback() {
@@ -283,17 +308,9 @@ final class ClosetPinUITests: XCTestCase {
         colorField.tap()
         colorField.typeText("Ivory")
 
-        let storageField = app.textFields["itemStorageField"]
-        storageField.tap()
-        storageField.typeText("Main wardrobe")
-
-        app.buttons["seasonShortcut_current"].tap()
-
         app.buttons["saveItemButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
-        let storageLabel = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Main wardrobe")).firstMatch
-        XCTAssertTrue(storageLabel.exists)
     }
 
     func testClosetItemCanEditStatusAndFormality() {

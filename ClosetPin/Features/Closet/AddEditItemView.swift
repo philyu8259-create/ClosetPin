@@ -7,6 +7,12 @@ struct AddEditItemDraft {
     static let defaultFormalityLevel = 3
     static let defaultWarmthLevel = 3
 
+    enum SeasonSelectionSource {
+        case systemDate
+        case photoSuggestion
+        case manual
+    }
+
     var itemID: UUID = UUID()
     var photoLocalPath: String = ""
     var originalPhotoLocalPath: String = ""
@@ -15,6 +21,7 @@ struct AddEditItemDraft {
     var type: ClothingType = .top
     var color: String = ""
     var selectedSeasons: Set<SeasonTag> = []
+    var seasonSelectionSource: SeasonSelectionSource = .systemDate
     var formalityLevel: Int = defaultFormalityLevel
     var warmthLevel: Int = defaultWarmthLevel
     var storageLocation: String = ""
@@ -22,7 +29,10 @@ struct AddEditItemDraft {
     var notes: String = ""
 
     init(item: ClothingItem? = nil) {
-        guard let item else { return }
+        guard let item else {
+            selectAutomaticCurrentSeason()
+            return
+        }
 
         itemID = item.id
         photoLocalPath = item.photoLocalPath
@@ -30,6 +40,7 @@ struct AddEditItemDraft {
         type = item.type
         color = item.displayColor
         selectedSeasons = Set(item.seasons)
+        seasonSelectionSource = .manual
         formalityLevel = item.formalityLevel
         warmthLevel = item.warmthLevel
         storageLocation = item.displayStorageLocation
@@ -47,9 +58,6 @@ struct AddEditItemDraft {
         }
         if selectedSeasons.isEmpty {
             messages.append(L10n.text("closet.validation.season_required"))
-        }
-        if normalized(storageLocation).isEmpty {
-            messages.append(L10n.text("closet.validation.storage_required"))
         }
         return messages
     }
@@ -80,14 +88,28 @@ struct AddEditItemDraft {
         } else {
             selectedSeasons.insert(season)
         }
+        seasonSelectionSource = .manual
     }
 
     mutating func selectCurrentSeason(date: Date = Date(), calendar: Calendar = .current) {
         selectedSeasons = [SeasonResolver.currentSeason(date: date, calendar: calendar)]
+        seasonSelectionSource = .manual
+    }
+
+    mutating func selectAutomaticCurrentSeason(date: Date = Date(), calendar: Calendar = .current) {
+        selectedSeasons = [SeasonResolver.currentSeason(date: date, calendar: calendar)]
+        seasonSelectionSource = .systemDate
     }
 
     mutating func selectYearRound() {
         selectedSeasons = Set(SeasonTag.allCases)
+        seasonSelectionSource = .manual
+    }
+
+    mutating func applyPhotoSuggestedSeasons(_ seasons: Set<SeasonTag>) {
+        guard !seasons.isEmpty else { return }
+        selectedSeasons = seasons
+        seasonSelectionSource = .photoSuggestion
     }
 
     func makeItem() -> ClothingItem {
@@ -145,6 +167,7 @@ struct AddEditItemView: View {
     @State private var photoPreview: PhotoPreviewSheet?
     @State private var photoTaggingOutcome: PhotoTaggingOutcome?
     @State private var showsOptionalDetails = false
+    @State private var showsSeasonChooser = false
 
     init(
         item: ClothingItem? = nil,
@@ -364,21 +387,25 @@ struct AddEditItemView: View {
                 .textInputAutocapitalization(.words)
                 .accessibilityIdentifier("itemColorField")
 
-            TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
-                .textInputAutocapitalization(.words)
-                .accessibilityIdentifier("itemStorageField")
-
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("closet.seasons.section"))
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(DesignSystem.secondaryInk)
 
-                SeasonShortcutRow(
-                    selectCurrentSeason: { draft.selectCurrentSeason() },
-                    selectYearRound: { draft.selectYearRound() }
+                ClosetSeasonAutoCard(
+                    selectedSeasons: draft.selectedSeasons,
+                    selectionSource: draft.seasonSelectionSource,
+                    isExpanded: $showsSeasonChooser
                 )
 
-                seasonGrid
+                if showsSeasonChooser {
+                    SeasonShortcutRow(
+                        selectCurrentSeason: { draft.selectCurrentSeason() },
+                        selectYearRound: { draft.selectYearRound() }
+                    )
+
+                    seasonGrid
+                }
             }
             .padding(.vertical, 4)
         }
@@ -387,6 +414,10 @@ struct AddEditItemView: View {
     private var optionalDetailsSection: some View {
         Section {
             DisclosureGroup(isExpanded: $showsOptionalDetails) {
+                TextField(L10n.text("closet.storage_location.label"), text: $draft.storageLocation)
+                    .textInputAutocapitalization(.words)
+                    .accessibilityIdentifier("itemStorageField")
+
                 StatusSelectionGrid(selection: $draft.status)
 
                 LevelControl(
@@ -607,6 +638,78 @@ struct AddEditItemView: View {
     }
 }
 
+private struct ClosetSeasonAutoCard: View {
+    let selectedSeasons: Set<SeasonTag>
+    let selectionSource: AddEditItemDraft.SeasonSelectionSource
+    @Binding var isExpanded: Bool
+
+    private var seasonSummary: String {
+        let seasons = SeasonTag.allCases
+            .filter { selectedSeasons.contains($0) }
+            .map(\.displayName)
+
+        guard !seasons.isEmpty else {
+            return L10n.text("closet.season.none")
+        }
+        return seasons.joined(separator: ", ")
+    }
+
+    private var summaryText: String {
+        switch selectionSource {
+        case .systemDate:
+            return L10n.string("closet.season.auto.current.format", arguments: seasonSummary)
+        case .photoSuggestion:
+            return L10n.string("closet.season.auto.photo.format", arguments: seasonSummary)
+        case .manual:
+            return seasonSummary
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+            Image(systemName: "calendar.badge.checkmark")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(DesignSystem.accent)
+                .frame(width: 30)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n.text("closet.season.auto.title"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(summaryText)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+            }
+
+            Spacer(minLength: DesignSystem.Spacing.sm)
+
+            Button {
+                withAnimation(.snappy(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                Text(L10n.text("closet.season.change"))
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(DesignSystem.accent.opacity(0.1))
+                    .clipShape(Capsule(style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("closetSeasonChangeButton")
+        }
+        .padding(12)
+        .background(DesignSystem.paper)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.45), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
 private struct SeasonShortcutRow: View {
     let selectCurrentSeason: () -> Void
     let selectYearRound: () -> Void
@@ -665,9 +768,6 @@ private struct EssentialsChecklistGrid: View {
         }
         if !draft.hasSeasonSelection {
             titles.append(L10n.text("closet.save_checklist.season"))
-        }
-        if !draft.hasStorageLocation {
-            titles.append(L10n.text("closet.save_checklist.storage"))
         }
 
         return titles

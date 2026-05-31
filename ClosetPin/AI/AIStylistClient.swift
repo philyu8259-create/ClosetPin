@@ -36,8 +36,8 @@ struct ClothingPhotoTagSuggestion: Equatable, Sendable {
             draft.color = color
         }
 
-        if draft.selectedSeasons.isEmpty {
-            draft.selectedSeasons = seasons
+        if draft.selectedSeasons.isEmpty || draft.seasonSelectionSource == .systemDate {
+            draft.applyPhotoSuggestedSeasons(seasons)
         }
 
         if draft.formalityLevel == AddEditItemDraft.defaultFormalityLevel {
