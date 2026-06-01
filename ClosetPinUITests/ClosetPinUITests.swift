@@ -390,7 +390,6 @@ final class ClosetPinUITests: XCTestCase {
 
         app.buttons["appTab_settings"].tap()
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Where AI steps in"].exists)
         XCTAssertFalse(app.textFields["tomorrowWeatherLocationField"].exists)
 
         let weatherToggle = app.switches["tomorrowWeatherToggle"]
@@ -404,6 +403,25 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["No GPS required. Today will refresh the forecast from this city when available."].exists)
         XCTAssertTrue(app.staticTexts["Ready for Today: Shanghai"].waitForExistence(timeout: 3))
+    }
+
+    func testSettingsExplainsAiRoleWithoutExtraSetup() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        app.buttons["appTab_settings"].tap()
+        app.swipeUp()
+        XCTAssertTrue(app.staticTexts["AI Assistant"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["AI helps at three moments: tag new photos, rank Today outfits, and adjust for tomorrow weather when you enable it."].exists)
+        XCTAssertTrue(app.staticTexts["Photo tags"].exists)
+        XCTAssertTrue(app.staticTexts["Local first"].exists)
+        XCTAssertTrue(app.staticTexts["Today ranking"].exists)
+        XCTAssertTrue(app.staticTexts["Always on"].exists)
+        XCTAssertTrue(app.staticTexts["Weather help"].exists)
+        XCTAssertTrue(app.staticTexts["Optional"].exists)
     }
 
     func testAddClosetItemSmokeFlow() {

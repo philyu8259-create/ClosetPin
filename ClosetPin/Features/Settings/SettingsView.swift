@@ -72,6 +72,11 @@ struct SettingsView: View {
                         }
                     }
 
+                    AIAssistStatusCard(
+                        cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
+                        tomorrowWeatherEnabled: tomorrowWeatherEnabled
+                    )
+
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
@@ -233,6 +238,94 @@ private struct SettingsSectionHeader: View {
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+private struct AIAssistStatusCard: View {
+    let cloudPhotoRecognitionEnabled: Bool
+    let tomorrowWeatherEnabled: Bool
+
+    var body: some View {
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                SettingsSectionHeader(
+                    title: L10n.text("settings.ai_status.title"),
+                    subtitle: L10n.text("settings.ai_status.body")
+                )
+
+                VStack(spacing: DesignSystem.Spacing.sm) {
+                    AIAssistStatusRow(
+                        systemImage: "camera.metering.center.weighted",
+                        title: L10n.text("settings.ai_status.photo.title"),
+                        status: cloudPhotoRecognitionEnabled
+                            ? L10n.text("settings.ai_status.photo.status.cloud")
+                            : L10n.text("settings.ai_status.photo.status.local"),
+                        detail: L10n.text("settings.ai_status.photo.detail")
+                    )
+
+                    AIAssistStatusRow(
+                        systemImage: "sparkles",
+                        title: L10n.text("settings.ai_status.ranking.title"),
+                        status: L10n.text("settings.ai_status.ranking.status"),
+                        detail: L10n.text("settings.ai_status.ranking.detail")
+                    )
+
+                    AIAssistStatusRow(
+                        systemImage: "cloud.sun",
+                        title: L10n.text("settings.ai_status.weather.title"),
+                        status: tomorrowWeatherEnabled
+                            ? L10n.text("settings.ai_status.weather.status.on")
+                            : L10n.text("settings.ai_status.weather.status.optional"),
+                        detail: L10n.text("settings.ai_status.weather.detail")
+                    )
+                }
+            }
+        }
+        .accessibilityIdentifier("settingsAIStatusCard")
+    }
+}
+
+private struct AIAssistStatusRow: View {
+    let systemImage: String
+    let title: String
+    let status: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(DesignSystem.accent)
+                .frame(width: 24, height: 24)
+                .background(DesignSystem.accent.opacity(0.09))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Spacer(minLength: DesignSystem.Spacing.sm)
+
+                    Text(status)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(DesignSystem.accent.opacity(0.09))
+                        .clipShape(Capsule(style: .continuous))
+                }
+
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(DesignSystem.Spacing.sm)
+        .background(DesignSystem.surface.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
     }
 }
 
@@ -403,11 +496,6 @@ private struct TomorrowWeatherSettingsCard: View {
                 )
             }
 
-            SettingsNoteRow(
-                systemImage: "sparkles.rectangle.stack",
-                title: L10n.text("settings.weather.ai.title"),
-                bodyText: L10n.text("settings.weather.ai.body")
-            )
         }
     }
 
