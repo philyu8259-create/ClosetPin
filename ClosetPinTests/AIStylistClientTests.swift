@@ -1,6 +1,7 @@
 import XCTest
 @testable import ClosetPin
 
+@MainActor
 final class AIStylistClientTests: XCTestCase {
     func testLocalPhotoIntelligenceSuggestsDominantColorAndPracticalDefaults() throws {
         let image = makeSolidImage(color: .systemBlue)
@@ -97,6 +98,76 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertEqual(suggestion.warmthLevel, 1)
         XCTAssertEqual(suggestion.confidence, 0.82, accuracy: 0.001)
         XCTAssertEqual(suggestion.source, .remoteAI)
+    }
+
+    func testCloudStylistExplanationRequestContainsOnlyCurrentOutfitMetadata() throws {
+        let candidate = OutfitCandidate(
+            id: "dailyOffice|seed",
+            items: [
+                clothingItem(type: .top, color: "white"),
+                clothingItem(type: .bottom, color: "navy")
+            ],
+            score: 142,
+            explanationSeed: "seed"
+        )
+
+        let body = try CloudStylistExplanationClient.makeRequestBody(
+            for: candidate,
+            scenario: .dailyOffice,
+            localeIdentifier: "en_US"
+        )
+        let payload = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        let items = try XCTUnwrap(payload["items"] as? [[String: Any]])
+
+        XCTAssertEqual(payload["candidateId"] as? String, "dailyOffice|seed")
+        XCTAssertEqual(payload["scenario"] as? String, "dailyOffice")
+        XCTAssertEqual(payload["score"] as? Int, 142)
+        XCTAssertEqual(payload["localeIdentifier"] as? String, "en_US")
+        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(items.first?["type"] as? String, "top")
+        XCTAssertEqual(items.first?["color"] as? String, "white")
+        XCTAssertNil(items.first?["photoLocalPath"])
+        XCTAssertNil(payload["closetItems"])
+        XCTAssertNil(payload["wardrobe"])
+        XCTAssertNil(payload["userPreference"])
+    }
+
+    func testCloudStylistExplanationDecodesTrimmedExplanationAndRejectsEmptyText() throws {
+        let validJSON = #"{"explanation":"  Works because the light top balances the navy base.  "}"#
+        let emptyJSON = #"{"explanation":"   "}"#
+
+        let explanation = try CloudStylistExplanationClient.decodeExplanation(from: Data(validJSON.utf8))
+        let emptyExplanation = try CloudStylistExplanationClient.decodeExplanation(from: Data(emptyJSON.utf8))
+
+        XCTAssertEqual(explanation, "Works because the light top balances the navy base.")
+        XCTAssertNil(emptyExplanation)
+    }
+
+    func testStylistExplanationPipelineUsesRemoteWhenAvailableAndFallsBackLocally() async throws {
+        let candidate = OutfitCandidate(
+            id: "dailyOffice|seed",
+            items: [
+                clothingItem(type: .top, color: "white"),
+                clothingItem(type: .bottom, color: "navy")
+            ],
+            score: 142,
+            explanationSeed: "seed"
+        )
+        let localExplanation = try await LocalFallbackStylistClient().explain(candidate: candidate, scenario: .dailyOffice)
+        let remotePipeline = StylistExplanationPipeline(
+            localClient: LocalFallbackStylistClient(),
+            remoteClient: StubAIStylistClient(explanation: "AI explains the balance in one simple sentence.")
+        )
+        let fallbackPipeline = StylistExplanationPipeline(
+            localClient: LocalFallbackStylistClient(),
+            remoteClient: FailingAIStylistClient()
+        )
+
+        let remoteExplanation = await remotePipeline.explanation(for: candidate, scenario: .dailyOffice)
+        let fallbackExplanation = await fallbackPipeline.explanation(for: candidate, scenario: .dailyOffice)
+
+        XCTAssertEqual(remoteExplanation, "AI explains the balance in one simple sentence.")
+        XCTAssertEqual(fallbackExplanation, localExplanation)
     }
 
     func testPhotoTaggingPipelineUsesCloudSuggestionWhenAllowed() async {
@@ -506,6 +577,22 @@ private struct StubAsyncPhotoTaggingClient: AsyncClothingPhotoTaggingClient {
 
 private struct FailingAsyncPhotoTaggingClient: AsyncClothingPhotoTaggingClient {
     func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion? {
+        throw URLError(.badServerResponse)
+    }
+}
+
+private struct StubAIStylistClient: AIStylistClient {
+    let explanation: String
+
+    @MainActor
+    func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String {
+        explanation
+    }
+}
+
+private struct FailingAIStylistClient: AIStylistClient {
+    @MainActor
+    func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String {
         throw URLError(.badServerResponse)
     }
 }

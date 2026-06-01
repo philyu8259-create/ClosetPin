@@ -1,8 +1,157 @@
 import Foundation
 import UIKit
 
-protocol AIStylistClient {
+protocol AIStylistClient: Sendable {
+    @MainActor
     func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String
+}
+
+struct StylistExplanationPipeline: Sendable {
+    let localClient: any AIStylistClient
+    let remoteClient: (any AIStylistClient)?
+
+    static func appDefault() -> StylistExplanationPipeline {
+        StylistExplanationPipeline(
+            localClient: LocalFallbackStylistClient(),
+            remoteClient: CloudStylistExplanationEndpoint.configuredURL.map {
+                CloudStylistExplanationClient(endpoint: $0)
+            }
+        )
+    }
+
+    @MainActor
+    func explanation(for candidate: OutfitCandidate, scenario: OutfitScenario) async -> String {
+        if let remoteClient {
+            do {
+                let remoteExplanation = try await remoteClient.explain(candidate: candidate, scenario: scenario)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if !remoteExplanation.isEmpty {
+                    return remoteExplanation
+                }
+            } catch {
+                // Cloud explanations are optional; recommendation cards should never block on AI.
+            }
+        }
+
+        do {
+            return try await localClient.explain(candidate: candidate, scenario: scenario)
+        } catch {
+            return L10n.text("recommendation.explanation.empty")
+        }
+    }
+}
+
+struct CloudStylistExplanationClient: AIStylistClient, @unchecked Sendable {
+    let endpoint: URL
+    let session: URLSession
+
+    init(endpoint: URL, session: URLSession = .shared) {
+        self.endpoint = endpoint
+        self.session = session
+    }
+
+    @MainActor
+    func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try Self.makeRequestBody(
+            for: candidate,
+            scenario: scenario,
+            localeIdentifier: Locale.current.identifier
+        )
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode),
+              let explanation = try Self.decodeExplanation(from: data) else {
+            throw CloudStylistExplanationClientError.invalidResponse
+        }
+
+        return explanation
+    }
+
+    static func makeRequestBody(
+        for candidate: OutfitCandidate,
+        scenario: OutfitScenario,
+        localeIdentifier: String
+    ) throws -> Data {
+        let request = CloudStylistExplanationRequest(
+            candidateId: candidate.id,
+            scenario: scenario.rawValue,
+            score: candidate.score,
+            explanationSeed: candidate.explanationSeed,
+            localeIdentifier: localeIdentifier,
+            items: candidate.items.map(CloudStylistExplanationItem.init(item:))
+        )
+        return try JSONEncoder().encode(request)
+    }
+
+    static func decodeExplanation(from data: Data) throws -> String? {
+        let response = try JSONDecoder().decode(CloudStylistExplanationResponse.self, from: data)
+        let explanation = response.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
+        return explanation.isEmpty ? nil : explanation
+    }
+}
+
+enum CloudStylistExplanationClientError: Error {
+    case invalidResponse
+}
+
+private struct CloudStylistExplanationRequest: Encodable {
+    let candidateId: String
+    let scenario: String
+    let score: Int
+    let explanationSeed: String
+    let localeIdentifier: String
+    let items: [CloudStylistExplanationItem]
+}
+
+private struct CloudStylistExplanationItem: Encodable {
+    let type: String
+    let color: String
+    let seasons: [String]
+    let formalityLevel: Int
+    let warmthLevel: Int
+    let status: String
+
+    init(item: ClothingItem) {
+        type = item.type.rawValue
+        color = item.color.trimmingCharacters(in: .whitespacesAndNewlines)
+        seasons = item.seasons.map(\.rawValue)
+        formalityLevel = item.formalityLevel
+        warmthLevel = item.warmthLevel
+        status = item.status.rawValue
+    }
+}
+
+private struct CloudStylistExplanationResponse: Decodable {
+    let explanation: String
+}
+
+private enum CloudStylistExplanationEndpoint {
+    static var configuredURL: URL? {
+        if let infoValue = Bundle.main.object(forInfoDictionaryKey: "CLOSETPIN_AI_RECOMMENDATION_EXPLANATION_URL") as? String,
+           let url = normalizedURL(from: infoValue) {
+            return url
+        }
+
+#if DEBUG
+        if let environmentValue = ProcessInfo.processInfo.environment["CLOSETPIN_AI_RECOMMENDATION_EXPLANATION_URL"],
+           let url = normalizedURL(from: environmentValue) {
+            return url
+        }
+#endif
+
+        return nil
+    }
+
+    private static func normalizedURL(from value: String) -> URL? {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty else { return nil }
+        return URL(string: trimmedValue)
+    }
 }
 
 protocol ClothingPhotoTaggingClient: Sendable {

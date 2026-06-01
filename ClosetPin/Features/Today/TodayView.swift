@@ -21,6 +21,7 @@ struct TodayView: View {
     @State private var tomorrowWeatherIsLoading = false
     @State private var tomorrowWeatherMessage: String?
     @State private var seasonOverrideExpanded = false
+    @State private var aiExplanations: [String: String] = [:]
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
@@ -29,17 +30,20 @@ struct TodayView: View {
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
     private let tomorrowWeatherProvider: any TomorrowWeatherProviding
+    private let stylistExplanationPipeline: StylistExplanationPipeline
 
     init(
         onOpenLooks: (() -> Void)? = nil,
         onOpenCloset: (() -> Void)? = nil,
         onAddClosetItem: (() -> Void)? = nil,
-        tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider()
+        tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider(),
+        stylistExplanationPipeline: StylistExplanationPipeline = .appDefault()
     ) {
         self.onOpenLooks = onOpenLooks
         self.onOpenCloset = onOpenCloset
         self.onAddClosetItem = onAddClosetItem
         self.tomorrowWeatherProvider = tomorrowWeatherProvider
+        self.stylistExplanationPipeline = stylistExplanationPipeline
     }
 
     private var candidates: [OutfitCandidate] {
@@ -102,6 +106,9 @@ struct TodayView: View {
             .task(id: tomorrowWeatherRequestKey) {
                 await refreshTomorrowWeatherIfNeeded()
             }
+            .task(id: stylistExplanationRequestKey) {
+                await refreshStylistExplanationsIfNeeded()
+            }
             .safeAreaInset(edge: .bottom) {
                 if let confirmation {
                     ConfirmationBanner(
@@ -130,7 +137,7 @@ struct TodayView: View {
                 TodayEditorialHero(
                     candidate: heroCandidate,
                     title: recommendationName,
-                    explanation: TodayRecommendationExplanation.text(for: heroCandidate, scenario: scenario),
+                    explanation: explanation(for: heroCandidate),
                     pendingActionIDs: pendingActionIDs,
                     onAction: { action in
                         record(action, for: heroCandidate)
@@ -188,7 +195,7 @@ struct TodayView: View {
                             index: index,
                             label: alternativeLabel(for: index),
                             candidate: candidate,
-                            explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
+                            explanation: explanation(for: candidate),
                             pendingActionIDs: pendingActionIDs,
                             onAction: { action in
                                 record(action, for: candidate)
@@ -250,6 +257,14 @@ struct TodayView: View {
         return [
             currentPreference.tomorrowWeatherEnabled ? "enabled" : "disabled",
             currentPreference.tomorrowWeatherLocationName
+        ].joined(separator: ":")
+    }
+
+    private var stylistExplanationRequestKey: String {
+        [
+            scenario.rawValue,
+            season.rawValue,
+            candidates.map(\.id).joined(separator: "|")
         ].joined(separator: ":")
     }
 
@@ -354,6 +369,27 @@ struct TodayView: View {
         index == 1 ? L10n.text("today.alternative.more_formal") : L10n.text("today.alternative.more_relaxed")
     }
 
+    private func explanation(for candidate: OutfitCandidate) -> String {
+        aiExplanations[candidate.id] ?? TodayRecommendationExplanation.text(for: candidate, scenario: scenario)
+    }
+
+    private func refreshStylistExplanationsIfNeeded() async {
+        let currentCandidates = candidates
+        guard !currentCandidates.isEmpty else {
+            aiExplanations = [:]
+            return
+        }
+
+        let currentCandidateIDs = Set(currentCandidates.map(\.id))
+        aiExplanations = aiExplanations.filter { currentCandidateIDs.contains($0.key) }
+
+        for candidate in currentCandidates where aiExplanations[candidate.id] == nil {
+            let explanation = await stylistExplanationPipeline.explanation(for: candidate, scenario: scenario)
+            guard currentCandidateIDs.contains(candidate.id) else { continue }
+            aiExplanations[candidate.id] = explanation
+        }
+    }
+
     private func record(_ action: TodayFeedbackAction, for candidate: OutfitCandidate) {
         let actionID = "\(candidate.id):\(action.feedbackType.rawValue)"
         guard !pendingActionIDs.contains(actionID) else { return }
@@ -367,7 +403,7 @@ struct TodayView: View {
                 candidate: candidate,
                 scenario: scenario,
                 season: season,
-                explanation: TodayRecommendationExplanation.text(for: candidate, scenario: scenario),
+                explanation: explanation(for: candidate),
                 in: modelContext
             )
 

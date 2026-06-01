@@ -1,6 +1,7 @@
 import Foundation
 
 struct LocalFallbackStylistClient: AIStylistClient {
+    @MainActor
     func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String {
         guard !candidate.items.isEmpty else {
             return L10n.text("recommendation.explanation.empty")

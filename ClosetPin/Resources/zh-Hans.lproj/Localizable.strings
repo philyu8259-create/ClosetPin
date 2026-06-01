@@ -254,7 +254,7 @@
 "settings.privacy.cloud_photo_recognition.title" = "云端照片识别";
 "settings.privacy.cloud_photo_recognition.body" = "默认关闭。开启后，只会把当前衣物照片和设备语言发送到已配置的识别后端；你的衣橱库仍保存在本机。";
 "settings.privacy.ai.title" = "AI 穿搭推荐";
-"settings.privacy.ai.body" = "即使云端识别后端不可用，ClosetPin 仍会继续提供本地照片标签建议。明日天气穿搭应在用户明确开启天气数据后再运行。";
+"settings.privacy.ai.body" = "照片标签默认本地处理，除非你开启云端识别。如果配置了 AI 解释后端，ClosetPin 只会发送当前穿搭的元数据，不发送照片或完整衣橱。";
 "settings.privacy.local.title" = "本地衣橱数据";
 "settings.privacy.local.body" = "MVP 阶段，衣物照片和已保存穿搭记录都存储在这台设备上。";
 "settings.save_error_title" = "未能保存设置";

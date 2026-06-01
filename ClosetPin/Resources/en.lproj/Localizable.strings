@@ -254,7 +254,7 @@
 "settings.privacy.cloud_photo_recognition.title" = "Cloud photo recognition";
 "settings.privacy.cloud_photo_recognition.body" = "Off by default. When enabled, only the current clothing photo and device locale are sent to the configured recognition backend; your closet library stays on device.";
 "settings.privacy.ai.title" = "AI recommendations";
-"settings.privacy.ai.body" = "ClosetPin keeps local photo tag suggestions available even when the cloud recognition backend is unavailable. Weather-aware tomorrow outfits should only run after forecast access is explicitly enabled.";
+"settings.privacy.ai.body" = "Photo tags stay local unless cloud recognition is enabled. If an AI explanation backend is configured, ClosetPin sends only the current outfit metadata, not photos or your full closet.";
 "settings.privacy.local.title" = "Local closet data";
 "settings.privacy.local.body" = "Wardrobe photos and saved outfit history are stored on this device in the MVP.";
 "settings.save_error_title" = "Settings Were Not Saved";
