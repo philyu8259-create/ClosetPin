@@ -44,6 +44,7 @@ struct StylistExplanationPipeline: Sendable {
 struct CloudStylistExplanationClient: AIStylistClient, @unchecked Sendable {
     let endpoint: URL
     let session: URLSession
+    static let requestTimeoutInterval: TimeInterval = 8
 
     init(endpoint: URL, session: URLSession = .shared) {
         self.endpoint = endpoint
@@ -52,11 +53,8 @@ struct CloudStylistExplanationClient: AIStylistClient, @unchecked Sendable {
 
     @MainActor
     func explain(candidate: OutfitCandidate, scenario: OutfitScenario) async throws -> String {
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = try Self.makeRequestBody(
+        let request = try Self.makeRequest(
+            endpoint: endpoint,
             for: candidate,
             scenario: scenario,
             localeIdentifier: Locale.current.identifier
@@ -70,6 +68,25 @@ struct CloudStylistExplanationClient: AIStylistClient, @unchecked Sendable {
         }
 
         return explanation
+    }
+
+    static func makeRequest(
+        endpoint: URL,
+        for candidate: OutfitCandidate,
+        scenario: OutfitScenario,
+        localeIdentifier: String
+    ) throws -> URLRequest {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = requestTimeoutInterval
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try Self.makeRequestBody(
+            for: candidate,
+            scenario: scenario,
+            localeIdentifier: localeIdentifier
+        )
+        return request
     }
 
     static func makeRequestBody(
@@ -252,6 +269,7 @@ struct PhotoTaggingPipeline: Sendable {
 struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Sendable {
     let endpoint: URL
     let session: URLSession
+    static let requestTimeoutInterval: TimeInterval = 8
 
     init(endpoint: URL, session: URLSession = .shared) {
         self.endpoint = endpoint
@@ -259,11 +277,8 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
     }
 
     func suggestTags(for image: UIImage) async throws -> ClothingPhotoTagSuggestion? {
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = try Self.makeRequestBody(
+        let request = try Self.makeRequest(
+            endpoint: endpoint,
             for: image,
             localeIdentifier: Locale.current.identifier
         )
@@ -275,6 +290,19 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
         }
 
         return try Self.decodeSuggestion(from: data)
+    }
+
+    static func makeRequest(endpoint: URL, for image: UIImage, localeIdentifier: String) throws -> URLRequest {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = requestTimeoutInterval
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try Self.makeRequestBody(
+            for: image,
+            localeIdentifier: localeIdentifier
+        )
+        return request
     }
 
     static func makeRequestBody(for image: UIImage, localeIdentifier: String) throws -> Data {

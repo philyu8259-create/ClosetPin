@@ -43,7 +43,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useSampleCapsuleButton"].tap()
 
         XCTAssertTrue(app.staticTexts["You choose"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI ranks"].exists)
+        XCTAssertTrue(app.staticTexts["Smart scores"].exists)
         XCTAssertTrue(app.staticTexts["You decide"].exists)
     }
 
@@ -82,7 +82,8 @@ final class ClosetPinUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Tomorrow Prep"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI is checking your occasion, auto season, and tomorrow forecast before ranking this plan."].exists)
+        XCTAssertTrue(app.staticTexts["Tomorrow prep: Soft Power Office"].exists)
+        XCTAssertTrue(app.staticTexts["ClosetPin checks your occasion, auto season, and tomorrow forecast before suggesting what to prep."].exists)
     }
 
     func testTomorrowPrepDoesNotHidePrimaryTodayActions() {
@@ -111,7 +112,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
-        XCTAssertTrue(app.staticTexts["AI 排序"].exists)
+        XCTAssertTrue(app.staticTexts["智能评分"].exists)
         XCTAssertTrue(app.buttons["宴会"].exists)
 
         app.buttons["appTab_closet"].tap()
@@ -439,11 +440,11 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["appTab_settings"].tap()
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["AI Assistant"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI helps at three moments: tag new photos, rank Today outfits, and adjust for tomorrow weather when you enable it."].exists)
+        XCTAssertTrue(app.staticTexts["AI helps at two moments: tag new photos and explain Today outfits. Weather help uses your city only when you enable it."].exists)
         XCTAssertTrue(app.staticTexts["Photo tags"].exists)
         XCTAssertTrue(app.staticTexts["Local first"].exists)
-        XCTAssertTrue(app.staticTexts["Today ranking"].exists)
-        XCTAssertTrue(app.staticTexts["Always on"].exists)
+        XCTAssertTrue(app.staticTexts["Outfit explanations"].exists)
+        XCTAssertTrue(app.staticTexts["Available on Today"].exists)
         XCTAssertTrue(app.staticTexts["Weather help"].exists)
         XCTAssertTrue(app.staticTexts["Optional"].exists)
     }

@@ -62,27 +62,6 @@ struct TodayView: View {
         )
     }
 
-    private var tomorrowCandidate: OutfitCandidate? {
-        guard let context = activeTomorrowWeatherContext else { return nil }
-
-        let tomorrowRecommendation = engine.recommend(
-            input: RecommendationInput(
-                scenario: scenario,
-                season: season,
-                tomorrow: TomorrowRecommendationInput(weatherContext: context),
-                maximumResults: 1,
-                preferredFormality: currentPreference?.preferredFormality
-            ),
-            items: clothingItems,
-            feedback: feedback
-        ).first
-        if let tomorrowRecommendation {
-            return tomorrowRecommendation
-        }
-
-        return candidates.first
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -217,6 +196,7 @@ struct TodayView: View {
             if let context = activeTomorrowWeatherContext {
                 TomorrowPrepCard(
                     weatherSummary: TomorrowWeatherPreview.weatherSummary(for: context),
+                    recommendationName: tomorrowPrepRecommendationName(for: context),
                     decisionSummary: L10n.text("today.tomorrow.decision_summary"),
                     tips: TomorrowWeatherPreview.preparationTips(for: context),
                     attributionName: tomorrowWeatherSnapshot?.attributionName,
@@ -232,6 +212,23 @@ struct TodayView: View {
                 )
             }
         }
+    }
+
+    private func tomorrowPrepRecommendationName(for context: TomorrowWeatherContext) -> String? {
+        let weatherCandidate = engine.recommend(
+            input: RecommendationInput(
+                scenario: scenario,
+                season: season,
+                tomorrow: TomorrowRecommendationInput(weatherContext: context),
+                maximumResults: 1,
+                preferredFormality: currentPreference?.preferredFormality
+            ),
+            items: clothingItems,
+            feedback: feedback
+        ).first ?? candidates.first
+
+        guard weatherCandidate != nil else { return nil }
+        return L10n.string("today.tomorrow.recommendation_name.format", arguments: recommendationName)
     }
 
     private var activeTomorrowWeatherContext: TomorrowWeatherContext? {
@@ -457,6 +454,7 @@ enum TomorrowWeatherPreview {
     static let inlineLaunchArgumentPrefix = "--closetpin-tomorrow-weather="
 
     static var context: TomorrowWeatherContext? {
+#if DEBUG
         guard let rawContext = ProcessInfo.processInfo.environment[environmentKey]
             ?? UserDefaults.standard.string(forKey: environmentKey)
             ?? rawContextFromArguments else {
@@ -464,6 +462,9 @@ enum TomorrowWeatherPreview {
         }
 
         return context(from: rawContext)
+#else
+        nil
+#endif
     }
 
     static func context(from rawContext: String) -> TomorrowWeatherContext? {
@@ -776,6 +777,7 @@ private struct TodaySeasonAutoCard: View {
 
 private struct TomorrowPrepCard: View {
     let weatherSummary: String
+    let recommendationName: String?
     let decisionSummary: String
     let tips: [String]
     let attributionName: String?
@@ -806,6 +808,15 @@ private struct TomorrowPrepCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("tomorrowPrepWeatherSummary")
+
+                if let recommendationName {
+                    Label(recommendationName, systemImage: "sparkles")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .accessibilityIdentifier("tomorrowPrepRecommendationName")
+                }
 
                 Text(decisionSummary)
                     .font(.caption)

@@ -77,6 +77,24 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertNil(payload["userPreference"])
     }
 
+    func testCloudPhotoTaggingRequestUsesShortTimeoutAndJSONHeaders() throws {
+        let image = makeSolidImage(color: .systemBlue)
+        let endpoint = try XCTUnwrap(URL(string: "https://example.com/photo-tags"))
+
+        let request = try CloudPhotoTaggingClient.makeRequest(
+            endpoint: endpoint,
+            for: image,
+            localeIdentifier: "en_US"
+        )
+
+        XCTAssertEqual(request.url, endpoint)
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.timeoutInterval, CloudPhotoTaggingClient.requestTimeoutInterval)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+        XCTAssertNotNil(request.httpBody)
+    }
+
     func testCloudPhotoTaggingClientDecodesRemoteSuggestion() throws {
         let json = """
         {
@@ -130,6 +148,33 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertNil(payload["closetItems"])
         XCTAssertNil(payload["wardrobe"])
         XCTAssertNil(payload["userPreference"])
+    }
+
+    func testCloudStylistExplanationRequestUsesShortTimeoutAndJSONHeaders() throws {
+        let candidate = OutfitCandidate(
+            id: "dailyOffice|seed",
+            items: [
+                clothingItem(type: .top, color: "white"),
+                clothingItem(type: .bottom, color: "navy")
+            ],
+            score: 142,
+            explanationSeed: "seed"
+        )
+        let endpoint = try XCTUnwrap(URL(string: "https://example.com/explain"))
+
+        let request = try CloudStylistExplanationClient.makeRequest(
+            endpoint: endpoint,
+            for: candidate,
+            scenario: .dailyOffice,
+            localeIdentifier: "en_US"
+        )
+
+        XCTAssertEqual(request.url, endpoint)
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.timeoutInterval, CloudStylistExplanationClient.requestTimeoutInterval)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+        XCTAssertNotNil(request.httpBody)
     }
 
     func testCloudStylistExplanationDecodesTrimmedExplanationAndRejectsEmptyText() throws {
