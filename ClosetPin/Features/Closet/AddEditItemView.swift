@@ -189,6 +189,9 @@ struct AddEditItemView: View {
                 primaryDetailsSection
                 optionalDetailsSection
             }
+            .scrollContentBackground(.hidden)
+            .background(DesignSystem.background)
+            .tint(DesignSystem.accent)
             .navigationTitle(item == nil ? L10n.text("closet.add_item") : L10n.text("closet.edit_item"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -151,6 +151,7 @@ struct WorkCapsuleOnboardingView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
+            .tint(DesignSystem.accent)
             .accessibilityIdentifier("startAddingClothesButton")
         }
     }
