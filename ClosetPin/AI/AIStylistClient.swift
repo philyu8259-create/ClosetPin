@@ -149,6 +149,12 @@ private struct CloudStylistExplanationResponse: Decodable {
 
 private enum CloudStylistExplanationEndpoint {
     static var configuredURL: URL? {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["CLOSETPIN_DISABLE_CLOUD_AI"] == "1" {
+            return nil
+        }
+#endif
+
         if let infoValue = Bundle.main.object(forInfoDictionaryKey: "CLOSETPIN_AI_RECOMMENDATION_EXPLANATION_URL") as? String,
            let url = normalizedURL(from: infoValue) {
             return url
@@ -159,10 +165,14 @@ private enum CloudStylistExplanationEndpoint {
            let url = normalizedURL(from: environmentValue) {
             return url
         }
-#endif
 
         return nil
+#else
+        return productionURL
+#endif
     }
+
+    private static let productionURL = URL(string: "https://xufanzhilian.com/api/closetpin/outfit-explanation")
 
     private static func normalizedURL(from value: String) -> URL? {
         let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -357,6 +367,12 @@ private struct CloudPhotoTaggingResponse: Decodable {
 
 private enum CloudPhotoTaggingEndpoint {
     static var configuredURL: URL? {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["CLOSETPIN_DISABLE_CLOUD_AI"] == "1" {
+            return nil
+        }
+#endif
+
         if let infoValue = Bundle.main.object(forInfoDictionaryKey: "CLOSETPIN_CLOUD_PHOTO_RECOGNITION_URL") as? String,
            let url = normalizedURL(from: infoValue) {
             return url
@@ -367,10 +383,14 @@ private enum CloudPhotoTaggingEndpoint {
            let url = normalizedURL(from: environmentValue) {
             return url
         }
-#endif
 
         return nil
+#else
+        return productionURL
+#endif
     }
+
+    private static let productionURL = URL(string: "https://xufanzhilian.com/api/closetpin/photo-tags")
 
     private static func normalizedURL(from value: String) -> URL? {
         let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)

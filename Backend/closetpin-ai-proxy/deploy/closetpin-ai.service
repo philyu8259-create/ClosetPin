@@ -1,0 +1,17 @@
+[Unit]
+Description=ClosetPin AI proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/closetpin-ai-proxy
+EnvironmentFile=/etc/closetpin-ai.env
+ExecStart=/usr/bin/node src/server.mjs
+Restart=always
+RestartSec=3
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

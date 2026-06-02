@@ -520,6 +520,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", locale]
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
+        app.launchEnvironment["CLOSETPIN_DISABLE_CLOUD_AI"] = "1"
         return app
     }
 }
