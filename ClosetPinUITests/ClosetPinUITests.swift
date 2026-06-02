@@ -406,6 +406,29 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ready for Today: Shanghai"].waitForExistence(timeout: 3))
     }
 
+    func testTodayWeatherMissingCityCanOpenSettingsDirectly() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        app.buttons["appTab_settings"].tap()
+        XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
+        let weatherToggle = app.switches["tomorrowWeatherToggle"]
+        XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
+        weatherToggle.tap()
+
+        app.buttons["appTab_today"].tap()
+        XCTAssertTrue(app.staticTexts["Tomorrow weather"].waitForExistence(timeout: 3))
+        let addCityButton = app.buttons["tomorrowWeatherOpenSettingsButton"]
+        XCTAssertTrue(addCityButton.waitForExistence(timeout: 3))
+        addCityButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.textFields["tomorrowWeatherLocationField"].exists)
+    }
+
     func testSettingsExplainsAiRoleWithoutExtraSetup() {
         let app = makeApp()
         app.launch()

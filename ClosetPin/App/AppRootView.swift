@@ -56,6 +56,10 @@ struct AppRootView: View {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .closet
                 }
+            }, onOpenSettings: {
+                withAnimation(.snappy(duration: 0.28)) {
+                    selectedTab = .settings
+                }
             })
                 .tag(AppTab.today)
 

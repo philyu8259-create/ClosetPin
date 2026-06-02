@@ -128,6 +128,7 @@
 "today.tomorrow.weather_loading.format" = "Checking %@ for tomorrow...";
 "today.tomorrow.weather_missing_location" = "Add a city in Settings to turn on weather-aware tomorrow planning.";
 "today.tomorrow.weather_unavailable" = "Tomorrow weather is not available right now. You can still use Today recommendations normally.";
+"today.tomorrow.add_city_settings" = "Add City in Settings";
 "today.tomorrow.decision_summary" = "AI is checking your occasion, auto season, and tomorrow forecast before ranking this plan.";
 "today.tomorrow.attribution.format" = "Source: %@";
 "today.tomorrow.attribution.link" = "Weather legal attribution";

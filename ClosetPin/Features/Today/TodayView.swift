@@ -26,6 +26,7 @@ struct TodayView: View {
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
     let onAddClosetItem: ((ClothingType?) -> Void)?
+    let onOpenSettings: (() -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
@@ -36,12 +37,14 @@ struct TodayView: View {
         onOpenLooks: (() -> Void)? = nil,
         onOpenCloset: (() -> Void)? = nil,
         onAddClosetItem: ((ClothingType?) -> Void)? = nil,
+        onOpenSettings: (() -> Void)? = nil,
         tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider(),
         stylistExplanationPipeline: StylistExplanationPipeline = .appDefault()
     ) {
         self.onOpenLooks = onOpenLooks
         self.onOpenCloset = onOpenCloset
         self.onAddClosetItem = onAddClosetItem
+        self.onOpenSettings = onOpenSettings
         self.tomorrowWeatherProvider = tomorrowWeatherProvider
         self.stylistExplanationPipeline = stylistExplanationPipeline
     }
@@ -223,7 +226,9 @@ struct TodayView: View {
                 TomorrowWeatherStatusCard(
                     isLoading: tomorrowWeatherIsLoading,
                     locationName: currentPreference?.tomorrowWeatherLocationName ?? "",
-                    message: tomorrowWeatherMessage ?? L10n.text("today.tomorrow.weather_missing_location")
+                    message: tomorrowWeatherMessage ?? L10n.text("today.tomorrow.weather_missing_location"),
+                    actionTitle: shouldPromptForTomorrowWeatherCity ? L10n.text("today.tomorrow.add_city_settings") : nil,
+                    action: shouldPromptForTomorrowWeatherCity ? onOpenSettings : nil
                 )
             }
         }
@@ -235,6 +240,11 @@ struct TodayView: View {
 
     private var shouldShowTomorrowWeatherStatus: Bool {
         currentPreference?.tomorrowWeatherEnabled == true
+    }
+
+    private var shouldPromptForTomorrowWeatherCity: Bool {
+        guard let currentPreference, currentPreference.tomorrowWeatherEnabled else { return false }
+        return !currentPreference.canRequestTomorrowWeather
     }
 
     private var recommendationName: String {
@@ -829,38 +839,52 @@ private struct TomorrowWeatherStatusCard: View {
     let isLoading: Bool
     let locationName: String
     let message: String
+    let actionTitle: String?
+    let action: (() -> Void)?
 
     var body: some View {
         LuxurySurfaceCard {
-            HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(DesignSystem.accent.opacity(0.12))
-                        .frame(width: 42, height: 42)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(DesignSystem.accent.opacity(0.12))
+                            .frame(width: 42, height: 42)
 
-                    if isLoading {
-                        ProgressView()
-                            .tint(DesignSystem.accent)
-                    } else {
-                        Image(systemName: "cloud.sun")
-                            .font(.headline)
-                            .foregroundStyle(DesignSystem.accent)
+                        if isLoading {
+                            ProgressView()
+                                .tint(DesignSystem.accent)
+                        } else {
+                            Image(systemName: "cloud.sun")
+                                .font(.headline)
+                                .foregroundStyle(DesignSystem.accent)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                        Text(L10n.text("today.tomorrow.weather_status.title"))
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+
+                        Text(statusText)
+                            .font(.subheadline)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                    Text(L10n.text("today.tomorrow.weather_status.title"))
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(DesignSystem.ink)
-
-                    Text(statusText)
-                        .font(.subheadline)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .fixedSize(horizontal: false, vertical: true)
+                if let actionTitle, let action {
+                    Button(action: action) {
+                        Label(actionTitle, systemImage: "gearshape.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("tomorrowWeatherOpenSettingsButton")
                 }
             }
         }
-        .accessibilityIdentifier("tomorrowWeatherStatusCard")
     }
 
     private var statusText: String {

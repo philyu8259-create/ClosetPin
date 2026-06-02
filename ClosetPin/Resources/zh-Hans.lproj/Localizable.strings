@@ -128,6 +128,7 @@
 "today.tomorrow.weather_loading.format" = "正在查看%@的明日天气……";
 "today.tomorrow.weather_missing_location" = "在「设置」填写城市后，即可开启结合天气的明日穿搭建议。";
 "today.tomorrow.weather_unavailable" = "当前无法获取明日天气。你仍可正常使用今日穿搭推荐。";
+"today.tomorrow.add_city_settings" = "去设置填写城市";
 "today.tomorrow.decision_summary" = "AI 会先结合场合、自动季节和明日天气，再为这套穿搭排序。";
 "today.tomorrow.attribution.format" = "来源：%@";
 "today.tomorrow.attribution.link" = "天气数据归因";
