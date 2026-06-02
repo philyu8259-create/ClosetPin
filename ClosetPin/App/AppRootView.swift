@@ -6,7 +6,7 @@ struct AppRootView: View {
     @Query private var clothingItems: [ClothingItem]
     @State private var debugSeedReady = false
     @State private var selectedTab: AppTab = .today
-    @State private var closetAddItemRequestID: UUID?
+    @State private var closetAddItemRequest: AddClosetItemRequest?
     @State private var debugSheet: DebugSheet?
 
     var body: some View {
@@ -51,15 +51,15 @@ struct AppRootView: View {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .closet
                 }
-            }, onAddClosetItem: {
-                closetAddItemRequestID = UUID()
+            }, onAddClosetItem: { initialType in
+                closetAddItemRequest = AddClosetItemRequest(initialType: initialType)
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .closet
                 }
             })
                 .tag(AppTab.today)
 
-            ClosetView(openAddItemRequest: closetAddItemRequestID, onOpenToday: {
+            ClosetView(openAddItemRequest: closetAddItemRequest, onOpenToday: {
                 withAnimation(.snappy(duration: 0.28)) {
                     selectedTab = .today
                 }
@@ -125,6 +125,11 @@ struct AppRootView: View {
         debugSheet = .addItem
 #endif
     }
+}
+
+struct AddClosetItemRequest: Identifiable, Equatable {
+    let id = UUID()
+    let initialType: ClothingType?
 }
 
 private enum DebugSheet: Identifiable {

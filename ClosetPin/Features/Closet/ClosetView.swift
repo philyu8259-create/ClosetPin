@@ -9,7 +9,7 @@ struct ClosetView: View {
     @State private var showsAdvancedFilters = false
     @State private var handledAddItemRequest: UUID?
 
-    var openAddItemRequest: UUID?
+    var openAddItemRequest: AddClosetItemRequest?
     var onOpenToday: () -> Void = {}
 
     private let categoryOrder: [ClothingType] = [
@@ -36,7 +36,7 @@ struct ClosetView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        activeSheet = .add
+                        activeSheet = .add(initialType: nil)
                     } label: {
                         Label(L10n.text("closet.add_item"), systemImage: "plus.circle.fill")
                     }
@@ -46,8 +46,8 @@ struct ClosetView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
-                case .add:
-                    AddEditItemView()
+                case .add(let initialType):
+                    AddEditItemView(initialType: initialType ?? .top)
                 }
             }
             .onAppear {
@@ -59,10 +59,10 @@ struct ClosetView: View {
         }
     }
 
-    private func handleAddItemRequest(_ request: UUID?) {
-        guard let request, request != handledAddItemRequest else { return }
-        handledAddItemRequest = request
-        activeSheet = .add
+    private func handleAddItemRequest(_ request: AddClosetItemRequest?) {
+        guard let request, request.id != handledAddItemRequest else { return }
+        handledAddItemRequest = request.id
+        activeSheet = .add(initialType: request.initialType)
     }
 
     private var closetGrid: some View {
@@ -219,7 +219,7 @@ struct ClosetView: View {
             }
 
             Button {
-                activeSheet = .add
+                activeSheet = .add(initialType: nil)
             } label: {
                 Label(L10n.text("closet.add_item"), systemImage: "plus")
             }
@@ -277,12 +277,12 @@ struct ClosetView: View {
 }
 
 private enum ClosetSheet: Identifiable {
-    case add
+    case add(initialType: ClothingType?)
 
     var id: String {
         switch self {
-        case .add:
-            "add"
+        case .add(let initialType):
+            "add-\(initialType?.rawValue ?? "default")"
         }
     }
 }

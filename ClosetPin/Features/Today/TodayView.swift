@@ -25,7 +25,7 @@ struct TodayView: View {
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
-    let onAddClosetItem: (() -> Void)?
+    let onAddClosetItem: ((ClothingType?) -> Void)?
 
     private let engine = RecommendationEngine()
     private let feedbackRecorder = TodayFeedbackRecorder()
@@ -35,7 +35,7 @@ struct TodayView: View {
     init(
         onOpenLooks: (() -> Void)? = nil,
         onOpenCloset: (() -> Void)? = nil,
-        onAddClosetItem: (() -> Void)? = nil,
+        onAddClosetItem: ((ClothingType?) -> Void)? = nil,
         tomorrowWeatherProvider: any TomorrowWeatherProviding = WeatherKitTomorrowWeatherProvider(),
         stylistExplanationPipeline: StylistExplanationPipeline = .appDefault()
     ) {
@@ -144,8 +144,10 @@ struct TodayView: View {
                     }
                 )
             } else {
+                let missingRecommendation = missingRecommendationPrompt
                 MissingRecommendationView(
-                    message: missingRecommendationMessage,
+                    message: missingRecommendation.message,
+                    suggestedType: missingRecommendation.suggestedType,
                     onOpenCloset: onOpenCloset,
                     onAddClosetItem: onAddClosetItem
                 )
@@ -316,7 +318,7 @@ struct TodayView: View {
         tomorrowWeatherIsLoading = false
     }
 
-    private var missingRecommendationMessage: String {
+    private var missingRecommendationPrompt: MissingRecommendationPrompt {
         let requiredTypes = requiredTypes(for: scenario)
         let threshold = requiredFormality(for: scenario)
 
@@ -328,21 +330,30 @@ struct TodayView: View {
             }
 
             if availableSeasonItems.isEmpty {
-                return L10n.string(
-                    "today.missing.add_one.format",
-                    arguments: type.missingItemPhrase, scenario.shortName
+                return MissingRecommendationPrompt(
+                    message: L10n.string(
+                        "today.missing.add_one.format",
+                        arguments: type.missingItemPhrase, scenario.shortName
+                    ),
+                    suggestedType: type
                 )
             }
 
             if availableSeasonItems.allSatisfy({ $0.formalityLevel < threshold }) {
-                return L10n.string(
-                    "today.missing.add_formal.format",
-                    arguments: type.missingItemPhrase, scenario.shortName
+                return MissingRecommendationPrompt(
+                    message: L10n.string(
+                        "today.missing.add_formal.format",
+                        arguments: type.missingItemPhrase, scenario.shortName
+                    ),
+                    suggestedType: type
                 )
             }
         }
 
-        return L10n.text("today.missing.available_or_season")
+        return MissingRecommendationPrompt(
+            message: L10n.text("today.missing.available_or_season"),
+            suggestedType: nil
+        )
     }
 
     private func requiredTypes(for scenario: OutfitScenario) -> [ClothingType] {
@@ -1057,8 +1068,9 @@ private struct TodayActionPanel: View {
 
 private struct MissingRecommendationView: View {
     let message: String
+    let suggestedType: ClothingType?
     let onOpenCloset: (() -> Void)?
-    let onAddClosetItem: (() -> Void)?
+    let onAddClosetItem: ((ClothingType?) -> Void)?
 
     var body: some View {
         LuxurySurfaceCard {
@@ -1073,7 +1085,9 @@ private struct MissingRecommendationView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let onAddClosetItem {
-                    Button(action: onAddClosetItem) {
+                    Button {
+                        onAddClosetItem(suggestedType)
+                    } label: {
                         Label(L10n.text("today.missing.add_item"), systemImage: "plus.circle.fill")
                             .frame(maxWidth: .infinity)
                     }
@@ -1094,6 +1108,11 @@ private struct MissingRecommendationView: View {
             }
         }
     }
+}
+
+private struct MissingRecommendationPrompt {
+    let message: String
+    let suggestedType: ClothingType?
 }
 
 private struct TodayConfirmation: Equatable {

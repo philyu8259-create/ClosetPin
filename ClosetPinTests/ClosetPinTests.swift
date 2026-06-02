@@ -396,6 +396,15 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertTrue(draft.canSave)
     }
 
+    func testAddEditItemDraftCanStartWithSuggestedMissingType() {
+        let defaultDraft = AddEditItemDraft()
+        let suggestedDraft = AddEditItemDraft(initialType: .bottom)
+
+        XCTAssertEqual(defaultDraft.type, .top)
+        XCTAssertEqual(suggestedDraft.type, .bottom)
+        XCTAssertFalse(suggestedDraft.selectedSeasons.isEmpty)
+    }
+
     func testAddEditItemDraftCanSelectCurrentSeasonFromSystemDate() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

@@ -235,6 +235,7 @@ final class ClosetPinUITests: XCTestCase {
         addMissingButton.tap()
 
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Bottom"].waitForExistence(timeout: 3))
     }
 
     func testTodayRecommendationCanRecordWoreFeedback() {

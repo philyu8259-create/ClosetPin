@@ -28,8 +28,9 @@ struct AddEditItemDraft {
     var status: ClothingStatus = .available
     var notes: String = ""
 
-    init(item: ClothingItem? = nil) {
+    init(item: ClothingItem? = nil, initialType: ClothingType = .top) {
         guard let item else {
+            type = initialType
             selectAutomaticCurrentSeason()
             return
         }
@@ -172,12 +173,13 @@ struct AddEditItemView: View {
     init(
         item: ClothingItem? = nil,
         imageStore: ImageStore = ImageStore(),
-        photoTaggingPipeline: PhotoTaggingPipeline = .appDefault()
+        photoTaggingPipeline: PhotoTaggingPipeline = .appDefault(),
+        initialType: ClothingType = .top
     ) {
         self.item = item
         self.imageStore = imageStore
         self.photoTaggingPipeline = photoTaggingPipeline
-        _draft = State(initialValue: AddEditItemDraft(item: item))
+        _draft = State(initialValue: AddEditItemDraft(item: item, initialType: initialType))
     }
 
     var body: some View {
