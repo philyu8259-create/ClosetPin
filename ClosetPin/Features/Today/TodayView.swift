@@ -22,6 +22,8 @@ struct TodayView: View {
     @State private var tomorrowWeatherMessage: String?
     @State private var seasonOverrideExpanded = false
     @State private var aiExplanations: [String: String] = [:]
+    @State private var stylistRefreshCounter = 0
+    @State private var heroRotationIndex = 0
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
@@ -66,11 +68,13 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                    contextStrip
+                    dailyDashboard
                     editorialHero
+                    contextStrip
                     tomorrowPrepSection
+                    decisionSupportSection
 
-                    if candidates.count > 1 {
+                    if orderedCandidates.count > 1 {
                         alternativesSection
                     }
                 }
@@ -85,6 +89,12 @@ struct TodayView: View {
             .onChange(of: currentPreference?.updatedAt) { _, _ in
                 applyPreferenceDefaultsIfNeeded()
             }
+            .onChange(of: scenario) { _, _ in
+                resetHeroRotation()
+            }
+            .onChange(of: season) { _, _ in
+                resetHeroRotation()
+            }
             .task(id: tomorrowWeatherRequestKey) {
                 await refreshTomorrowWeatherIfNeeded()
             }
@@ -95,7 +105,8 @@ struct TodayView: View {
                 if let confirmation {
                     ConfirmationBanner(
                         confirmation: confirmation,
-                        onOpenLooks: onOpenLooks
+                        onOpenLooks: onOpenLooks,
+                        onUndo: undoFeedback
                     )
                         .padding(.horizontal, 18)
                         .padding(.bottom, DesignSystem.Spacing.tabBarClearance + 8)
@@ -115,12 +126,13 @@ struct TodayView: View {
 
     private var editorialHero: some View {
         Group {
-            if let heroCandidate = candidates.first {
+            if let heroCandidate = orderedCandidates.first {
                 TodayEditorialHero(
                     candidate: heroCandidate,
                     title: recommendationName,
                     explanation: explanation(for: heroCandidate),
                     pendingActionIDs: pendingActionIDs,
+                    onTryAnother: regenerateTodayLook,
                     onAction: { action in
                         record(action, for: heroCandidate)
                     }
@@ -157,16 +169,19 @@ struct TodayView: View {
                 .padding(.vertical, 1)
             }
             .accessibilityIdentifier("todayScenarioPicker")
+        }
+    }
 
+    private var decisionSupportSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             TodaySeasonAutoCard(season: $season, isExpanded: $seasonOverrideExpanded)
-
             TodayDecisionGuideCard()
         }
     }
 
     private var alternativesSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-            let alternatives = Array(candidates.dropFirst().enumerated())
+            let alternatives = Array(orderedCandidates.dropFirst().enumerated())
             if !alternatives.isEmpty {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                     Text(L10n.text("today.alternatives.title"))
@@ -181,6 +196,7 @@ struct TodayView: View {
                             candidate: candidate,
                             explanation: explanation(for: candidate),
                             pendingActionIDs: pendingActionIDs,
+                            onTryAnother: regenerateTodayLook,
                             onAction: { action in
                                 record(action, for: candidate)
                             }
@@ -261,6 +277,12 @@ struct TodayView: View {
         preferences.first
     }
 
+    private var orderedCandidates: [OutfitCandidate] {
+        guard !candidates.isEmpty else { return [] }
+        let safeOffset = heroRotationIndex % candidates.count
+        return Array(candidates.dropFirst(safeOffset)) + Array(candidates.prefix(safeOffset))
+    }
+
     private var tomorrowWeatherRequestKey: String {
         guard let currentPreference else { return "none" }
         return [
@@ -273,8 +295,25 @@ struct TodayView: View {
         [
             scenario.rawValue,
             season.rawValue,
-            candidates.map(\.id).joined(separator: "|")
+            "\(stylistRefreshCounter)",
+            orderedCandidates.map(\.id).joined(separator: "|")
         ].joined(separator: ":")
+    }
+
+    private var dailyDashboard: some View {
+        DailyStylingDashboardCard(
+            scenarioName: scenario.displayName,
+            seasonName: season.displayName,
+            closetSummary: L10n.string("today.dashboard.closet_ready.format", arguments: readyItemCount),
+            hasRecommendation: candidates.first != nil,
+            onGenerate: regenerateTodayLook
+        )
+    }
+
+    private var readyItemCount: Int {
+        clothingItems.filter { item in
+            item.resolvedStatus == .available && item.seasons.contains(season)
+        }.count
     }
 
     private func applyPreferenceDefaultsIfNeeded() {
@@ -392,7 +431,7 @@ struct TodayView: View {
     }
 
     private func refreshStylistExplanationsIfNeeded() async {
-        let currentCandidates = candidates
+        let currentCandidates = orderedCandidates
         guard !currentCandidates.isEmpty else {
             aiExplanations = [:]
             return
@@ -406,6 +445,22 @@ struct TodayView: View {
             guard currentCandidateIDs.contains(candidate.id) else { continue }
             aiExplanations[candidate.id] = explanation
         }
+    }
+
+    private func regenerateTodayLook() {
+        aiExplanations = [:]
+        withAnimation(.snappy(duration: 0.22)) {
+            seasonOverrideExpanded = false
+            if !candidates.isEmpty {
+                heroRotationIndex = (heroRotationIndex + 1) % candidates.count
+            }
+        }
+        stylistRefreshCounter += 1
+    }
+
+    private func resetHeroRotation() {
+        heroRotationIndex = 0
+        stylistRefreshCounter += 1
     }
 
     private func record(_ action: TodayFeedbackAction, for candidate: OutfitCandidate) {
@@ -427,7 +482,8 @@ struct TodayView: View {
 
             let nextConfirmation = TodayConfirmation(
                 message: action.confirmation(for: action.feedbackType, outcome: result.outcome),
-                showsLookbookAction: action.showsLookbookAction
+                showsLookbookAction: action.showsLookbookAction,
+                undoAction: action.undoAction(for: result)
             )
             withAnimation(.snappy) {
                 confirmation = nextConfirmation
@@ -441,6 +497,35 @@ struct TodayView: View {
                         confirmation = nil
                     }
                 }
+            }
+        } catch {
+            saveError = error.localizedDescription
+        }
+    }
+
+    private func undoFeedback(_ undoAction: TodayUndoAction) {
+        do {
+            let storedFeedback = try modelContext.fetch(FetchDescriptor<OutfitFeedback>())
+                .first { $0.id == undoAction.feedbackID }
+            if let storedFeedback {
+                modelContext.delete(storedFeedback)
+            }
+
+            if let outfitID = undoAction.outfitID {
+                let storedOutfit = try modelContext.fetch(FetchDescriptor<Outfit>())
+                    .first { $0.id == outfitID }
+                if let storedOutfit {
+                    modelContext.delete(storedOutfit)
+                }
+            }
+
+            try modelContext.save()
+            withAnimation(.snappy(duration: 0.22)) {
+                confirmation = TodayConfirmation(
+                    message: L10n.text("today.confirmation.undone"),
+                    showsLookbookAction: false,
+                    undoAction: nil
+                )
             }
         } catch {
             saveError = error.localizedDescription
@@ -661,6 +746,92 @@ private extension TomorrowWeatherCondition {
             self = .unknown
             return
         }
+    }
+}
+
+private struct DailyStylingDashboardCard: View {
+    let scenarioName: String
+    let seasonName: String
+    let closetSummary: String
+    let hasRecommendation: Bool
+    let onGenerate: () -> Void
+
+    var body: some View {
+        LuxurySurfaceCard(isElevated: true) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                        Text(L10n.text("today.dashboard.kicker"))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DesignSystem.accent)
+                            .textCase(.uppercase)
+
+                        Text(L10n.text("today.dashboard.title"))
+                            .font(DesignSystem.editorialDisplayFont(size: 24))
+                            .foregroundStyle(DesignSystem.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.86)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: DesignSystem.Spacing.sm)
+
+                    Image(systemName: "sparkles")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(DesignSystem.premiumGold)
+                        .frame(width: 42, height: 42)
+                        .background(DesignSystem.premiumGold.opacity(0.16))
+                        .clipShape(Circle())
+                }
+
+                Text(L10n.text("today.dashboard.body"))
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    DashboardTag(title: scenarioName, icon: "calendar.badge.checkmark")
+                    DashboardTag(title: seasonName, icon: "leaf.fill")
+                    DashboardTag(title: closetSummary, icon: "hanger")
+                }
+
+                Button(action: onGenerate) {
+                    Label(
+                        hasRecommendation ? L10n.text("today.dashboard.generate_again") : L10n.text("today.dashboard.generate"),
+                        systemImage: "wand.and.sparkles"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(DesignSystem.accent)
+                .accessibilityIdentifier("todayGenerateLookButton")
+            }
+        }
+        .accessibilityIdentifier("todayDailyDashboard")
+    }
+}
+
+private struct DashboardTag: View {
+    let title: String
+    let icon: String
+
+    var body: some View {
+        Label(title, systemImage: icon)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.76)
+            .foregroundStyle(DesignSystem.ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(DesignSystem.surface.opacity(0.86))
+            .clipShape(Capsule(style: .continuous))
+            .overlay {
+                Capsule(style: .continuous)
+                    .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
+            }
     }
 }
 
@@ -912,49 +1083,51 @@ private struct TodayEditorialHero: View {
     let title: String
     let explanation: String
     let pendingActionIDs: Set<String>
+    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-            EditorialImageSurface(
-                image: coverImage,
-                height: 220
-            ) {
+            LuxurySurfaceCard(isElevated: true) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                     Label(L10n.text("today.edit.kicker"), systemImage: "sparkles")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(DesignSystem.premiumGold)
+                        .foregroundStyle(DesignSystem.accent)
 
                     Text(title)
-                        .font(DesignSystem.editorialDisplayFont(size: 34))
-                        .foregroundStyle(.white)
+                        .font(DesignSystem.editorialDisplayFont(size: 30))
+                        .foregroundStyle(DesignSystem.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(explanation)
                         .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.86))
+                        .foregroundStyle(DesignSystem.secondaryInk)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    MatchPill(title: L10n.text("today.match.best"), icon: "seal.fill")
+                        .padding(.top, DesignSystem.Spacing.xs)
+
+                    TodayActionPanel(
+                        candidate: candidate,
+                        index: 0,
+                        pendingActionIDs: pendingActionIDs,
+                        onTryAnother: onTryAnother,
+                        onAction: onAction
+                    )
+                    .padding(.top, DesignSystem.Spacing.sm)
                 }
             }
 
-            HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
-                Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(DesignSystem.accent)
-                    .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
-
-                Text(L10n.text("today.best.title"))
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(DesignSystem.secondaryInk)
+            EditorialImageSurface(
+                image: coverImage,
+                height: 148
+            ) {
+                Text(L10n.text("today.visual.kicker"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.9))
             }
-
-            TodayActionPanel(
-                candidate: candidate,
-                index: 0,
-                pendingActionIDs: pendingActionIDs,
-                onAction: onAction
-            )
+            .allowsHitTesting(false)
 
             TodayIncludedItemsSection(items: candidate.items, index: 0)
         }
@@ -990,6 +1163,7 @@ private struct OutfitCompactCard: View {
     let candidate: OutfitCandidate
     let explanation: String
     let pendingActionIDs: Set<String>
+    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     var body: some View {
@@ -1002,10 +1176,7 @@ private struct OutfitCompactCard: View {
 
                     Spacer(minLength: DesignSystem.Spacing.sm)
 
-                    Label("\(candidate.score)", systemImage: "gauge.with.dots.needle.50percent")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DesignSystem.accent)
-                        .accessibilityLabel(L10n.string("today.score.accessibility.format", arguments: candidate.score))
+                    MatchPill(title: L10n.text("today.match.alt"), icon: "sparkle.magnifyingglass")
                 }
 
                 OutfitVisualBoard(items: candidate.items)
@@ -1021,6 +1192,7 @@ private struct OutfitCompactCard: View {
                     candidate: candidate,
                     index: index,
                     pendingActionIDs: pendingActionIDs,
+                    onTryAnother: onTryAnother,
                     onAction: onAction
                 )
             }
@@ -1028,10 +1200,29 @@ private struct OutfitCompactCard: View {
     }
 }
 
+private struct MatchPill: View {
+    let title: String
+    let icon: String
+
+    var body: some View {
+        Label(title, systemImage: icon)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+            .foregroundStyle(DesignSystem.accent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(DesignSystem.accent.opacity(0.1))
+            .clipShape(Capsule(style: .continuous))
+            .accessibilityIdentifier("todayMatchPill")
+    }
+}
+
 private struct TodayActionPanel: View {
     let candidate: OutfitCandidate
     let index: Int
     let pendingActionIDs: Set<String>
+    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     private let learningActions: [TodayFeedbackAction] = [.like, .dislike, .skip]
@@ -1044,6 +1235,7 @@ private struct TodayActionPanel: View {
                 } label: {
                     Label(TodayFeedbackAction.wore.title, systemImage: TodayFeedbackAction.wore.systemImage)
                         .frame(maxWidth: .infinity)
+                        .frame(minHeight: 36)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.accent)
@@ -1055,6 +1247,7 @@ private struct TodayActionPanel: View {
                 } label: {
                     Label(TodayFeedbackAction.save.title, systemImage: TodayFeedbackAction.save.systemImage)
                         .frame(maxWidth: .infinity)
+                        .frame(minHeight: 36)
                 }
                 .buttonStyle(.bordered)
                 .tint(DesignSystem.accent)
@@ -1070,6 +1263,9 @@ private struct TodayActionPanel: View {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(learningActions) { action in
                         Button {
+                            if action == .skip {
+                                onTryAnother()
+                            }
                             onAction(action)
                         } label: {
                             Label(action.title, systemImage: action.systemImage)
@@ -1077,9 +1273,10 @@ private struct TodayActionPanel: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.78)
                                 .frame(maxWidth: .infinity)
+                                .frame(minHeight: 34)
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .controlSize(.regular)
                         .tint(action.tint)
                         .disabled(isPending(action))
                         .accessibilityIdentifier("todayFeedback_\(action.feedbackType.rawValue)_\(index)")
@@ -1087,6 +1284,7 @@ private struct TodayActionPanel: View {
                 }
             }
             .padding(DesignSystem.Spacing.sm)
+            .fixedSize(horizontal: false, vertical: true)
             .background(DesignSystem.paper.opacity(0.82))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
             .overlay {
@@ -1094,6 +1292,7 @@ private struct TodayActionPanel: View {
                     .stroke(DesignSystem.border.opacity(0.52), lineWidth: 1)
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func isPending(_ action: TodayFeedbackAction) -> Bool {
@@ -1153,17 +1352,30 @@ private struct MissingRecommendationPrompt {
 private struct TodayConfirmation: Equatable {
     let message: String
     let showsLookbookAction: Bool
+    let undoAction: TodayUndoAction?
+}
+
+private struct TodayUndoAction: Equatable {
+    let feedbackID: UUID
+    let outfitID: UUID?
 }
 
 private struct ConfirmationBanner: View {
     let confirmation: TodayConfirmation
     let onOpenLooks: (() -> Void)?
+    let onUndo: (TodayUndoAction) -> Void
 
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.sm) {
-            Label(confirmation.message, systemImage: "checkmark.circle.fill")
+            Image(systemName: "checkmark.circle.fill")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.white)
+
+            Text(confirmation.message)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if confirmation.showsLookbookAction, let onOpenLooks {
@@ -1179,12 +1391,30 @@ private struct ConfirmationBanner: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("todayFeedbackViewLooksButton")
             }
+
+            if let undoAction = confirmation.undoAction {
+                Button {
+                    onUndo(undoAction)
+                } label: {
+                    Text(L10n.text("today.confirmation.undo"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(.white)
+                        .clipShape(Capsule(style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("todayFeedbackUndoButton")
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.accent)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("todayFeedbackConfirmationBanner")
     }
 }
 
@@ -1286,6 +1516,12 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         case .save:
             L10n.text("today.confirmation.save")
         }
+    }
+
+    func undoAction(for result: TodayFeedbackRecorder.RecordResult) -> TodayUndoAction? {
+        guard result.outcome == .recorded else { return nil }
+        guard self != .wore else { return nil }
+        return TodayUndoAction(feedbackID: result.feedback.id, outfitID: result.outfit?.id)
     }
 }
 

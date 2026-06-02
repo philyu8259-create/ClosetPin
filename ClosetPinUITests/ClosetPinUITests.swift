@@ -107,9 +107,9 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.buttons["添加自己的衣物"].exists)
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["今天穿这套"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["保存到穿搭"].exists)
-        XCTAssertTrue(app.staticTexts["调整之后的推荐"].exists)
+        XCTAssertTrue(app.staticTexts["今天就穿"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["保存"].exists)
+        XCTAssertTrue(app.staticTexts["让 ClosetPin 更懂你"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
         XCTAssertTrue(app.staticTexts["智能评分"].exists)
@@ -161,7 +161,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["startAddingClothesButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Item Photo"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI can suggest type and color after the photo; you can still edit everything."].exists)
+        XCTAssertTrue(app.staticTexts["Add a clear photo first, then let AI help you complete the basic details."].exists)
         XCTAssertTrue(app.staticTexts["To save this piece"].exists)
         XCTAssertTrue(app.staticTexts["Add a photo"].exists)
         XCTAssertTrue(app.staticTexts["Add a color"].exists)
@@ -250,7 +250,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
         woreButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForExistence(timeout: 3))
     }
 
     func testTodayRecommendationCanRecordPreferenceFeedback() {
@@ -260,13 +260,14 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Tune future recommendations"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Help ClosetPin learn"].waitForExistence(timeout: 3))
 
         let goodFitButton = app.buttons["todayFeedback_liked_0"]
         XCTAssertTrue(goodFitButton.waitForExistence(timeout: 3))
         goodFitButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Preference saved."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Saved. We will suggest more looks like this."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayFeedbackUndoButton"].exists)
     }
 
     func testSavedOutfitCanOpenLooksFromConfirmation() {
@@ -322,8 +323,8 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
         woreButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Recorded as worn."].waitForNonExistence(timeout: 4))
+        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForNonExistence(timeout: 4))
     }
 
     func testEmptyLooksCanReturnToToday() {
@@ -439,8 +440,8 @@ final class ClosetPinUITests: XCTestCase {
 
         app.buttons["appTab_settings"].tap()
         app.swipeUp()
-        XCTAssertTrue(app.staticTexts["AI Assistant"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI helps at two moments: tag new photos and explain Today outfits. Weather help uses your city only when you enable it."].exists)
+        XCTAssertTrue(app.staticTexts["AI & Privacy"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Understand what AI uses so you can make choices confidently."].exists)
         XCTAssertTrue(app.staticTexts["Photo tags"].exists)
         XCTAssertTrue(app.staticTexts["Local first"].exists)
         XCTAssertTrue(app.staticTexts["Outfit explanations"].exists)

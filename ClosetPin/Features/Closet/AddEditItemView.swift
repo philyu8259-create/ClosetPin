@@ -299,6 +299,10 @@ struct AddEditItemView: View {
                 Text(L10n.text("closet.photo.editorial_help"))
                     .font(.caption)
                     .foregroundStyle(DesignSystem.secondaryInk)
+                Text(L10n.text("closet.photo.post_capture_help"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.accent)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
 #if DEBUG
@@ -381,6 +385,7 @@ struct AddEditItemView: View {
             Text(L10n.text("closet.ai_edit.helper"))
                 .font(.caption)
                 .foregroundStyle(DesignSystem.secondaryInk)
+                .accessibilityIdentifier("addItemFlowGuide")
 
             Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
@@ -426,16 +431,16 @@ struct AddEditItemView: View {
                 StatusSelectionGrid(selection: $draft.status)
 
                 LevelControl(
-                    title: L10n.string("closet.formality.format", arguments: draft.formalityLevel),
-                    subtitle: L10n.text("closet.formality.scale"),
+                    title: L10n.text("closet.formality.label"),
+                    label: formalityLabel(for: draft.formalityLevel),
                     value: $draft.formalityLevel,
                     decreaseIdentifier: "formalityDecreaseButton",
                     increaseIdentifier: "formalityIncreaseButton"
                 )
 
                 LevelControl(
-                    title: L10n.string("closet.warmth.format", arguments: draft.warmthLevel),
-                    subtitle: L10n.text("closet.warmth.scale"),
+                    title: L10n.text("closet.warmth.label"),
+                    label: warmthLabel(for: draft.warmthLevel),
                     value: $draft.warmthLevel,
                     decreaseIdentifier: "warmthDecreaseButton",
                     increaseIdentifier: "warmthIncreaseButton"
@@ -799,6 +804,11 @@ private struct EssentialsChecklistGrid: View {
                         EssentialsChecklistChip(title: title, isComplete: false)
                     }
                 }
+
+                Text(L10n.text("closet.save_checklist.action_hint"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .padding(.top, 2)
             }
         }
     }
@@ -879,7 +889,7 @@ private struct StatusSelectionGrid: View {
 
 private struct LevelControl: View {
     let title: String
-    let subtitle: String
+    let label: String
     @Binding var value: Int
     let decreaseIdentifier: String
     let increaseIdentifier: String
@@ -900,11 +910,11 @@ private struct LevelControl: View {
                 }
 
                 VStack(spacing: 4) {
-                    Text("\(value)")
-                        .font(DesignSystem.editorialSectionFont(size: 28))
+                    Text(label)
+                        .font(DesignSystem.editorialSectionFont(size: 24))
                         .foregroundStyle(DesignSystem.ink)
 
-                    Text(subtitle)
+                    Text(L10n.string("closet.level_indicator.format", arguments: value))
                         .font(.caption)
                         .foregroundStyle(DesignSystem.secondaryInk)
                         .multilineTextAlignment(.center)
@@ -924,6 +934,32 @@ private struct LevelControl: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+private func formalityLabel(for value: Int) -> String {
+    switch max(1, min(5, value)) {
+    case 2:
+        return L10n.text("closet.formality.smart")
+    case 3:
+        return L10n.text("closet.formality.business")
+    case 4...5:
+        return L10n.text("closet.formality.formal")
+    default:
+        return L10n.text("closet.formality.casual")
+    }
+}
+
+private func warmthLabel(for value: Int) -> String {
+    switch max(1, min(5, value)) {
+    case 2:
+        return L10n.text("closet.warmth.medium")
+    case 3:
+        return L10n.text("closet.warmth.warm")
+    case 4...5:
+        return L10n.text("closet.warmth.heavy")
+    default:
+        return L10n.text("closet.warmth.light")
     }
 }
 

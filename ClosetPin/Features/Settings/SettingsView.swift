@@ -21,25 +21,11 @@ struct SettingsView: View {
                 VStack(spacing: DesignSystem.Spacing.lg) {
                     SettingsSummaryCard(scenario: defaultScenario, formality: preferredFormality)
 
-                    LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                            SettingsSectionHeader(
-                                title: L10n.text("settings.weather.section"),
-                                subtitle: L10n.text("settings.weather.subtitle")
-                            )
-
-                            TomorrowWeatherSettingsCard(
-                                isEnabled: $tomorrowWeatherEnabled,
-                                locationName: $tomorrowWeatherLocationName
-                            )
-                        }
-                    }
-
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
-                                title: L10n.text("settings.preferences.section"),
-                                subtitle: L10n.text("settings.preferences.subtitle")
+                                title: L10n.text("settings.style_preferences.section"),
+                                subtitle: L10n.text("settings.style_preferences.subtitle")
                             )
 
                             ScenarioSelectionRow(selection: $defaultScenario)
@@ -69,38 +55,86 @@ struct SettingsView: View {
                                 )
                             )
                             .accessibilityIdentifier("settingsAppliedPreferenceNote")
+
+                            Divider()
+                                .padding(.vertical, 6)
+
+                            SettingsSectionHeader(
+                                title: L10n.text("settings.weather.section"),
+                                subtitle: L10n.text("settings.weather.subtitle")
+                            )
+
+                            TomorrowWeatherSettingsCard(
+                                isEnabled: $tomorrowWeatherEnabled,
+                                locationName: $tomorrowWeatherLocationName
+                            )
                         }
                     }
 
-                    AIAssistStatusCard(
-                        cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
-                        tomorrowWeatherEnabled: tomorrowWeatherEnabled
-                    )
+                    LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
+                        SettingsSectionHeader(
+                            title: L10n.text("settings.ai_privacy.section"),
+                            subtitle: L10n.text("settings.ai_privacy.subtitle")
+                        )
+
+                        SettingsNoteRow(
+                            systemImage: "camera.badge.ellipsis",
+                            title: L10n.text("settings.ai_privacy.photo_title"),
+                            bodyText: L10n.text("settings.ai_privacy.photo_body")
+                        )
+
+                        AIAssistStatusCard(
+                            cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
+                            tomorrowWeatherEnabled: tomorrowWeatherEnabled
+                        )
+
+                        Divider()
+
+                        CloudPhotoRecognitionToggle(isOn: $cloudPhotoRecognitionEnabled)
+
+                        SettingsNoteRow(
+                            systemImage: "person.crop.circle.badge.questionmark",
+                            title: L10n.text("settings.privacy.ai.title"),
+                            bodyText: L10n.text("settings.privacy.ai.body")
+                        )
+
+                        SettingsNoteRow(
+                            systemImage: "lock.shield",
+                            title: L10n.text("settings.privacy.local.title"),
+                            bodyText: L10n.text("settings.privacy.local.body")
+                        )
+                    }
 
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
-                                title: L10n.text("settings.privacy.section"),
-                                subtitle: L10n.text("settings.privacy.subtitle")
-                            )
-
-                            Divider()
-
-                            CloudPhotoRecognitionToggle(isOn: $cloudPhotoRecognitionEnabled)
-
-                            SettingsNoteRow(
-                                systemImage: "lock.shield",
-                                title: L10n.text("settings.privacy.ai.title"),
-                                bodyText: L10n.text("settings.privacy.ai.body")
+                                title: L10n.text("settings.language.section"),
+                                subtitle: L10n.text("settings.language.subtitle")
                             )
 
                             SettingsNoteRow(
-                                systemImage: "iphone",
-                                title: L10n.text("settings.privacy.local.title"),
-                                bodyText: L10n.text("settings.privacy.local.body")
+                                systemImage: "globe",
+                                title: L10n.text("settings.language.title"),
+                                bodyText: systemLanguageName()
                             )
                         }
                     }
+
+                    LuxurySurfaceCard {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                            SettingsSectionHeader(
+                                title: L10n.text("settings.about.section"),
+                                subtitle: L10n.text("settings.about.subtitle")
+                            )
+
+                            SettingsNoteRow(
+                                systemImage: "info.circle",
+                                title: L10n.text("settings.about.title"),
+                                bodyText: L10n.string("settings.about.body.format", arguments: appVersionLabel())
+                            )
+                        }
+                    }
+
                 }
                 .padding(18)
                 .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
@@ -124,6 +158,16 @@ struct SettingsView: View {
                 Text(saveError ?? L10n.text("common.try_again"))
             }
         }
+    }
+
+    private func appVersionLabel() -> String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? L10n.text("settings.about.version_unknown")
+    }
+
+    private func systemLanguageName() -> String {
+        let preferredIdentifier = Locale.preferredLanguages.first ?? Locale.current.identifier
+        return Locale.current.localizedString(forIdentifier: preferredIdentifier) ?? preferredIdentifier
     }
 
     private func loadPreferenceIfNeeded() {
@@ -246,40 +290,31 @@ private struct AIAssistStatusCard: View {
     let tomorrowWeatherEnabled: Bool
 
     var body: some View {
-        LuxurySurfaceCard {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                SettingsSectionHeader(
-                    title: L10n.text("settings.ai_status.title"),
-                    subtitle: L10n.text("settings.ai_status.body")
-                )
+        VStack(spacing: DesignSystem.Spacing.sm) {
+            AIAssistStatusRow(
+                systemImage: "camera.metering.center.weighted",
+                title: L10n.text("settings.ai_status.photo.title"),
+                status: cloudPhotoRecognitionEnabled
+                    ? L10n.text("settings.ai_status.photo.status.cloud")
+                    : L10n.text("settings.ai_status.photo.status.local"),
+                detail: L10n.text("settings.ai_status.photo.detail")
+            )
 
-                VStack(spacing: DesignSystem.Spacing.sm) {
-                    AIAssistStatusRow(
-                        systemImage: "camera.metering.center.weighted",
-                        title: L10n.text("settings.ai_status.photo.title"),
-                        status: cloudPhotoRecognitionEnabled
-                            ? L10n.text("settings.ai_status.photo.status.cloud")
-                            : L10n.text("settings.ai_status.photo.status.local"),
-                        detail: L10n.text("settings.ai_status.photo.detail")
-                    )
+            AIAssistStatusRow(
+                systemImage: "sparkles",
+                title: L10n.text("settings.ai_status.ranking.title"),
+                status: L10n.text("settings.ai_status.ranking.status"),
+                detail: L10n.text("settings.ai_status.ranking.detail")
+            )
 
-                    AIAssistStatusRow(
-                        systemImage: "sparkles",
-                        title: L10n.text("settings.ai_status.ranking.title"),
-                        status: L10n.text("settings.ai_status.ranking.status"),
-                        detail: L10n.text("settings.ai_status.ranking.detail")
-                    )
-
-                    AIAssistStatusRow(
-                        systemImage: "cloud.sun",
-                        title: L10n.text("settings.ai_status.weather.title"),
-                        status: tomorrowWeatherEnabled
-                            ? L10n.text("settings.ai_status.weather.status.on")
-                            : L10n.text("settings.ai_status.weather.status.optional"),
-                        detail: L10n.text("settings.ai_status.weather.detail")
-                    )
-                }
-            }
+            AIAssistStatusRow(
+                systemImage: "cloud.sun",
+                title: L10n.text("settings.ai_status.weather.title"),
+                status: tomorrowWeatherEnabled
+                    ? L10n.text("settings.ai_status.weather.status.on")
+                    : L10n.text("settings.ai_status.weather.status.optional"),
+                detail: L10n.text("settings.ai_status.weather.detail")
+            )
         }
         .accessibilityIdentifier("settingsAIStatusCard")
     }

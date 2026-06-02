@@ -12,14 +12,12 @@ struct ClosetView: View {
     var openAddItemRequest: AddClosetItemRequest?
     var onOpenToday: () -> Void = {}
 
-    private let categoryOrder: [ClothingType] = [
+    private let healthCoreTypes: [ClothingType] = [
         .top,
         .bottom,
-        .blazer,
         .shoes,
         .bag,
-        .outerwear,
-        .accessory
+        .blazer
     ]
 
     var body: some View {
@@ -70,6 +68,7 @@ struct ClosetView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                 archiveMasthead
                 todayReadinessCard
+                closetHealthCard
                 filterBar
 
                 if filteredItems.isEmpty {
@@ -157,14 +156,50 @@ struct ClosetView: View {
         }
     }
 
+    private var closetHealthCard: some View {
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "heart.text.square.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+
+                    Text(L10n.text("closet.health.title"))
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+                }
+
+                Text(L10n.string("closet.health.summary.format", arguments: availableItemCount, needsWashItemCount, needsRepairItemCount))
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: DesignSystem.Spacing.md) {
+                    Text(L10n.string("closet.health.coverage_format.format", arguments: coveredHealthTypesCount, healthCoreTypes.count))
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(DesignSystem.surface.opacity(0.58))
+                        .clipShape(Capsule(style: .continuous))
+
+                    Text(coverageMessage)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(coverageMessageIsUrgent ? DesignSystem.wine : DesignSystem.accent)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
-                    ContextChip(title: L10n.text("closet.filter.all"), value: ClosetTypeFilter.all, selection: $typeFilter)
-
-                    ForEach(categoryOrder, id: \.self) { type in
-                        ContextChip(title: type.displayName, value: ClosetTypeFilter.type(type), selection: $typeFilter)
+                    ForEach(typeFilterOptions, id: \.filter) { option in
+                        ContextChip(title: option.title, value: option.filter, selection: $typeFilter)
                     }
                 }
                 .padding(.vertical, 1)
@@ -268,6 +303,55 @@ struct ClosetView: View {
         items.filter { $0.status == .available }.count
     }
 
+    private var needsWashItemCount: Int {
+        items.filter { $0.status == .needsWash }.count
+    }
+
+    private var needsRepairItemCount: Int {
+        items.filter { $0.status == .needsRepair }.count
+    }
+
+    private var typeFilterOptions: [ClosetTypeFilterOption] {
+        [
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.all"), filter: .all),
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.tops"), filter: .type(.top)),
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.bottoms"), filter: .type(.bottom)),
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.shoes"), filter: .type(.shoes)),
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.blazers"), filter: .type(.blazer)),
+            ClosetTypeFilterOption(title: L10n.text("closet.filter.bags"), filter: .type(.bag))
+        ]
+    }
+
+    private var coveredHealthTypes: Set<ClothingType> {
+        Set(
+            items
+                .filter { $0.status == .available }
+                .compactMap { $0.resolvedType }
+                .filter(healthCoreTypes.contains)
+        )
+    }
+
+    private var coveredHealthTypesCount: Int {
+        coveredHealthTypes.count
+    }
+
+    private var missingHealthTypes: [ClothingType] {
+        healthCoreTypes.filter { !coveredHealthTypes.contains($0) }
+    }
+
+    private var coverageMessageIsUrgent: Bool {
+        !missingHealthTypes.isEmpty
+    }
+
+    private var coverageMessage: String {
+        guard !missingHealthTypes.isEmpty else {
+            return L10n.text("closet.health.coverage_complete")
+        }
+
+        let names = missingHealthTypes.map(\.displayName).joined(separator: " / ")
+        return L10n.string("closet.health.coverage_gap.format", arguments: names)
+    }
+
     private var gridColumns: [GridItem] {
         [
             GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
@@ -295,6 +379,11 @@ private enum ClosetTypeFilter: Hashable {
 private enum ClosetStatusFilter: Hashable {
     case all
     case status(ClothingStatus)
+}
+
+private struct ClosetTypeFilterOption: Hashable {
+    let title: String
+    let filter: ClosetTypeFilter
 }
 
 private struct GarmentGridCard: View {
@@ -328,13 +417,7 @@ private struct GarmentGridCard: View {
                     .foregroundStyle(.white.opacity(0.82))
                     .lineLimit(1)
 
-                Text(item.status.displayName)
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.white.opacity(0.18))
-                    .clipShape(Capsule(style: .continuous))
+                statusBadge
             }
             .padding(DesignSystem.Spacing.md)
         }
@@ -361,6 +444,30 @@ private struct GarmentGridCard: View {
         let storage = item.displayStorageLocation
         guard !storage.isEmpty else { return item.type.displayName }
         return "\(item.type.displayName) · \(storage)"
+    }
+
+    @ViewBuilder
+    private var statusBadge: some View {
+        switch item.status {
+        case .available:
+            EmptyView()
+        case .needsWash:
+            statusBadge(text: item.status.displayName, color: DesignSystem.statusColor(for: .needsWash), isUrgent: true)
+        case .needsRepair:
+            statusBadge(text: item.status.displayName, color: DesignSystem.statusColor(for: .needsRepair), isUrgent: true)
+        case .inactive:
+            statusBadge(text: item.status.displayName, color: DesignSystem.secondaryInk, isUrgent: false)
+        }
+    }
+
+    private func statusBadge(text: String, color: Color, isUrgent: Bool) -> some View {
+        Text(text)
+            .font(isUrgent ? .caption2.weight(.bold) : .caption.weight(.medium))
+            .foregroundStyle(isUrgent ? .white : color)
+            .padding(.horizontal, isUrgent ? 9 : 8)
+            .padding(.vertical, isUrgent ? 5 : 4)
+            .background(isUrgent ? color.opacity(0.92) : color.opacity(0.14))
+            .clipShape(Capsule(style: .continuous))
     }
 }
 
