@@ -133,7 +133,7 @@ struct ClosetView: View {
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(DesignSystem.ink)
 
-                        Text(L10n.string("closet.today_ready.body.format", arguments: availableItemCount))
+                        Text(L10n.string("closet.today_ready.body.format", arguments: closetReadinessItemCount))
                             .font(.subheadline)
                             .foregroundStyle(DesignSystem.secondaryInk)
                             .lineLimit(2)
@@ -372,6 +372,19 @@ struct ClosetView: View {
 
     private var availableItemCount: Int {
         items.filter { $0.status == .available }.count
+    }
+
+    private var isFilteringClosetForCurrentReadinessContext: Bool {
+        activeFilter != .all
+            || !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var closetReadinessItemCount: Int {
+        if isFilteringClosetForCurrentReadinessContext {
+            return filteredItems.filter { $0.status == .available }.count
+        }
+
+        return availableItemCount
     }
 
     private var needsWashItemCount: Int {

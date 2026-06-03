@@ -284,7 +284,6 @@
 "looks.kind.saved" = "Saved";
 "looks.kind.worn" = "Worn";
 "looks.item_count.format" = "%d items";
-"looks.score.format" = "Score %d";
 "looks.archive.title" = "Lookbook";
 "looks.archive.latest.format" = "Latest: %@";
 "looks.archive.open_today" = "Add another from Today";
@@ -292,8 +291,8 @@
 "looks.context.saved.title" = "Saved from Today";
 "looks.context.saved.body" = "Kept for planning, repeating, or comparing against future recommendations.";
 "looks.context.worn.title" = "Actually worn";
-"looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works across your routine.";
-"looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what actually works across your routine.";
+"looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works across your real occasions.";
+"looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what works across your real occasions.";
 "closet.archive.kicker" = "Archive";
 "closet.archive.title" = "Your Closet";
 "closet.archive.count.format" = "%d pieces ready to style";
@@ -331,7 +330,7 @@
 "settings.ai_status.photo.detail" = "Suggests type, color, season, and warmth after a photo; you can edit everything.";
 "settings.ai_status.ranking.title" = "Outfit explanations";
 "settings.ai_status.ranking.status" = "Available on Today";
-"settings.ai_status.ranking.detail" = "Explains the recommended outfit after ClosetPin scores your occasion, closet, season, formality, and feedback.";
+"settings.ai_status.ranking.detail" = "Explains the recommended outfit using your occasion, closet, season, formality, and your past feedback from real wears and saves.";
 "settings.ai_status.weather.title" = "Weather help";
 "settings.ai_status.weather.status.optional" = "Optional";
 "settings.ai_status.weather.status.on" = "Enabled";

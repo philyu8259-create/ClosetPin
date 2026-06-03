@@ -21,7 +21,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         feedback: [OutfitFeedback],
         items: [ClothingItem]
     ) -> [LooksHistoryEntry] {
-        let itemsByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+        let itemsByID = deduplicatedItemsByID(from: items)
 
         let savedEntries = outfits
             .filter { $0.savedAt != nil }
@@ -100,5 +100,15 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         }
 
         return TodayRecommendationExplanation.text(for: snapshots, scenario: outfit.scenario)
+    }
+
+    private static func deduplicatedItemsByID(from items: [ClothingItem]) -> [UUID: ClothingItem] {
+        var itemsByID: [UUID: ClothingItem] = [:]
+
+        for item in items {
+            itemsByID[item.id] = item
+        }
+
+        return itemsByID
     }
 }

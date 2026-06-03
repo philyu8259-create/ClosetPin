@@ -53,15 +53,29 @@ enum ColorResolver {
         return color
     }
 
-    static func localizedDisplayColor(from rawColor: String) -> String? {
+    static func localizedDisplayColor(from rawColor: String, locale: Locale = .current) -> String? {
         guard let color = safeDisplayColor(from: rawColor) else { return nil }
 
-        if Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true,
+        if shouldDisplayChineseColor(for: locale),
            let chineseColor = chineseDisplayAlias(for: color) {
             return chineseColor
         }
 
         return color
+    }
+
+    private static func shouldDisplayChineseColor(for locale: Locale) -> Bool {
+        let languageCode = locale.language.languageCode?.identifier.lowercased() ?? ""
+        if languageCode.hasPrefix("zh") {
+            return true
+        }
+
+        let identifierLocale = locale.identifier.lowercased()
+        if identifierLocale.hasPrefix("zh") || identifierLocale.hasPrefix("zh-") {
+            return true
+        }
+
+        return false
     }
 
     static func swatchKind(for rawColor: String) -> SwatchKind {

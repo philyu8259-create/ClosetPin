@@ -192,13 +192,6 @@ private struct LooksHistoryCard: View {
             HStack(spacing: DesignSystem.Spacing.sm) {
                 CapsuleTag(text: entry.scenario.displayName, tint: DesignSystem.accent)
                 CapsuleTag(text: L10n.string("looks.item_count.format", arguments: entry.itemCount), tint: DesignSystem.secondaryInk)
-
-                if let score = entry.score {
-                    CapsuleTag(
-                        text: L10n.string("looks.score.format", arguments: score),
-                        tint: DesignSystem.premiumGold
-                    )
-                }
             }
 
             Text(entry.explanation)

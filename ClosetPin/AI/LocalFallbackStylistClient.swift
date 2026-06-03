@@ -22,10 +22,12 @@ struct LocalFallbackStylistClient: AIStylistClient {
     }
 
     private func summary(for items: [ClothingItem]) -> String {
+        let fallbackLocale = Locale(identifier: "en_US")
+
         let descriptions = items.map { item in
             let type = (item.resolvedType ?? item.type).summaryName
 
-            guard let color = ColorResolver.safeDisplayColor(from: item.color) else {
+            guard let color = ColorResolver.localizedDisplayColor(from: item.color, locale: fallbackLocale) else {
                 return type
             }
 

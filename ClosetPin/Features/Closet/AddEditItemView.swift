@@ -1047,7 +1047,7 @@ struct AddEditItemView: View {
         let currentColor = draft.color.trimmingCharacters(in: .whitespacesAndNewlines)
         let suggestedColor = suggestion.color.trimmingCharacters(in: .whitespacesAndNewlines)
         if !suggestedColor.isEmpty, currentColor != suggestedColor {
-            changes.append(.color(value: suggestedColor))
+            changes.append(.color(value: localizedSuggestionColor(for: suggestedColor)))
         }
 
         if draft.selectedSeasons.isEmpty || draft.seasonSelectionSource == .systemDate {
@@ -1140,7 +1140,10 @@ struct AddEditItemView: View {
 
     private func suggestionStatusText(for outcome: PhotoTaggingOutcome) -> String {
         let suggestion = outcome.suggestion
-        let suggestionSummary = [suggestion.color, suggestion.type.displayName]
+        let suggestionSummary = [
+            localizedSuggestionColor(for: suggestion.color),
+            suggestion.type.displayName
+        ]
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .joined(separator: " · ")
         let key = switch outcome.delivery {
@@ -1152,6 +1155,11 @@ struct AddEditItemView: View {
             "closet.photo.ai_suggestion.cloud_fallback.format"
         }
         return L10n.string(key, arguments: suggestionSummary)
+    }
+
+    private func localizedSuggestionColor(for value: String) -> String {
+        ColorResolver.localizedDisplayColor(from: value)
+            ?? value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func suggestionStatusIcon(for outcome: PhotoTaggingOutcome) -> String {

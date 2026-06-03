@@ -233,6 +233,54 @@ final class ClosetPinTests: XCTestCase {
         )
     }
 
+    func testLooksHistoryEntriesKeepDeterministicItemSelectionWithDuplicateItemIDs() {
+        let itemID = UUID()
+        let earlierDuplicate = ClothingItem(
+            id: itemID,
+            photoLocalPath: "/tmp/duplicate-top.jpg",
+            type: .top,
+            color: "White",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Rack"
+        )
+        let laterDuplicate = ClothingItem(
+            id: itemID,
+            photoLocalPath: "/tmp/duplicate-shoes.jpg",
+            type: .shoes,
+            color: "Black",
+            seasons: [.summer],
+            formalityLevel: 4,
+            storageLocation: "Shoe rack"
+        )
+        let outfit = Outfit(
+            itemIds: [itemID],
+            scenario: .importantMeeting,
+            dateContext: Date(timeIntervalSince1970: 100),
+            weatherNote: "Evening",
+            score: 80,
+            explanation: "Classic meeting option.",
+            savedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let entries = LooksHistoryEntry.makeEntries(
+            outfits: [outfit],
+            feedback: [],
+            items: [earlierDuplicate, laterDuplicate]
+        )
+
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries.first?.itemSummary, "\(localizedColor("Black")) \(ClothingType.shoes.displayName)")
+        XCTAssertEqual(entries.first?.visualItems.map(\.photoLocalPath), ["/tmp/duplicate-shoes.jpg"])
+        XCTAssertEqual(
+            entries.first?.explanation,
+            TodayRecommendationExplanation.text(
+                for: [TodayOutfitItemSnapshot(type: .shoes, color: "Black")],
+                scenario: .importantMeeting
+            )
+        )
+    }
+
     func testOutfitVisualItemsPreserveOutfitOrderAndPhotoMetadata() {
         let top = ClothingItem(
             id: UUID(),

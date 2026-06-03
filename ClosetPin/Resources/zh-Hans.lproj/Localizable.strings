@@ -284,7 +284,6 @@
 "looks.kind.saved" = "已保存";
 "looks.kind.worn" = "已穿";
 "looks.item_count.format" = "%d 件单品";
-"looks.score.format" = "评分 %d";
 "looks.archive.title" = "穿搭档案";
 "looks.archive.latest.format" = "最近：%@";
 "looks.archive.open_today" = "去今日继续记录";
@@ -292,8 +291,8 @@
 "looks.context.saved.title" = "从今日保存";
 "looks.context.saved.body" = "用于之后复穿、规划，或和后续推荐做对比。";
 "looks.context.worn.title" = "真实穿过";
-"looks.context.worn.body" = "会作为真实反馈，帮助 ClosetPin 学习哪些搭配适合你的日常节奏。";
-"looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配真正适合你的日常节奏。";
+"looks.context.worn.body" = "会作为真实反馈，帮助 ClosetPin 学习哪些搭配更适合你的不同场合。";
+"looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配更适合你的不同场合。";
 "closet.archive.kicker" = "衣橱档案";
 "closet.archive.title" = "你的衣橱";
 "closet.archive.count.format" = "%d 件单品可搭配";
@@ -331,7 +330,7 @@
 "settings.ai_status.photo.detail" = "拍照后建议类型、颜色、季节和保暖度；所有内容都能修改。";
 "settings.ai_status.ranking.title" = "穿搭解释";
 "settings.ai_status.ranking.status" = "今日可用";
-"settings.ai_status.ranking.detail" = "ClosetPin 结合场合、衣橱、自动季节、正式度和反馈评分后，AI 可解释推荐原因。";
+"settings.ai_status.ranking.detail" = "ClosetPin 结合场合、衣橱、自动季节、正式度和历史偏好（真实穿过/保存）来解释推荐原因。";
 "settings.ai_status.weather.title" = "天气辅助";
 "settings.ai_status.weather.status.optional" = "可选";
 "settings.ai_status.weather.status.on" = "已开启";

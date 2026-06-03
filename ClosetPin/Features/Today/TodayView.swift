@@ -9,6 +9,7 @@ struct TodayView: View {
     @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
     private static let confirmationDismissDelay: Duration = .seconds(3)
+    private static let heroAnchorID = "today-hero-anchor"
 
     @State private var scenario: OutfitScenario = .dailyOffice
     @State private var season: SeasonTag = SeasonResolver.currentSeason()
@@ -70,63 +71,69 @@ struct TodayView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                    dailyDashboard
-                    editorialHero
-                    contextStrip
-                    tomorrowPrepSection
-                    decisionSupportSection
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                        dailyDashboard
+                            .id(Self.heroAnchorID)
+                        editorialHero
+                        contextStrip
+                        tomorrowPrepSection
+                        decisionSupportSection
 
-                    if displayedCandidates.count > 1 {
-                        alternativesSection
+                        if displayedCandidates.count > 1 {
+                            alternativesSection
+                        }
+                    }
+                    .padding(18)
+                    .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .background(DesignSystem.background)
+                .navigationTitle(L10n.text("today.title"))
+                .navigationBarTitleDisplayMode(.inline)
+                .onAppear(perform: applyPreferenceDefaultsIfNeeded)
+                .onChange(of: currentPreference?.updatedAt) { _, _ in
+                    applyPreferenceDefaultsIfNeeded()
+                }
+                .onChange(of: scenario) { _, _ in
+                    resetHeroRotation()
+                    withAnimation(.snappy(duration: 0.22)) {
+                        scrollProxy.scrollTo(Self.heroAnchorID, anchor: .top)
                     }
                 }
-                .padding(18)
-                .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(DesignSystem.background)
-            .navigationTitle(L10n.text("today.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear(perform: applyPreferenceDefaultsIfNeeded)
-            .onChange(of: currentPreference?.updatedAt) { _, _ in
-                applyPreferenceDefaultsIfNeeded()
-            }
-            .onChange(of: scenario) { _, _ in
-                resetHeroRotation()
-            }
-            .onChange(of: season) { _, _ in
-                resetHeroRotation()
-            }
-            .task(id: recommendationRequestKey) {
-                refreshRecommendations()
-            }
-            .task(id: tomorrowWeatherRequestKey) {
-                await refreshTomorrowWeatherIfNeeded()
-            }
-            .task(id: stylistExplanationRequestKey) {
-                await refreshStylistExplanationsIfNeeded()
-            }
-            .safeAreaInset(edge: .bottom) {
-                if let confirmation {
-                    ConfirmationBanner(
-                        confirmation: confirmation,
-                        onOpenLooks: onOpenLooks,
-                        onUndo: undoFeedback
-                    )
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, DesignSystem.Spacing.tabBarClearance + 8)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                .onChange(of: season) { _, _ in
+                    resetHeroRotation()
                 }
-            }
-            .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
-                get: { saveError != nil },
-                set: { if !$0 { saveError = nil } }
-            )) {
-                Button(L10n.text("common.ok"), role: .cancel) {}
-            } message: {
-                Text(saveError ?? L10n.text("common.try_again"))
+                .task(id: recommendationRequestKey) {
+                    refreshRecommendations()
+                }
+                .task(id: tomorrowWeatherRequestKey) {
+                    await refreshTomorrowWeatherIfNeeded()
+                }
+                .task(id: stylistExplanationRequestKey) {
+                    await refreshStylistExplanationsIfNeeded()
+                }
+                .safeAreaInset(edge: .bottom) {
+                    if let confirmation {
+                        ConfirmationBanner(
+                            confirmation: confirmation,
+                            onOpenLooks: onOpenLooks,
+                            onUndo: undoFeedback
+                        )
+                            .padding(.horizontal, 18)
+                            .padding(.bottom, DesignSystem.Spacing.tabBarClearance + 8)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
+                    get: { saveError != nil },
+                    set: { if !$0 { saveError = nil } }
+                )) {
+                    Button(L10n.text("common.ok"), role: .cancel) {}
+                } message: {
+                    Text(saveError ?? L10n.text("common.try_again"))
+                }
             }
         }
     }
