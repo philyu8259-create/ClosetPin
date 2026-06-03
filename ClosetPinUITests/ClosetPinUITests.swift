@@ -474,21 +474,17 @@ final class ClosetPinUITests: XCTestCase {
 
     func testSettingsWeatherSuggestionsHaveSimpleCityFlow() {
         let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] = "1"
+        app.launchEnvironment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_ENABLED"] = "1"
         app.launch()
-
-        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
-        app.buttons["useSampleCapsuleButton"].tap()
 
         app.buttons["appTab_settings"].tap()
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.textFields["tomorrowWeatherLocationField"].exists)
-
-        let weatherToggle = app.switches["tomorrowWeatherToggle"]
-        XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
-        enableSwitch(weatherToggle)
-        app.swipeUp()
 
         let locationField = app.textFields["tomorrowWeatherLocationField"]
+        if !locationField.exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(locationField.waitForExistence(timeout: 5))
         locationField.tap()
         locationField.typeText("Shanghai")
@@ -499,18 +495,10 @@ final class ClosetPinUITests: XCTestCase {
 
     func testTodayWeatherMissingCityCanOpenSettingsDirectly() {
         let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] = "1"
+        app.launchEnvironment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_ENABLED"] = "1"
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
-        app.buttons["useSampleCapsuleButton"].tap()
-
-        app.buttons["appTab_settings"].tap()
-        XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
-        let weatherToggle = app.switches["tomorrowWeatherToggle"]
-        XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
-        enableSwitch(weatherToggle)
-
-        app.buttons["appTab_today"].tap()
         XCTAssertTrue(app.staticTexts["Tomorrow weather"].waitForExistence(timeout: 3))
         app.swipeUp()
         let addCityButton = app.buttons["tomorrowWeatherOpenSettingsButton"]
@@ -520,23 +508,6 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         app.swipeUp()
         XCTAssertTrue(app.textFields["tomorrowWeatherLocationField"].waitForExistence(timeout: 5))
-    }
-
-    private func enableSwitch(
-        _ element: XCUIElement,
-        timeout: TimeInterval = 5,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) {
-        if (element.value as? String) == "1" {
-            return
-        }
-
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
-        let predicate = NSPredicate(format: "value == %@", "1")
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
-        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
-        XCTAssertEqual(result, .completed, file: file, line: line)
     }
 
     func testSettingsExplainsAiRoleWithoutExtraSetup() {

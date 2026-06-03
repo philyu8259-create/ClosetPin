@@ -4,6 +4,7 @@ import SwiftUI
 struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var clothingItems: [ClothingItem]
+    @Query private var preferences: [UserPreference]
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var debugSeedReady = false
     @State private var selectedTab: AppTab = .today
@@ -134,7 +135,26 @@ struct AppRootView: View {
             _ = try? WorkCapsuleSeeder.insertSampleCapsule(in: modelContext)
         }
 
+        applyDebugPreferenceOverridesIfNeeded()
         debugSeedReady = true
+#endif
+    }
+
+    @MainActor
+    private func applyDebugPreferenceOverridesIfNeeded() {
+#if DEBUG
+        guard ProcessInfo.processInfo.environment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_ENABLED"] == "1" else {
+            return
+        }
+
+        let locationName = ProcessInfo.processInfo.environment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_LOCATION"] ?? ""
+        if let preference = preferences.first {
+            preference.tomorrowWeatherEnabled = true
+            preference.tomorrowWeatherLocationName = locationName.trimmingCharacters(in: .whitespacesAndNewlines)
+            preference.updatedAt = Date()
+        } else {
+            modelContext.insert(UserPreference(tomorrowWeatherEnabled: true, tomorrowWeatherLocationName: locationName))
+        }
 #endif
     }
 
