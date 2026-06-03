@@ -39,6 +39,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: ClosetPin/ClosetPin.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.phil.closetpin
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: ClosetPin lets you choose clothing photos to build your local wardrobe.

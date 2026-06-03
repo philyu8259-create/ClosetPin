@@ -130,6 +130,7 @@
 		BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TomorrowWeatherContext.swift; sourceTree = "<group>"; };
 		C22D3C89603FDF9ACBA3FF92 /* TodayFeedbackRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayFeedbackRecorder.swift; sourceTree = "<group>"; };
 		CD536F12EE5B2CA515CB80A7 /* editorial-white-shirt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-white-shirt.png"; sourceTree = "<group>"; };
+		D042B4C8E49F4BE79E61A9C0 /* ClosetPin.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClosetPin.entitlements; sourceTree = "<group>"; };
 		D1B7AA169818AAB97CABB7DB /* empty-closet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "empty-closet.png"; sourceTree = "<group>"; };
 		DA163B8A51D76F86E6C91BCC /* editorial-black-shoes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-black-shoes.png"; sourceTree = "<group>"; };
 		DCA34D7124C32E8513FEBC82 /* ColorResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorResolverTests.swift; sourceTree = "<group>"; };
@@ -265,6 +266,7 @@
 			children = (
 				15A5BBC4E51886DC383345C0 /* AI */,
 				5C2710D2576F399238138E1F /* App */,
+				D042B4C8E49F4BE79E61A9C0 /* ClosetPin.entitlements */,
 				404AF2CD035CB1FAC7FF044B /* Domain */,
 				357F0235C34242AF3AFA5841 /* Features */,
 				B54AEC79A7A3C598BA8B738D /* Persistence */,
@@ -589,6 +591,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_ENTITLEMENTS = ClosetPin/ClosetPin.entitlements;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "ClosetPin uses the camera so you can add clothes to your wardrobe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ClosetPin lets you choose clothing photos to build your local wardrobe.";
@@ -778,6 +781,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_ENTITLEMENTS = ClosetPin/ClosetPin.entitlements;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "ClosetPin uses the camera so you can add clothes to your wardrobe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ClosetPin lets you choose clothing photos to build your local wardrobe.";
