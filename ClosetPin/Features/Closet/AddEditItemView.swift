@@ -1005,7 +1005,6 @@ struct AddEditItemView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(DesignSystem.accent)
-                            .disabled(changes.isEmpty)
                             .accessibilityIdentifier("photoSuggestionUseButton")
 
                             Spacer()

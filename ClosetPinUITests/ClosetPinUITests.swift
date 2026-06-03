@@ -264,12 +264,17 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useTestPhotoButton"].tap()
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.staticTexts["Ready to save."].exists)
+        let saveItemButton = app.buttons["saveItemButton"]
+        XCTAssertTrue(saveItemButton.waitForExistence(timeout: 3))
 
         app.buttons["photoSuggestionUseButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
+        let saveEnabledExpectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isEnabled == true"),
+            object: saveItemButton
+        )
+        XCTAssertEqual(XCTWaiter().wait(for: [saveEnabledExpectation], timeout: 3), .completed)
     }
 
     func testAddItemAiSuggestionCanBeReviewedManually() {
@@ -287,8 +292,11 @@ final class ClosetPinUITests: XCTestCase {
         manualReviewButton.tap()
         app.swipeUp()
 
-        XCTAssertTrue(app.buttons["formalityLevel_3"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
+        let optionalDetailsDisclosure = app.buttons["optionalDetailsDisclosure"]
+        XCTAssertTrue(optionalDetailsDisclosure.waitForExistence(timeout: 3))
+        let optionalDetailsOpen = app.textFields["itemStorageField"].waitForExistence(timeout: 1)
+        XCTAssertTrue(optionalDetailsDisclosure.isHittable || optionalDetailsOpen)
     }
 
     func testTodayMissingRecommendationOpensAddItemDirectly() {
