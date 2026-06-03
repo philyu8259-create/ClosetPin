@@ -1,0 +1,43 @@
+name: iOS CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select iPhone simulator
+        id: simulator
+        run: |
+          set -euo pipefail
+          destination_id="$(
+            xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -showdestinations |
+            sed -nE 's/.*\{ platform:iOS Simulator, .*id:([^,]+), .*name:iPhone.*/\1/p' |
+            head -1 |
+            xargs
+          )"
+
+          if [ -z "$destination_id" ]; then
+            echo "No iPhone simulator destination found."
+            xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -showdestinations
+            exit 1
+          fi
+
+          echo "destination_id=$destination_id" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: |
+          xcodebuild test \
+            -project ClosetPin.xcodeproj \
+            -scheme ClosetPin \
+            -destination "id=${{ steps.simulator.outputs.destination_id }}"

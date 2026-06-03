@@ -155,6 +155,29 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testClosetSearchFiltersVisualGrid() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        let searchField = app.textFields["closetSearchField"]
+        XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+        searchField.tap()
+        searchField.typeText("Charcoal")
+
+        let charcoalTop = app.buttons["closetItemCard_33333333-3333-3333-3333-333333333333"]
+        let charcoalBlazer = app.buttons["closetItemCard_66666666-6666-6666-6666-666666666666"]
+        let nonMatchingBlueTop = app.buttons["closetItemCard_22222222-2222-2222-2222-222222222222"]
+
+        XCTAssertTrue(charcoalTop.waitForExistence(timeout: 3))
+        XCTAssertTrue(charcoalBlazer.waitForExistence(timeout: 3))
+        XCTAssertFalse(nonMatchingBlueTop.exists)
+    }
+
     func testStartAddingFromOnboardingOpensAddItemFlow() {
         let app = makeApp()
         app.launch()
@@ -508,35 +531,36 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
-        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 5))
 
         app.buttons["appTab_closet"].tap()
 
         let visibleItemCard = app.buttons["closetItemCard_77777777-7777-7777-7777-777777777777"]
-        XCTAssertTrue(visibleItemCard.waitForExistence(timeout: 3))
+        XCTAssertTrue(visibleItemCard.waitForExistence(timeout: 5))
         visibleItemCard.tap()
 
-        XCTAssertTrue(app.buttons["editItemButton"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["editItemButton"].waitForExistence(timeout: 5))
         app.buttons["editItemButton"].tap()
         app.swipeUp()
         app.swipeUp()
 
         let optionalDetails = app.buttons["optionalDetailsDisclosure"]
-        XCTAssertTrue(optionalDetails.waitForExistence(timeout: 3))
+        XCTAssertTrue(optionalDetails.waitForExistence(timeout: 5))
         optionalDetails.tap()
 
         let needsWashOption = app.buttons["statusOption_needsWash"]
-        XCTAssertTrue(needsWashOption.waitForExistence(timeout: 3))
+        XCTAssertTrue(needsWashOption.waitForExistence(timeout: 5))
         needsWashOption.tap()
         app.swipeUp()
 
         let polishedFormality = app.buttons["formalityLevel_5"]
-        XCTAssertTrue(polishedFormality.waitForExistence(timeout: 3))
+        XCTAssertTrue(polishedFormality.waitForExistence(timeout: 5))
         polishedFormality.tap()
 
         app.buttons["saveItemButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Needs Wash"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Needs Wash"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Polished"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
     }
 

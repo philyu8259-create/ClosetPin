@@ -4,10 +4,12 @@ import SwiftUI
 struct ClosetView: View {
     @Query(sort: \ClothingItem.createdAt, order: .reverse) private var items: [ClothingItem]
     @State private var activeSheet: ClosetSheet?
+    @State private var selectedItem: ClothingItem?
     @State private var typeFilter: ClosetTypeFilter = .all
     @State private var statusFilter: ClosetStatusFilter = .all
     @State private var showsAdvancedFilters = false
     @State private var handledAddItemRequest: UUID?
+    @State private var searchText = ""
 
     var openAddItemRequest: AddClosetItemRequest?
     var onOpenToday: () -> Void = {}
@@ -31,6 +33,9 @@ struct ClosetView: View {
             }
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("closet.title"))
+            .navigationDestination(item: $selectedItem) { item in
+                ClosetItemDetailView(item: item)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -76,8 +81,8 @@ struct ClosetView: View {
                 } else {
                     LazyVGrid(columns: gridColumns, spacing: DesignSystem.Spacing.md) {
                         ForEach(filteredItems) { item in
-                            NavigationLink {
-                                ClosetItemDetailView(item: item)
+                            Button {
+                                selectedItem = item
                             } label: {
                                 GarmentGridCard(item: item)
                             }
@@ -196,6 +201,37 @@ struct ClosetView: View {
 
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                TextField(L10n.text("closet.search.placeholder"), text: $searchText)
+                    .textInputAutocapitalization(.words)
+                    .disableAutocorrection(true)
+                    .accessibilityIdentifier("closetSearchField")
+
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.text("closet.search.clear"))
+                    .accessibilityIdentifier("closetSearchClearButton")
+                }
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(DesignSystem.paper.opacity(0.94))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                    .stroke(DesignSystem.border.opacity(0.58), lineWidth: 1)
+            }
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(typeFilterOptions, id: \.filter) { option in
@@ -288,6 +324,7 @@ struct ClosetView: View {
                     item.resolvedStatus == status
                 }
             }
+            .filter(matchesSearch)
             .sorted {
                 if $0.createdAt != $1.createdAt {
                     return $0.createdAt > $1.createdAt
@@ -297,6 +334,23 @@ struct ClosetView: View {
                 }
                 return $0.displayColor.localizedCaseInsensitiveCompare($1.displayColor) == .orderedAscending
             }
+    }
+
+    private func matchesSearch(_ item: ClothingItem) -> Bool {
+        let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else { return true }
+
+        let searchableText = [
+            item.displayTitle,
+            item.displayColor,
+            item.type.displayName,
+            item.status.displayName,
+            item.displayStorageLocation,
+            item.seasons.map(\.displayName).joined(separator: " "),
+            item.notes
+        ].joined(separator: " ")
+
+        return searchableText.localizedCaseInsensitiveContains(trimmedQuery)
     }
 
     private var availableItemCount: Int {
@@ -709,6 +763,34 @@ struct ClosetItemDetailView: View {
                 }
 
                 LuxurySurfaceCard {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        Button {
+                            isEditing = true
+                        } label: {
+                            Label(L10n.text("closet.detail.edit"), systemImage: "slider.horizontal.3")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(DesignSystem.accent)
+                        .accessibilityIdentifier("editItemButton")
+
+                        if WardrobePhoto.localImage(at: item.originalPhotoLocalPath) != nil {
+                            Button {
+                                isShowingOriginal = true
+                            } label: {
+                                Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
+                                    .font(.subheadline.weight(.semibold))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(DesignSystem.secondaryInk)
+                            .accessibilityIdentifier("viewOriginalPhotoButton")
+                        }
+                    }
+                }
+
+                LuxurySurfaceCard {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                         DetailSectionHeader(title: L10n.text("closet.details.section"), systemImage: "tag")
                         detailRow(title: L10n.text("closet.type.label"), value: item.type.displayName)
@@ -734,8 +816,17 @@ struct ClosetItemDetailView: View {
                 LuxurySurfaceCard {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                         DetailSectionHeader(title: L10n.text("closet.levels.section"), systemImage: "slider.horizontal.3")
-                        detailRow(title: L10n.text("closet.formality.label"), value: "\(item.formalityLevel)")
-                        detailRow(title: L10n.text("closet.warmth.label"), value: "\(item.warmthLevel)")
+                        FlowLayout(spacing: 8) {
+                            DetailPill(text: formalityLabel(for: item.formalityLevel), tint: DesignSystem.accent)
+                            DetailPill(text: warmthLabel(for: item.warmthLevel), tint: DesignSystem.premiumGold)
+                            ForEach(item.seasons.prefix(2)) { season in
+                                DetailPill(text: season.displayName, tint: DesignSystem.secondaryInk)
+                            }
+                        }
+                        Text(L10n.string("closet.detail.style_summary.format", arguments: formalityLabel(for: item.formalityLevel), warmthLabel(for: item.warmthLevel)))
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 
@@ -771,14 +862,6 @@ struct ClosetItemDetailView: View {
         .background(DesignSystem.background)
         .navigationTitle(item.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(L10n.text("closet.detail.edit")) {
-                    isEditing = true
-                }
-                .accessibilityIdentifier("editItemButton")
-            }
-        }
         .sheet(isPresented: $isEditing) {
             AddEditItemView(item: item)
         }
@@ -828,6 +911,36 @@ struct ClosetItemDetailView: View {
             dismiss()
         } catch {
             deleteError = error.localizedDescription
+        }
+    }
+
+    private func formalityLabel(for value: Int) -> String {
+        switch max(1, min(5, value)) {
+        case 1:
+            L10n.text("closet.formality.level_1")
+        case 2:
+            L10n.text("closet.formality.level_2")
+        case 3:
+            L10n.text("closet.formality.level_3")
+        case 4:
+            L10n.text("closet.formality.level_4")
+        default:
+            L10n.text("closet.formality.level_5")
+        }
+    }
+
+    private func warmthLabel(for value: Int) -> String {
+        switch max(1, min(5, value)) {
+        case 1:
+            L10n.text("closet.warmth.level_1")
+        case 2:
+            L10n.text("closet.warmth.level_2")
+        case 3:
+            L10n.text("closet.warmth.level_3")
+        case 4:
+            L10n.text("closet.warmth.level_4")
+        default:
+            L10n.text("closet.warmth.level_5")
         }
     }
 }

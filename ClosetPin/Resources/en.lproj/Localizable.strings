@@ -45,6 +45,8 @@
 "closet.health.coverage_gap.format" = "Missing %1$@. Add basics first for a smoother start.";
 "closet.filter.status_all" = "Any Status";
 "closet.filter.advanced" = "Advanced filters";
+"closet.search.placeholder" = "Search color, type, season, location";
+"closet.search.clear" = "Clear closet search";
 "closet.filtered_empty.title" = "No pieces match";
 "closet.filtered_empty.description" = "Adjust the filters or add another item to complete this closet.";
 "closet.add_item" = "Add Item";
@@ -100,6 +102,7 @@
 "closet.detail.delete_confirm_title" = "Delete this item?";
 "closet.detail.delete_confirm_message" = "This removes the item from your closet and deletes its local photos.";
 "closet.detail.delete_error_title" = "Item Was Not Deleted";
+"closet.detail.style_summary.format" = "%@ · %@, ready to compare without reading numbers.";
 "closet.details.section" = "Item Details";
 "closet.type.label" = "Type";
 "closet.color.label" = "Color";

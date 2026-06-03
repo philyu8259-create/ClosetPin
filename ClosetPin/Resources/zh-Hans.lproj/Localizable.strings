@@ -45,6 +45,8 @@
 "closet.health.coverage_gap.format" = "缺少%@，先补这些基础类更容易出装。";
 "closet.filter.status_all" = "全部状态";
 "closet.filter.advanced" = "高级筛选";
+"closet.search.placeholder" = "搜索颜色、类型、季节、位置";
+"closet.search.clear" = "清除衣橱搜索";
 "closet.filtered_empty.title" = "没有匹配单品";
 "closet.filtered_empty.description" = "调整筛选条件，或添加另一件单品来补齐衣橱。";
 "closet.add_item" = "添加单品";
@@ -100,6 +102,7 @@
 "closet.detail.delete_confirm_title" = "删除这件单品？";
 "closet.detail.delete_confirm_message" = "这会从衣橱中移除该单品，并删除本地照片。";
 "closet.detail.delete_error_title" = "未能删除单品";
+"closet.detail.style_summary.format" = "%@ · %@，不用看数字也能判断适合度。";
 "closet.details.section" = "单品详情";
 "closet.type.label" = "类型";
 "closet.color.label" = "颜色";
