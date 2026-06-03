@@ -188,11 +188,11 @@
 "today.dashboard.generate" = "Generate Today's Look";
 "today.dashboard.generate_again" = "Try Another Look";
 "today.context.title" = "Occasion";
-"today.ai_assist.body" = "Pick an occasion. ClosetPin scores the look; you decide.";
+"today.ai_assist.body" = "Pick an occasion. ClosetPin checks your closet and explains why the look fits; you decide.";
 "today.decision.user.title" = "You choose";
 "today.decision.user.body" = "Pick the occasion; season is selected automatically.";
-"today.decision.ai.title" = "Smart scores";
-"today.decision.ai.body" = "ClosetPin scores ready pieces; AI can explain the best fit.";
+"today.decision.ai.title" = "Why this works";
+"today.decision.ai.body" = "ClosetPin checks your style, season, and closet; AI explains the fit in plain language.";
 "today.decision.final.title" = "You decide";
 "today.decision.final.body" = "Wear it, save it, or tune future ideas.";
 "today.season.auto.title" = "Auto season";
@@ -251,7 +251,6 @@
 "today.missing.add_formal.format" = "Add or update one more formal %@ to generate %@ outfits.";
 "today.missing.available_or_season" = "Make one item available or select a season with ready pieces.";
 "today.option.format" = "Option %d";
-"today.score.accessibility.format" = "Score %d";
 "today.missing.title" = "Outfit ingredients needed";
 "today.missing.add_item" = "Add Missing Item";
 "today.missing.open_closet" = "Continue in Closet";

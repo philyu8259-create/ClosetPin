@@ -41,6 +41,7 @@ struct GarmentGridCard: View {
         .background(DesignSystem.surface.opacity(0.82))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 12)
+        .accessibilityElement(children: .ignore)
     }
 
     private var metadataText: String {

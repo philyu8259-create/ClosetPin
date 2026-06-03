@@ -188,11 +188,11 @@
 "today.dashboard.generate" = "生成今日穿搭";
 "today.dashboard.generate_again" = "换一套看看";
 "today.context.title" = "场合";
-"today.ai_assist.body" = "选场合，ClosetPin 评分，最后你决定。";
+"today.ai_assist.body" = "选场合后，ClosetPin 检查衣橱并说明为什么适合，最终你决定。";
 "today.decision.user.title" = "你来选择";
 "today.decision.user.body" = "选择今天的场合；季节会自动判断。";
-"today.decision.ai.title" = "智能评分";
-"today.decision.ai.body" = "ClosetPin 为可穿单品打分；AI 可解释为什么推荐。";
+"today.decision.ai.title" = "搭配依据";
+"today.decision.ai.body" = "ClosetPin 会看你的风格、季节和衣橱，AI 用简单语言说明为什么适合。";
 "today.decision.final.title" = "你来决定";
 "today.decision.final.body" = "直接穿、保存，或调整之后的推荐。";
 "today.season.auto.title" = "自动季节";
@@ -251,7 +251,6 @@
 "today.missing.add_formal.format" = "添加或更新一件更正式的%@即可生成%@穿搭。";
 "today.missing.available_or_season" = "请将一件单品设为可用，或选择已有可搭配单品的季节。";
 "today.option.format" = "方案 %d";
-"today.score.accessibility.format" = "评分 %d";
 "today.missing.title" = "需要补齐穿搭单品";
 "today.missing.add_item" = "添加缺少单品";
 "today.missing.open_closet" = "继续补齐衣橱";

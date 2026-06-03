@@ -55,7 +55,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useSampleCapsuleButton"].tap()
 
         XCTAssertTrue(app.staticTexts["You choose"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Smart scores"].exists)
+        XCTAssertTrue(app.staticTexts["Why this works"].exists)
         XCTAssertTrue(app.staticTexts["You decide"].exists)
     }
 
@@ -124,7 +124,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["微调这条建议"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
-        XCTAssertTrue(app.staticTexts["智能评分"].exists)
+        XCTAssertTrue(app.staticTexts["搭配依据"].exists)
         XCTAssertTrue(app.buttons["宴会"].exists)
 
         app.buttons["appTab_closet"].tap()

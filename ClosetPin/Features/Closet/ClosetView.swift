@@ -6,7 +6,6 @@ struct ClosetView: View {
     @State private var activeSheet: ClosetSheet?
     @State private var activeFilter: ClosetFilter = .all
     @State private var handledAddItemRequest: UUID?
-    @State private var selectedItem: ClothingItem?
     @State private var searchText = ""
     @FocusState private var searchFieldIsFocused: Bool
 
@@ -48,7 +47,7 @@ struct ClosetView: View {
                     AddEditItemView(initialType: initialType ?? .top)
                 }
             }
-            .navigationDestination(item: $selectedItem) { item in
+            .navigationDestination(for: ClothingItem.self) { item in
                 ClosetItemDetailView(item: item)
             }
             .onAppear {
@@ -79,9 +78,7 @@ struct ClosetView: View {
                 } else {
                     LazyVGrid(columns: gridColumns, spacing: DesignSystem.Spacing.md) {
                         ForEach(filteredItems) { item in
-                            Button {
-                                selectedItem = item
-                            } label: {
+                            NavigationLink(value: item) {
                                 GarmentGridCard(item: item)
                             }
                             .buttonStyle(.plain)
