@@ -6,6 +6,17 @@ struct WorkCapsuleOnboardingView: View {
     @State private var activeSheet: OnboardingSheet?
     @State private var saveError: String?
 
+    let onCompleted: () -> Void
+    let onStartAdding: (() -> Void)?
+
+    init(
+        onCompleted: @escaping () -> Void = {},
+        onStartAdding: (() -> Void)? = nil
+    ) {
+        self.onCompleted = onCompleted
+        self.onStartAdding = onStartAdding
+    }
+
     private let checklistItems = [
         "onboarding.checklist.3_tops",
         "onboarding.checklist.2_bottoms",
@@ -144,6 +155,9 @@ struct WorkCapsuleOnboardingView: View {
             .accessibilityIdentifier("useSampleCapsuleButton")
 
             Button {
+                if let onStartAdding {
+                    onStartAdding()
+                }
                 activeSheet = .addItem
             } label: {
                 Label(L10n.text("onboarding.start_adding"), systemImage: "plus")
@@ -159,6 +173,7 @@ struct WorkCapsuleOnboardingView: View {
     private func addSampleCapsule() {
         do {
             try WorkCapsuleSeeder.insertSampleCapsule(in: modelContext)
+            onCompleted()
         } catch {
             saveError = error.localizedDescription
         }

@@ -3,6 +3,57 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+private enum PhotoPreviewMode: Hashable {
+    case display
+    case original
+}
+
+private enum FormalityLevelLabel: Int, CaseIterable {
+    case lowest = 1
+    case low = 2
+    case neutral = 3
+    case high = 4
+    case highest = 5
+
+    var title: String {
+        switch self {
+        case .lowest:
+            L10n.text("closet.formality.level_1")
+        case .low:
+            L10n.text("closet.formality.level_2")
+        case .neutral:
+            L10n.text("closet.formality.level_3")
+        case .high:
+            L10n.text("closet.formality.level_4")
+        case .highest:
+            L10n.text("closet.formality.level_5")
+        }
+    }
+}
+
+private enum WarmthLevelLabel: Int, CaseIterable {
+    case lowest = 1
+    case low = 2
+    case neutral = 3
+    case high = 4
+    case highest = 5
+
+    var title: String {
+        switch self {
+        case .lowest:
+            L10n.text("closet.warmth.level_1")
+        case .low:
+            L10n.text("closet.warmth.level_2")
+        case .neutral:
+            L10n.text("closet.warmth.level_3")
+        case .high:
+            L10n.text("closet.warmth.level_4")
+        case .highest:
+            L10n.text("closet.warmth.level_5")
+        }
+    }
+}
+
 struct AddEditItemDraft {
     static let defaultFormalityLevel = 3
     static let defaultWarmthLevel = 3
@@ -167,6 +218,10 @@ struct AddEditItemView: View {
     @State private var photoError: String?
     @State private var photoPreview: PhotoPreviewSheet?
     @State private var photoTaggingOutcome: PhotoTaggingOutcome?
+    @State private var suggestionNeedsReview = false
+    @State private var photoPreviewMode: PhotoPreviewMode = .display
+    @State private var showPostSaveGuide = false
+    @State private var postSaveGuidance: String?
     @State private var showsOptionalDetails = false
     @State private var showsSeasonChooser = false
 
@@ -188,6 +243,9 @@ struct AddEditItemView: View {
                 editorialPhotoSection
                 primaryDetailsSection
                 optionalDetailsSection
+                if showPostSaveGuide {
+                    postSaveGuidanceSection
+                }
             }
             .scrollContentBackground(.hidden)
             .background(DesignSystem.background)
@@ -237,9 +295,9 @@ struct AddEditItemView: View {
         Section(L10n.text("closet.photo.editorial_title")) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {
-                    if displayPreviewImage != nil || draft.hasPhoto {
+                    if let previewImage {
                         WardrobePhotoThumbnail(
-                            image: displayPreviewImage,
+                            image: previewImage,
                             fallbackColor: ColorResolver.swatchColor(for: draft.color),
                             cornerRadius: DesignSystem.Radius.editorialHero
                         )
@@ -269,11 +327,7 @@ struct AddEditItemView: View {
 
                 HStack(spacing: 10) {
                     Button {
-                        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                            photoError = L10n.text("closet.photo.camera_unavailable")
-                            return
-                        }
-                        isCameraPresented = true
+                        openCameraForPhoto()
                     } label: {
                         Label(L10n.text("closet.photo.take"), systemImage: "camera")
                             .frame(maxWidth: .infinity)
@@ -305,6 +359,43 @@ struct AddEditItemView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            if draft.hasPhoto || displayPreviewImage != nil {
+                Divider()
+                    .padding(.vertical, 4)
+
+                HStack(alignment: .top) {
+                    Label(L10n.text("closet.photo.preview"), systemImage: "photo.on.rectangle")
+                        .font(.footnote)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+
+                    Spacer()
+
+                    if originalPreviewImage != nil {
+                        Picker(
+                            L10n.text("closet.photo.preview_mode"),
+                            selection: $photoPreviewMode
+                        ) {
+                            Text(L10n.text("closet.photo.preview.display")).tag(PhotoPreviewMode.display)
+                            Text(L10n.text("closet.photo.preview.original")).tag(PhotoPreviewMode.original)
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: 212)
+                    } else {
+                        HStack(spacing: 8) {
+                            Text(L10n.text("closet.photo.preview.disabled_placeholder"))
+                                .font(.caption)
+                                .foregroundStyle(DesignSystem.secondaryInk)
+                        }
+                    }
+                }
+
+                if originalPreviewImage == nil {
+                    Label(L10n.text("closet.photo.original_not_ready"), systemImage: "photo")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
 #if DEBUG
             if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
                 Button(L10n.text("closet.photo.use_test")) {
@@ -316,26 +407,40 @@ struct AddEditItemView: View {
             }
 #endif
 
-            if displayPreviewImage != nil {
+            if previewImage != nil {
                 HStack {
-                    Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    Button {
+                        openCameraForPhoto()
+                    } label: {
+                        Label(L10n.text("closet.photo.retake"), systemImage: "camera")
+                            .font(.footnote.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        Label(L10n.text("closet.photo.replace"), systemImage: "arrow.triangle.2.circlepath")
+                            .font(.footnote.weight(.semibold))
+                            .accessibilityIdentifier("photoReplaceButton")
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("photoReplaceButton")
 
                     Spacer()
 
-                    if let originalPreviewImage {
-                        Button {
-                            photoPreview = PhotoPreviewSheet(
-                                title: L10n.text("closet.photo.original"),
-                                image: originalPreviewImage
-                            )
-                        } label: {
-                            Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
-                        }
-                        .font(.footnote.weight(.semibold))
-                        .buttonStyle(.borderless)
+                    Button {
+                    } label: {
+                        Label(L10n.text("closet.photo.adjust_crop"), systemImage: "crop")
                     }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .disabled(true)
+                    .buttonStyle(.borderless)
+                }
+
+                if photoPreviewMode == .display {
+                    Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -350,10 +455,17 @@ struct AddEditItemView: View {
             }
 
             if let photoTaggingOutcome {
-                Label(suggestionStatusText(for: photoTaggingOutcome), systemImage: suggestionStatusIcon(for: photoTaggingOutcome))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .accessibilityIdentifier("photoIntelligenceSuggestionStatus")
+                if suggestionNeedsReview {
+                    photoSuggestionReviewCard(for: photoTaggingOutcome)
+                } else {
+                    Label(
+                        L10n.string("closet.photo.ai_suggestion.auto_applied.format", arguments: photoTaggingOutcome.suggestion.type.displayName),
+                        systemImage: suggestionStatusIcon(for: photoTaggingOutcome)
+                    )
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .accessibilityIdentifier("photoAutoAppliedTag")
+                }
             }
 
             if let photoError {
@@ -376,6 +488,29 @@ struct AddEditItemView: View {
             return UIImage(data: data)
         }
         return WardrobePhoto.localImage(at: draft.originalPhotoLocalPath)
+    }
+
+    private var previewImage: UIImage? {
+        switch photoPreviewMode {
+        case .display:
+            return displayPreviewImage
+        case .original:
+            if let originalPreviewImage {
+                return originalPreviewImage
+            }
+            return displayPreviewImage
+        }
+    }
+
+    private var postSaveMessage: String {
+        if let guidance = postSaveGuidance {
+            return guidance
+        }
+
+        if item == nil {
+            return L10n.text("closet.post_save.continue_note")
+        }
+        return L10n.text("closet.post_save.item_saved")
     }
 
     private var primaryDetailsSection: some View {
@@ -430,20 +565,18 @@ struct AddEditItemView: View {
 
                 StatusSelectionGrid(selection: $draft.status)
 
-                LevelControl(
+                FormalityLevelControl(
                     title: L10n.text("closet.formality.label"),
-                    label: formalityLabel(for: draft.formalityLevel),
-                    value: $draft.formalityLevel,
-                    decreaseIdentifier: "formalityDecreaseButton",
-                    increaseIdentifier: "formalityIncreaseButton"
+                    options: FormalityLevelLabel.allCases,
+                    selected: $draft.formalityLevel,
+                    selectedTitle: L10n.string("closet.formality.preview.format", arguments: formalityLabel(for: draft.formalityLevel))
                 )
 
-                LevelControl(
+                WarmthLevelControl(
                     title: L10n.text("closet.warmth.label"),
-                    label: warmthLabel(for: draft.warmthLevel),
-                    value: $draft.warmthLevel,
-                    decreaseIdentifier: "warmthDecreaseButton",
-                    increaseIdentifier: "warmthIncreaseButton"
+                    options: WarmthLevelLabel.allCases,
+                    selected: $draft.warmthLevel,
+                    selectedTitle: L10n.string("closet.warmth.preview.format", arguments: warmthLabel(for: draft.warmthLevel))
                 )
 
                 TextField(L10n.text("closet.notes.placeholder"), text: $draft.notes, axis: .vertical)
@@ -461,6 +594,47 @@ struct AddEditItemView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("optionalDetailsDisclosure")
             }
+        }
+    }
+
+    private var postSaveGuidanceSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                Text(L10n.text("closet.post_save.title"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(postSaveMessage)
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                if item == nil {
+                    Button(L10n.text("closet.post_save.continue")) {
+                        resetDraftForNextAdd()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("postSaveContinueAddingButton")
+
+                    Button(L10n.text("closet.post_save.generate_today")) {
+                        postSaveGuidance = L10n.text("closet.post_save.generate_hint")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("postSaveGenerateTodayButton")
+                }
+
+                Button(L10n.text("closet.post_save.view_closet")) {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("postSaveViewClosetButton")
+            }
+            .padding(.vertical, 4)
         }
     }
 
@@ -540,6 +714,13 @@ struct AddEditItemView: View {
                 return
             }
 
+            if item == nil {
+                showPostSaveGuide = true
+                postSaveGuidance = nil
+                suggestionNeedsReview = false
+                return
+            }
+
             dismiss()
         } catch {
             stagedWrite?.discard()
@@ -552,6 +733,20 @@ struct AddEditItemView: View {
             }
             saveError = error.localizedDescription
         }
+    }
+
+    private func resetDraftForNextAdd() {
+        draft = AddEditItemDraft(initialType: .top)
+        selectedPhotoItem = nil
+        photoTaggingOutcome = nil
+        suggestionNeedsReview = false
+        photoError = nil
+        postSaveGuidance = nil
+        showPostSaveGuide = false
+        photoPreview = nil
+        photoPreviewMode = .display
+        showsOptionalDetails = false
+        showsSeasonChooser = false
     }
 
     @MainActor
@@ -570,6 +765,9 @@ struct AddEditItemView: View {
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
             draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
             await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+            photoPreviewMode = .display
+            showPostSaveGuide = false
+            postSaveGuidance = nil
             photoError = nil
         } catch {
             photoError = L10n.text("closet.photo.selected_load_failed")
@@ -583,6 +781,9 @@ struct AddEditItemView: View {
             Task {
                 await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
             }
+            photoPreviewMode = .display
+            showPostSaveGuide = false
+            postSaveGuidance = nil
             photoError = nil
         } else {
             photoError = L10n.text("closet.photo.captured_save_failed")
@@ -601,11 +802,97 @@ struct AddEditItemView: View {
             allowsCloudRecognition: allowsCloudPhotoRecognition
         ) else {
             photoTaggingOutcome = nil
+            suggestionNeedsReview = false
             return
         }
 
         outcome.suggestion.apply(to: &draft)
         photoTaggingOutcome = outcome
+        suggestionNeedsReview = true
+    }
+
+    private func openCameraForPhoto() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            photoError = L10n.text("closet.photo.camera_unavailable")
+            return
+        }
+        isCameraPresented = true
+    }
+
+    private func photoSuggestionReviewAccepted() {
+        suggestionNeedsReview = false
+    }
+
+    private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
+        LuxurySurfaceCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                Text(L10n.text("closet.photo.ai_suggestion.title"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+
+                Text(suggestionStatusText(for: outcome))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    suggestionRow(label: L10n.text("closet.photo.ai_suggestion.type"), value: outcome.suggestion.type.displayName)
+                    suggestionRow(label: L10n.text("closet.photo.ai_suggestion.color"), value: outcome.suggestion.color)
+                    suggestionRow(
+                        label: L10n.text("closet.photo.ai_suggestion.seasons"),
+                        value: outcome.suggestion.seasons.map(\.displayName).joined(separator: " · ")
+                    )
+                    suggestionRow(
+                        label: L10n.text("closet.photo.ai_suggestion.formality"),
+                        value: formalityLabel(for: outcome.suggestion.formalityLevel)
+                    )
+                    suggestionRow(
+                        label: L10n.text("closet.photo.ai_suggestion.warmth"),
+                        value: warmthLabel(for: outcome.suggestion.warmthLevel)
+                    )
+                }
+
+                if suggestionNeedsReview {
+                    Text(L10n.text("closet.photo.ai_suggestion.footer"))
+                        .font(.caption2)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .padding(.top, 2)
+                }
+
+                HStack {
+                    Button(L10n.text("closet.photo.ai_suggestion.looks_good")) {
+                        photoSuggestionReviewAccepted()
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("photoSuggestionLooksGoodButton")
+
+                    Spacer()
+
+                    Button(L10n.text("closet.photo.ai_suggestion.edit")) {
+                        showsOptionalDetails = true
+                        photoSuggestionReviewAccepted()
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityIdentifier("photoSuggestionEditDetailsButton")
+                }
+            }
+        }
+        .accessibilityIdentifier("photoSuggestionReviewCard")
+    }
+
+    private func suggestionRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text(value.isEmpty ? L10n.text("closet.photo.ai_suggestion.unknown") : value)
+                .font(.caption)
+                .foregroundStyle(DesignSystem.ink)
+                .multilineTextAlignment(.trailing)
+        }
     }
 
     private var allowsCloudPhotoRecognition: Bool {
@@ -614,6 +901,9 @@ struct AddEditItemView: View {
 
     private func suggestionStatusText(for outcome: PhotoTaggingOutcome) -> String {
         let suggestion = outcome.suggestion
+        let suggestionSummary = [suggestion.color, suggestion.type.displayName]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: " · ")
         let key = switch outcome.delivery {
         case .localOnly:
             "closet.photo.ai_suggestion.local.format"
@@ -622,7 +912,7 @@ struct AddEditItemView: View {
         case .localAfterCloudUnavailable:
             "closet.photo.ai_suggestion.cloud_fallback.format"
         }
-        return L10n.string(key, arguments: suggestion.color, suggestion.type.displayName)
+        return L10n.string(key, arguments: suggestionSummary)
     }
 
     private func suggestionStatusIcon(for outcome: PhotoTaggingOutcome) -> String {
@@ -632,18 +922,7 @@ struct AddEditItemView: View {
         case .remoteAI:
             "sparkles"
         case .localAfterCloudUnavailable:
-            "wifi.slash"
-        }
-    }
-
-    private func suggestionStatusColor(for outcome: PhotoTaggingOutcome) -> Color {
-        switch outcome.delivery {
-        case .localOnly:
-            DesignSystem.accent
-        case .remoteAI:
-            DesignSystem.premiumGold
-        case .localAfterCloudUnavailable:
-            DesignSystem.wine
+            "icloud"
         }
     }
 }
@@ -887,12 +1166,11 @@ private struct StatusSelectionGrid: View {
     }
 }
 
-private struct LevelControl: View {
+private struct FormalityLevelControl: View {
     let title: String
-    let label: String
-    @Binding var value: Int
-    let decreaseIdentifier: String
-    let increaseIdentifier: String
+    let options: [FormalityLevelLabel]
+    @Binding var selected: Int
+    let selectedTitle: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
@@ -900,36 +1178,67 @@ private struct LevelControl: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
 
-            HStack(spacing: DesignSystem.Spacing.md) {
-                LevelButton(
-                    systemImage: "minus",
-                    accessibilityIdentifier: decreaseIdentifier,
-                    isDisabled: value <= 1
-                ) {
-                    value = max(1, value - 1)
+            Text(selectedTitle)
+                .font(.caption)
+                .foregroundStyle(DesignSystem.ink)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 8)], spacing: 8) {
+                ForEach(options, id: \.rawValue) { option in
+                    Button {
+                        selected = option.rawValue
+                    } label: {
+                        Text(option.title)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .foregroundStyle(selected == option.rawValue ? .white : DesignSystem.ink)
+                            .background(selected == option.rawValue ? DesignSystem.accent : DesignSystem.paper)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("formalityLevel_\(option.rawValue)")
+                    .accessibilityAddTraits(selected == option.rawValue ? .isSelected : [])
                 }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
 
-                VStack(spacing: 4) {
-                    Text(label)
-                        .font(DesignSystem.editorialSectionFont(size: 24))
-                        .foregroundStyle(DesignSystem.ink)
+private struct WarmthLevelControl: View {
+    let title: String
+    let options: [WarmthLevelLabel]
+    @Binding var selected: Int
+    let selectedTitle: String
 
-                    Text(L10n.string("closet.level_indicator.format", arguments: value))
-                        .font(.caption)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(DesignSystem.surface.opacity(0.86))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text(title)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(DesignSystem.secondaryInk)
 
-                LevelButton(
-                    systemImage: "plus",
-                    accessibilityIdentifier: increaseIdentifier,
-                    isDisabled: value >= 5
-                ) {
-                    value = min(5, value + 1)
+            Text(selectedTitle)
+                .font(.caption)
+                .foregroundStyle(DesignSystem.ink)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 8)], spacing: 8) {
+                ForEach(options, id: \.rawValue) { option in
+                    Button {
+                        selected = option.rawValue
+                    } label: {
+                        Text(option.title)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .foregroundStyle(selected == option.rawValue ? .white : DesignSystem.ink)
+                            .background(selected == option.rawValue ? DesignSystem.accent : DesignSystem.paper)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("warmthLevel_\(option.rawValue)")
+                    .accessibilityAddTraits(selected == option.rawValue ? .isSelected : [])
                 }
             }
         }
@@ -939,48 +1248,31 @@ private struct LevelControl: View {
 
 private func formalityLabel(for value: Int) -> String {
     switch max(1, min(5, value)) {
+    case 1:
+        return L10n.text("closet.formality.level_1")
     case 2:
-        return L10n.text("closet.formality.smart")
+        return L10n.text("closet.formality.level_2")
     case 3:
-        return L10n.text("closet.formality.business")
-    case 4...5:
-        return L10n.text("closet.formality.formal")
+        return L10n.text("closet.formality.level_3")
+    case 4:
+        return L10n.text("closet.formality.level_4")
     default:
-        return L10n.text("closet.formality.casual")
+        return L10n.text("closet.formality.level_5")
     }
 }
 
 private func warmthLabel(for value: Int) -> String {
     switch max(1, min(5, value)) {
+    case 1:
+        return L10n.text("closet.warmth.level_1")
     case 2:
-        return L10n.text("closet.warmth.medium")
+        return L10n.text("closet.warmth.level_2")
     case 3:
-        return L10n.text("closet.warmth.warm")
-    case 4...5:
-        return L10n.text("closet.warmth.heavy")
+        return L10n.text("closet.warmth.level_3")
+    case 4:
+        return L10n.text("closet.warmth.level_4")
     default:
-        return L10n.text("closet.warmth.light")
-    }
-}
-
-private struct LevelButton: View {
-    let systemImage: String
-    let accessibilityIdentifier: String
-    let isDisabled: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.headline.weight(.bold))
-                .frame(width: 40, height: 40)
-                .foregroundStyle(isDisabled ? DesignSystem.secondaryInk.opacity(0.45) : .white)
-                .background(isDisabled ? DesignSystem.border.opacity(0.55) : DesignSystem.accent)
-                .clipShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .disabled(isDisabled)
-        .accessibilityIdentifier(accessibilityIdentifier)
+        return L10n.text("closet.warmth.level_5")
     }
 }
 

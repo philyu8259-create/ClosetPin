@@ -21,6 +21,18 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testCompletedOnboardingWithEmptyClosetShowsActionableTabs() {
+        let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_DEBUG_HAS_COMPLETED_ONBOARDING"] = "1"
+        app.launch()
+
+        XCTAssertFalse(app.staticTexts["10-Minute Starter Closet"].exists)
+        XCTAssertTrue(app.staticTexts["Outfit ingredients needed"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        XCTAssertTrue(app.staticTexts["Build Your Closet"].waitForExistence(timeout: 3))
+    }
+
     func testOnboardingFramesClosetBeyondWork() {
         let app = makeApp()
         app.launch()
@@ -161,7 +173,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["startAddingClothesButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Item Photo"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Add a clear photo first, then let AI help you complete the basic details."].exists)
+        XCTAssertTrue(app.staticTexts["Add a clear photo first, then AI gives suggested type, color, season, formality and warmth."].exists)
         XCTAssertTrue(app.staticTexts["To save this piece"].exists)
         XCTAssertTrue(app.staticTexts["Add a photo"].exists)
         XCTAssertTrue(app.staticTexts["Add a color"].exists)
@@ -178,12 +190,18 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["appTab_closet"].tap()
         app.buttons["addItemButton"].tap()
         app.buttons["useTestPhotoButton"].tap()
+        XCTAssertTrue(app.staticTexts["Photo preview"].waitForExistence(timeout: 3))
         app.swipeUp()
 
         XCTAssertTrue(app.staticTexts["Auto season"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["closetSeasonChangeButton"].exists)
         XCTAssertFalse(app.buttons["seasonShortcut_current"].exists)
         XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
+        XCTAssertFalse(app.buttons["formalityLevel_3"].exists)
+
+        app.buttons["optionalDetailsDisclosure"].tap()
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["formalityLevel_3"].exists)
     }
 
     func testAddItemCanSaveWithPhotoColorAndAutoSeason() {
@@ -207,6 +225,10 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
         app.buttons["saveItemButton"].tap()
 
+        let viewClosetButton = app.buttons["postSaveViewClosetButton"]
+        XCTAssertTrue(viewClosetButton.waitForExistence(timeout: 3))
+        viewClosetButton.tap()
+
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
     }
 
@@ -227,8 +249,12 @@ final class ClosetPinUITests: XCTestCase {
         colorField.typeText("Ivory")
 
         app.buttons["saveItemButton"].tap()
+        if app.buttons["postSaveViewClosetButton"].waitForExistence(timeout: 1) {
+            app.buttons["postSaveViewClosetButton"].tap()
+            app.buttons["appTab_today"].tap()
+        }
 
-        XCTAssertTrue(app.staticTexts["Add one bottom to generate office outfits."].exists)
+        XCTAssertTrue(app.staticTexts["Add one bottom to generate office outfits."].waitForExistence(timeout: 3))
 
         let addMissingButton = app.buttons["todayMissingAddItemButton"]
         XCTAssertTrue(addMissingButton.waitForExistence(timeout: 3))
@@ -504,14 +530,14 @@ final class ClosetPinUITests: XCTestCase {
         needsWashOption.tap()
         app.swipeUp()
 
-        let formalityIncreaseButton = app.buttons["formalityIncreaseButton"]
-        XCTAssertTrue(formalityIncreaseButton.waitForExistence(timeout: 3))
-        formalityIncreaseButton.tap()
+        let polishedFormality = app.buttons["formalityLevel_5"]
+        XCTAssertTrue(polishedFormality.waitForExistence(timeout: 3))
+        polishedFormality.tap()
 
         app.buttons["saveItemButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Needs Wash"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["5"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
     }
 
     private func makeApp(

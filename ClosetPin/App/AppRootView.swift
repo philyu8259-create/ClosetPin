@@ -4,6 +4,7 @@ import SwiftUI
 struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var clothingItems: [ClothingItem]
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var debugSeedReady = false
     @State private var selectedTab: AppTab = .today
     @State private var closetAddItemRequest: AddClosetItemRequest?
@@ -23,8 +24,11 @@ struct AppRootView: View {
                     prepareDebugSampleCapsuleIfNeeded()
                 }
             } else {
-                if clothingItems.isEmpty {
-                    WorkCapsuleOnboardingView()
+                if shouldShowOnboarding {
+                    WorkCapsuleOnboardingView(
+                        onCompleted: completeOnboarding,
+                        onStartAdding: startAddingFromOnboarding
+                    )
                 } else {
                     tabShell
                 }
@@ -97,6 +101,19 @@ struct AppRootView: View {
 #endif
     }
 
+    private var shouldShowOnboarding: Bool {
+        clothingItems.isEmpty && !effectiveHasCompletedOnboarding
+    }
+
+    private var effectiveHasCompletedOnboarding: Bool {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1" {
+            return ProcessInfo.processInfo.environment["CLOSETPIN_DEBUG_HAS_COMPLETED_ONBOARDING"] == "1"
+        }
+#endif
+        return hasCompletedOnboarding
+    }
+
     private var debugBootstrapView: some View {
         ZStack {
             DesignSystem.background
@@ -128,6 +145,16 @@ struct AppRootView: View {
         guard debugSheet == nil else { return }
         debugSheet = .addItem
 #endif
+    }
+
+    @MainActor
+    private func completeOnboarding() {
+        hasCompletedOnboarding = true
+    }
+
+    @MainActor
+    private func startAddingFromOnboarding() {
+        hasCompletedOnboarding = true
     }
 }
 
