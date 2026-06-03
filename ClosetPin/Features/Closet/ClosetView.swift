@@ -74,7 +74,9 @@ struct ClosetView: View {
                 todayReadinessCard
 
                 if filteredItems.isEmpty {
-                    EmptyFilteredClosetView()
+                    EmptyFilteredClosetView {
+                        resetClosetFilters()
+                    }
                 } else {
                     LazyVGrid(columns: gridColumns, spacing: DesignSystem.Spacing.md) {
                         ForEach(filteredItems) { item in
@@ -178,20 +180,22 @@ struct ClosetView: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: DesignSystem.Spacing.md) {
-                    Text(L10n.string("closet.health.coverage_format.format", arguments: coveredHealthTypesCount, healthCoreTypes.count))
-                        .font(.caption)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(DesignSystem.surface.opacity(0.58))
-                        .clipShape(Capsule(style: .continuous))
+                if !missingHealthTypes.isEmpty {
+                    HStack(spacing: DesignSystem.Spacing.md) {
+                        Text(L10n.string("closet.health.coverage_format.format", arguments: coveredHealthTypesCount, healthCoreTypes.count))
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(DesignSystem.surface.opacity(0.58))
+                            .clipShape(Capsule(style: .continuous))
 
-                    Text(coverageMessage)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(coverageMessageIsUrgent ? DesignSystem.wine : DesignSystem.accent)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        Text(coverageMessage)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(DesignSystem.wine)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
@@ -306,10 +310,6 @@ struct ClosetView: View {
             return true
         case .type(let type):
             return matchesTypeFilter(item, type)
-        case .needsWash:
-            return item.resolvedStatus == .needsWash
-        case .needsRepair:
-            return item.resolvedStatus == .needsRepair
         }
     }
 
@@ -340,15 +340,19 @@ struct ClosetView: View {
         return searchableText.localizedCaseInsensitiveContains(trimmedQuery)
     }
 
+    private func resetClosetFilters() {
+        activeFilter = .all
+        searchText = ""
+        searchFieldIsFocused = false
+    }
+
     private var filterOptions: [ClosetFilter] {
         [
             .all,
             .type(.top),
             .type(.bottom),
             .type(.shoes),
-            .type(.outerwear),
-            .needsWash,
-            .needsRepair
+            .type(.outerwear)
         ]
     }
 
@@ -363,10 +367,6 @@ struct ClosetView: View {
             default:
                 type.displayName
             }
-        case .needsWash:
-            L10n.text("clothing.status.needsWash")
-        case .needsRepair:
-            L10n.text("clothing.status.needsRepair")
         }
     }
 
@@ -421,15 +421,7 @@ struct ClosetView: View {
         healthCoreTypes.filter { !coveredHealthTypes.contains($0) }
     }
 
-    private var coverageMessageIsUrgent: Bool {
-        !missingHealthTypes.isEmpty
-    }
-
     private var coverageMessage: String {
-        guard !missingHealthTypes.isEmpty else {
-            return L10n.text("closet.health.coverage_complete")
-        }
-
         let names = missingHealthTypes.map(\.displayName).joined(separator: " / ")
         return L10n.string("closet.health.coverage_gap.format", arguments: names)
     }
@@ -456,6 +448,4 @@ private enum ClosetSheet: Identifiable {
 private enum ClosetFilter: Hashable {
     case all
     case type(ClothingType)
-    case needsWash
-    case needsRepair
 }

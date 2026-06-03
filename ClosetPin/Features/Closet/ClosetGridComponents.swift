@@ -81,6 +81,8 @@ func closetItemAccessibilityLabel(for item: ClothingItem) -> String {
 }
 
 struct EmptyFilteredClosetView: View {
+    var clearFilters: () -> Void = {}
+
     var body: some View {
         LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -92,6 +94,16 @@ struct EmptyFilteredClosetView: View {
                     .font(.body)
                     .foregroundStyle(DesignSystem.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    clearFilters()
+                } label: {
+                    Label(L10n.text("closet.filtered_empty.clear"), systemImage: "arrow.counterclockwise")
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(DesignSystem.accent)
+                .accessibilityIdentifier("closetClearFiltersButton")
             }
         }
     }

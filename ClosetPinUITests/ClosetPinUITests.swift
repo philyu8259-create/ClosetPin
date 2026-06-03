@@ -196,7 +196,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["startAddingClothesButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Item Photo"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Add a clear photo first, then AI gives suggested type, color, season, formality and warmth."].exists)
+        XCTAssertTrue(app.staticTexts["photoAiHelpText"].exists)
         XCTAssertTrue(app.staticTexts["To save this piece"].exists)
         XCTAssertTrue(app.staticTexts["Add a photo"].exists)
         XCTAssertTrue(app.staticTexts["Add a color"].exists)
@@ -272,7 +272,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
     }
 
-    func testAddItemAiSuggestionCanApplySingleField() {
+    func testAddItemAiSuggestionCanBeReviewedManually() {
         let app = makeApp()
         app.launch()
 
@@ -282,11 +282,12 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
 
-        let colorOnlyButton = app.buttons["photoSuggestionApply_color"]
-        XCTAssertTrue(colorOnlyButton.waitForExistence(timeout: 3))
-        colorOnlyButton.tap()
+        let manualReviewButton = app.buttons["photoSuggestionEditManualButton"]
+        XCTAssertTrue(manualReviewButton.waitForExistence(timeout: 3))
+        manualReviewButton.tap()
+        app.swipeUp()
 
-        XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["formalityLevel_3"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
     }
 

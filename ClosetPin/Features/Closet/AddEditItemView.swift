@@ -329,10 +329,7 @@ struct AddEditItemView: View {
                 Text(L10n.text("closet.photo.editorial_help"))
                     .font(.caption)
                     .foregroundStyle(DesignSystem.secondaryInk)
-                Text(L10n.text("closet.photo.post_capture_help"))
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.accent)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("photoAiHelpText")
 
                 if photoPreparationState.isBusy {
                     HStack(spacing: 10) {
@@ -425,15 +422,6 @@ struct AddEditItemView: View {
                     .accessibilityIdentifier("photoReplaceButton")
 
                     Spacer()
-
-                    Button {
-                    } label: {
-                        Label(L10n.text("closet.photo.adjust_crop"), systemImage: "crop")
-                    }
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .disabled(true)
-                    .buttonStyle(.borderless)
                 }
 
                 if photoPreviewMode == .display {
@@ -542,12 +530,43 @@ struct AddEditItemView: View {
 
     private var primaryDetailsSection: some View {
         Section(L10n.text("closet.ai_edit.section")) {
-            EssentialsChecklistGrid(draft: draft)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                if missingPrimaryRequirements.isEmpty {
+                    Label(L10n.text("closet.save_checklist.ready"), systemImage: "checkmark.circle.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .accessibilityIdentifier("addItemFlowGuide")
+                } else {
+                    Text(L10n.text("closet.save_checklist.title"))
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                }
 
-            Text(L10n.text("closet.ai_edit.helper"))
-                .font(.caption)
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .accessibilityIdentifier("addItemFlowGuide")
+                if missingPrimaryRequirements.isEmpty == false {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
+                        ForEach(missingPrimaryRequirements, id: \.self) { requirement in
+                            HStack(spacing: 8) {
+                                Image(systemName: "circle.fill")
+                                    .foregroundStyle(DesignSystem.secondaryInk)
+                                    .font(.caption2)
+                                Text(requirement)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(DesignSystem.ink)
+                                    .lineLimit(2)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 9)
+                            .background(DesignSystem.paper)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                    }
+                }
+
+                Text(L10n.text("closet.ai_edit.helper"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+            }
 
             Picker(L10n.text("closet.type.label"), selection: $draft.type) {
                 ForEach(ClothingType.allCases) { type in
@@ -581,6 +600,20 @@ struct AddEditItemView: View {
             }
             .padding(.vertical, 4)
         }
+    }
+
+    private var missingPrimaryRequirements: [String] {
+        var requirements: [String] = []
+        if !draft.hasPhoto {
+            requirements.append(L10n.text("closet.save_checklist.photo"))
+        }
+        if !draft.hasColor {
+            requirements.append(L10n.text("closet.save_checklist.color"))
+        }
+        if !draft.hasSeasonSelection {
+            requirements.append(L10n.text("closet.save_checklist.season"))
+        }
+        return requirements
     }
 
     private var optionalDetailsSection: some View {
@@ -917,28 +950,6 @@ struct AddEditItemView: View {
         didApplyLatestSuggestion = true
     }
 
-    private func applyPendingPhotoSuggestionColorOnly() {
-        guard let pendingPhotoSuggestion else { return }
-        guard suggestedChangeFields(for: pendingPhotoSuggestion).contains(.color) else {
-            self.pendingPhotoSuggestion = nil
-            suggestionNeedsReview = false
-            didApplyLatestSuggestion = false
-            return
-        }
-        applyPendingPhotoSuggestion(fields: [.color])
-    }
-
-    private func applyPendingPhotoSuggestionSeasonsOnly() {
-        guard let pendingPhotoSuggestion else { return }
-        guard suggestedChangeFields(for: pendingPhotoSuggestion).contains(.seasons) else {
-            self.pendingPhotoSuggestion = nil
-            suggestionNeedsReview = false
-            didApplyLatestSuggestion = false
-            return
-        }
-        applyPendingPhotoSuggestion(fields: [.seasons])
-    }
-
     private func dismissPendingPhotoSuggestionForManualEdit() {
         pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
@@ -955,9 +966,6 @@ struct AddEditItemView: View {
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
         let changes = suggestedChanges(for: outcome.suggestion)
-        let changeFields = Set(changes.map(\.field))
-        let hasColorChange = changeFields.contains(.color)
-        let hasSeasonChange = changeFields.contains(.seasons)
 
         return LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
@@ -989,49 +997,27 @@ struct AddEditItemView: View {
                         .font(.caption2)
                         .foregroundStyle(DesignSystem.secondaryInk)
                         .padding(.top, 2)
-                }
 
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                    HStack {
-                        Button(L10n.text("closet.photo.ai_suggestion.use")) {
-                            applyPendingPhotoSuggestion()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(DesignSystem.accent)
-                        .disabled(changes.isEmpty)
-                        .accessibilityIdentifier("photoSuggestionUseButton")
-
-                        Spacer()
-
-                        Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
-                            dismissPendingPhotoSuggestionForManualEdit()
-                        }
-                        .buttonStyle(.borderless)
-                        .accessibilityIdentifier("photoSuggestionEditManualButton")
-                    }
-
-                    HStack(spacing: DesignSystem.Spacing.sm) {
-                        if hasColorChange {
-                            Button(L10n.text("closet.photo.ai_suggestion.apply_color")) {
-                                applyPendingPhotoSuggestionColorOnly()
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                        HStack {
+                            Button(L10n.text("closet.photo.ai_suggestion.use")) {
+                                applyPendingPhotoSuggestion()
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .buttonStyle(.borderedProminent)
                             .tint(DesignSystem.accent)
-                            .accessibilityIdentifier("photoSuggestionApply_color")
+                            .disabled(changes.isEmpty)
+                            .accessibilityIdentifier("photoSuggestionUseButton")
+
+                            Spacer()
+
+                            Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
+                                dismissPendingPhotoSuggestionForManualEdit()
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityIdentifier("photoSuggestionEditManualButton")
                         }
 
-                        if hasSeasonChange {
-                            Button(L10n.text("closet.photo.ai_suggestion.apply_seasons")) {
-                                applyPendingPhotoSuggestionSeasonsOnly()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .tint(DesignSystem.accent)
-                            .accessibilityIdentifier("photoSuggestionApply_seasons")
-                        }
                     }
-                    .padding(.top, hasColorChange || hasSeasonChange ? 2 : 0)
                 }
             }
         }
