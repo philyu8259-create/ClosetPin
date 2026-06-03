@@ -233,8 +233,10 @@
 "today.season.label" = "Season";
 "today.recommended_for.format" = "Recommended for %@";
 "today.best.title" = "Today's Best";
-"today.match.best" = "Best Match";
-"today.match.alt" = "Style Backup";
+"today.match.best" = "Today's Best";
+"today.match.alt" = "Easy Backup";
+"today.match.alt_sharp" = "Sharper Option";
+"today.match.alt_easy" = "Easy Backup";
 "today.best.name.daily_office" = "Soft Power Office";
 "today.best.name.important_meeting" = "Executive Polish";
 "today.best.name.weekend_casual" = "Weekend Ease";

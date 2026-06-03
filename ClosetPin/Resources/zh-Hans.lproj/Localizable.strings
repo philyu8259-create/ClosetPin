@@ -233,8 +233,10 @@
 "today.season.label" = "季节";
 "today.recommended_for.format" = "推荐用于%@";
 "today.best.title" = "今日最佳";
-"today.match.best" = "最适合今天";
-"today.match.alt" = "备选搭配";
+"today.match.best" = "今日最佳";
+"today.match.alt" = "轻松备选";
+"today.match.alt_sharp" = "更利落一套";
+"today.match.alt_easy" = "轻松备选";
 "today.best.name.daily_office" = "松弛通勤";
 "today.best.name.important_meeting" = "利落会议";
 "today.best.name.weekend_casual" = "周末松弛";

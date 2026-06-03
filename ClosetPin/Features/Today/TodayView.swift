@@ -1232,7 +1232,7 @@ private struct OutfitCompactCard: View {
 
                     Spacer(minLength: DesignSystem.Spacing.sm)
 
-                    MatchPill(title: L10n.text("today.match.alt"), icon: "sparkle.magnifyingglass")
+                    MatchPill(title: matchTitle, icon: "sparkle.magnifyingglass")
                 }
 
                 OutfitVisualBoard(items: candidate.items)
@@ -1253,6 +1253,10 @@ private struct OutfitCompactCard: View {
                 )
             }
         }
+    }
+
+    private var matchTitle: String {
+        index == 1 ? L10n.text("today.match.alt_sharp") : L10n.text("today.match.alt_easy")
     }
 }
 
