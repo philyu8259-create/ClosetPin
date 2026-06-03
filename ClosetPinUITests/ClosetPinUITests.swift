@@ -121,7 +121,7 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["今天就穿"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["保存"].exists)
-        XCTAssertTrue(app.staticTexts["让 ClosetPin 更懂你"].exists)
+        XCTAssertTrue(app.staticTexts["微调这条建议"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
         XCTAssertTrue(app.staticTexts["智能评分"].exists)
@@ -272,6 +272,24 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
     }
 
+    func testAddItemAiSuggestionCanApplySingleField() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["startAddingClothesButton"].tap()
+        app.buttons["useTestPhotoButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
+
+        let colorOnlyButton = app.buttons["photoSuggestionApply_color"]
+        XCTAssertTrue(colorOnlyButton.waitForExistence(timeout: 3))
+        colorOnlyButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
+    }
+
     func testTodayMissingRecommendationOpensAddItemDirectly() {
         let app = makeApp()
         app.launch()
@@ -326,9 +344,13 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Help ClosetPin learn"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Tune this suggestion"].waitForExistence(timeout: 3))
 
-        let goodFitButton = app.buttons["todayFeedback_liked_0"]
+        let moreButton = app.buttons["todayFeedbackMore_0"]
+        XCTAssertTrue(moreButton.waitForExistence(timeout: 3))
+        moreButton.tap()
+
+        let goodFitButton = app.buttons["More like this"]
         XCTAssertTrue(goodFitButton.waitForExistence(timeout: 3))
         goodFitButton.tap()
 

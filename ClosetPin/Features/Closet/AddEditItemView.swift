@@ -18,6 +18,14 @@ private enum PhotoPreparationState: Equatable {
     }
 }
 
+private enum PhotoSuggestionField: CaseIterable, Hashable {
+    case type
+    case color
+    case seasons
+    case formality
+    case warmth
+}
+
 private enum FormalityLevelLabel: Int, CaseIterable {
     case lowest = 1
     case low = 2
@@ -922,7 +930,35 @@ struct AddEditItemView: View {
 
     private func applyPendingPhotoSuggestion() {
         guard let pendingPhotoSuggestion else { return }
-        pendingPhotoSuggestion.apply(to: &draft)
+        let fields = suggestedChanges(for: pendingPhotoSuggestion).map(\.field)
+        applyPendingPhotoSuggestion(fields: Set(fields))
+    }
+
+    private func applyPendingPhotoSuggestion(fields: Set<PhotoSuggestionField>) {
+        guard let pendingPhotoSuggestion else { return }
+        guard !fields.isEmpty else {
+            self.pendingPhotoSuggestion = nil
+            suggestionNeedsReview = false
+            didApplyLatestSuggestion = true
+            return
+        }
+
+        if fields.contains(.type) {
+            draft.type = pendingPhotoSuggestion.type
+        }
+        if fields.contains(.color) {
+            draft.color = pendingPhotoSuggestion.color
+        }
+        if fields.contains(.seasons) {
+            draft.applyPhotoSuggestedSeasons(pendingPhotoSuggestion.seasons)
+        }
+        if fields.contains(.formality) {
+            draft.formalityLevel = pendingPhotoSuggestion.formalityLevel
+        }
+        if fields.contains(.warmth) {
+            draft.warmthLevel = pendingPhotoSuggestion.warmthLevel
+        }
+
         self.pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
         didApplyLatestSuggestion = true
@@ -943,7 +979,9 @@ struct AddEditItemView: View {
     }
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
-        LuxurySurfaceCard {
+        let changes = suggestedChanges(for: outcome.suggestion)
+
+        return LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("closet.photo.ai_suggestion.title"))
                     .font(.subheadline.weight(.semibold))
@@ -956,21 +994,16 @@ struct AddEditItemView: View {
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: 8) {
-                    suggestionRow(label: L10n.text("closet.photo.ai_suggestion.type"), value: outcome.suggestion.type.displayName)
-                    suggestionRow(label: L10n.text("closet.photo.ai_suggestion.color"), value: outcome.suggestion.color)
-                    suggestionRow(
-                        label: L10n.text("closet.photo.ai_suggestion.seasons"),
-                        value: outcome.suggestion.seasons.map(\.displayName).joined(separator: " · ")
-                    )
-                    suggestionRow(
-                        label: L10n.text("closet.photo.ai_suggestion.formality"),
-                        value: formalityLabel(for: outcome.suggestion.formalityLevel)
-                    )
-                    suggestionRow(
-                        label: L10n.text("closet.photo.ai_suggestion.warmth"),
-                        value: warmthLabel(for: outcome.suggestion.warmthLevel)
-                    )
+                if changes.isEmpty {
+                    Label(L10n.text("closet.photo.ai_suggestion.no_changes"), systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.accent)
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(changes, id: \.field) { change in
+                            suggestionRow(label: change.label, value: change.value)
+                        }
+                    }
                 }
 
                 if suggestionNeedsReview {
@@ -980,24 +1013,76 @@ struct AddEditItemView: View {
                         .padding(.top, 2)
                 }
 
-                HStack {
-                    Button(L10n.text("closet.photo.ai_suggestion.use")) {
-                        applyPendingPhotoSuggestion()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(DesignSystem.accent)
-                    .accessibilityIdentifier("photoSuggestionUseButton")
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                    HStack {
+                        Button(L10n.text("closet.photo.ai_suggestion.use")) {
+                            applyPendingPhotoSuggestion()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(DesignSystem.accent)
+                        .accessibilityIdentifier("photoSuggestionUseButton")
 
-                    Spacer()
+                        Spacer()
 
-                    Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
-                        dismissPendingPhotoSuggestionForManualEdit()
+                        Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
+                            dismissPendingPhotoSuggestionForManualEdit()
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityIdentifier("photoSuggestionEditManualButton")
                     }
-                    .buttonStyle(.borderless)
-                    .accessibilityIdentifier("photoSuggestionEditManualButton")
+
+                    if !changes.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: DesignSystem.Spacing.sm) {
+                                ForEach(changes, id: \.field) { change in
+                                    Button(change.partialActionTitle) {
+                                        applyPendingPhotoSuggestion(fields: [change.field])
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                    .tint(DesignSystem.accent)
+                                    .accessibilityIdentifier("photoSuggestionApply_\(change.accessibilitySuffix)")
+                                }
+                            }
+                            .padding(.vertical, 1)
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private func suggestedChanges(for suggestion: ClothingPhotoTagSuggestion) -> [PhotoSuggestionChange] {
+        var changes: [PhotoSuggestionChange] = []
+
+        if draft.type == .top, draft.type != suggestion.type {
+            changes.append(.type(value: suggestion.type.displayName))
+        }
+
+        let currentColor = draft.color.trimmingCharacters(in: .whitespacesAndNewlines)
+        let suggestedColor = suggestion.color.trimmingCharacters(in: .whitespacesAndNewlines)
+        if currentColor.isEmpty, !suggestedColor.isEmpty {
+            changes.append(.color(value: suggestedColor))
+        }
+
+        if draft.selectedSeasons.isEmpty || draft.seasonSelectionSource == .systemDate {
+            let suggestedSeasons = SeasonTag.allCases.filter { suggestion.seasons.contains($0) }
+            if Set(suggestedSeasons) != draft.selectedSeasons, !suggestedSeasons.isEmpty {
+                changes.append(.seasons(value: suggestedSeasons.map(\.displayName).joined(separator: " · ")))
+            }
+        }
+
+        if draft.formalityLevel == AddEditItemDraft.defaultFormalityLevel,
+           draft.formalityLevel != suggestion.formalityLevel {
+            changes.append(.formality(value: formalityLabel(for: suggestion.formalityLevel)))
+        }
+
+        if draft.warmthLevel == AddEditItemDraft.defaultWarmthLevel,
+           draft.warmthLevel != suggestion.warmthLevel {
+            changes.append(.warmth(value: warmthLabel(for: suggestion.warmthLevel)))
+        }
+
+        return changes
     }
 
     private func suggestionRow(label: String, value: String) -> some View {
@@ -1011,6 +1096,64 @@ struct AddEditItemView: View {
                 .font(.caption)
                 .foregroundStyle(DesignSystem.ink)
                 .multilineTextAlignment(.trailing)
+        }
+    }
+
+    private struct PhotoSuggestionChange: Hashable {
+        let field: PhotoSuggestionField
+        let label: String
+        let value: String
+        let partialActionTitle: String
+        let accessibilitySuffix: String
+
+        static func type(value: String) -> PhotoSuggestionChange {
+            PhotoSuggestionChange(
+                field: .type,
+                label: L10n.text("closet.photo.ai_suggestion.type"),
+                value: value,
+                partialActionTitle: L10n.text("closet.photo.ai_suggestion.apply_type"),
+                accessibilitySuffix: "type"
+            )
+        }
+
+        static func color(value: String) -> PhotoSuggestionChange {
+            PhotoSuggestionChange(
+                field: .color,
+                label: L10n.text("closet.photo.ai_suggestion.color"),
+                value: value,
+                partialActionTitle: L10n.text("closet.photo.ai_suggestion.apply_color"),
+                accessibilitySuffix: "color"
+            )
+        }
+
+        static func seasons(value: String) -> PhotoSuggestionChange {
+            PhotoSuggestionChange(
+                field: .seasons,
+                label: L10n.text("closet.photo.ai_suggestion.seasons"),
+                value: value,
+                partialActionTitle: L10n.text("closet.photo.ai_suggestion.apply_seasons"),
+                accessibilitySuffix: "seasons"
+            )
+        }
+
+        static func formality(value: String) -> PhotoSuggestionChange {
+            PhotoSuggestionChange(
+                field: .formality,
+                label: L10n.text("closet.photo.ai_suggestion.formality"),
+                value: value,
+                partialActionTitle: L10n.text("closet.photo.ai_suggestion.apply_formality"),
+                accessibilitySuffix: "formality"
+            )
+        }
+
+        static func warmth(value: String) -> PhotoSuggestionChange {
+            PhotoSuggestionChange(
+                field: .warmth,
+                label: L10n.text("closet.photo.ai_suggestion.warmth"),
+                value: value,
+                partialActionTitle: L10n.text("closet.photo.ai_suggestion.apply_warmth"),
+                accessibilitySuffix: "warmth"
+            )
         }
     }
 

@@ -90,6 +90,12 @@
 "closet.photo.ai_suggestion.edit" = "Edit details";
 "closet.photo.ai_suggestion.use" = "Use AI draft";
 "closet.photo.ai_suggestion.edit_manual" = "I'll edit manually";
+"closet.photo.ai_suggestion.no_changes" = "AI found nothing new to change.";
+"closet.photo.ai_suggestion.apply_type" = "Type only";
+"closet.photo.ai_suggestion.apply_color" = "Color only";
+"closet.photo.ai_suggestion.apply_seasons" = "Seasons only";
+"closet.photo.ai_suggestion.apply_formality" = "Formality only";
+"closet.photo.ai_suggestion.apply_warmth" = "Warmth only";
 "closet.photo.ai_suggestion.unknown" = "Not detected";
 "closet.photo.ai_suggestion.auto_applied.format" = "AI applied: %@";
 "closet.photo.ai_suggestion.local.format" = "Local suggestion for %@";
@@ -252,7 +258,11 @@
 "today.feedback.dislike" = "Not My Style";
 "today.feedback.skip" = "Try Another";
 "today.feedback.save" = "Save";
-"today.feedback.tune_title" = "Help ClosetPin learn";
+"today.feedback.tune_title" = "Tune this suggestion";
+"today.feedback.more" = "More";
+"today.feedback.more_like" = "More like this";
+"today.feedback.avoid_style" = "Avoid this style";
+"today.feedback.try_different" = "Try different";
 "today.confirmation.already_worn" = "Already recorded as worn today.";
 "today.confirmation.already_saved" = "Outfit already saved today.";
 "today.confirmation.wore" = "Great. This look is marked for today.";

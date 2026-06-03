@@ -90,6 +90,12 @@
 "closet.photo.ai_suggestion.edit" = "编辑细节";
 "closet.photo.ai_suggestion.use" = "使用 AI 草稿";
 "closet.photo.ai_suggestion.edit_manual" = "我自己来填";
+"closet.photo.ai_suggestion.no_changes" = "AI 没有发现需要修改的新内容。";
+"closet.photo.ai_suggestion.apply_type" = "只用类型";
+"closet.photo.ai_suggestion.apply_color" = "只用颜色";
+"closet.photo.ai_suggestion.apply_seasons" = "只用季节";
+"closet.photo.ai_suggestion.apply_formality" = "只用正式度";
+"closet.photo.ai_suggestion.apply_warmth" = "只用保暖度";
 "closet.photo.ai_suggestion.unknown" = "未识别";
 "closet.photo.ai_suggestion.auto_applied.format" = "AI 已应用：%@";
 "closet.photo.ai_suggestion.local.format" = "本地建议：%@";
@@ -252,7 +258,11 @@
 "today.feedback.dislike" = "不是我的风格";
 "today.feedback.skip" = "换一套";
 "today.feedback.save" = "保存";
-"today.feedback.tune_title" = "让 ClosetPin 更懂你";
+"today.feedback.tune_title" = "微调这条建议";
+"today.feedback.more" = "更多";
+"today.feedback.more_like" = "多推荐类似";
+"today.feedback.avoid_style" = "避开这种风格";
+"today.feedback.try_different" = "换个方向";
 "today.confirmation.already_worn" = "今天已经记录为已穿。";
 "today.confirmation.already_saved" = "今天已经保存过这套穿搭。";
 "today.confirmation.wore" = "很好，这套已记录为今天穿。";

@@ -1291,14 +1291,28 @@ private struct TodayActionPanel: View {
                 .tint(DesignSystem.accent)
                 .disabled(isPending(.save))
                 .accessibilityIdentifier("todayFeedback_saved_\(index)")
+
+                Button {
+                    onTryAnother()
+                } label: {
+                    Label(TodayFeedbackAction.skip.title, systemImage: TodayFeedbackAction.skip.systemImage)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 36)
+                }
+                .buttonStyle(.bordered)
+                .tint(DesignSystem.secondaryInk)
+                .accessibilityIdentifier("todayTryAnother_\(index)")
             }
 
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
                 Text(L10n.text("today.feedback.tune_title"))
-                    .font(.caption.weight(.semibold))
+                    .font(.caption)
                     .foregroundStyle(DesignSystem.secondaryInk)
+                    .lineLimit(1)
 
-                HStack(spacing: DesignSystem.Spacing.sm) {
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Menu {
                     ForEach(learningActions) { action in
                         Button {
                             if action == .skip {
@@ -1306,22 +1320,23 @@ private struct TodayActionPanel: View {
                             }
                             onAction(action)
                         } label: {
-                            Label(action.title, systemImage: action.systemImage)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.78)
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: 34)
+                            Label(action.menuTitle, systemImage: action.systemImage)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
-                        .tint(action.tint)
                         .disabled(isPending(action))
-                        .accessibilityIdentifier("todayFeedback_\(action.feedbackType.rawValue)_\(index)")
                     }
+                } label: {
+                    Label(L10n.text("today.feedback.more"), systemImage: "ellipsis.circle")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(DesignSystem.paper.opacity(0.86))
+                        .clipShape(Capsule(style: .continuous))
                 }
+                .tint(DesignSystem.secondaryInk)
+                .accessibilityIdentifier("todayFeedbackMore_\(index)")
             }
-            .padding(DesignSystem.Spacing.sm)
+            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .padding(.vertical, DesignSystem.Spacing.xs)
             .fixedSize(horizontal: false, vertical: true)
             .background(DesignSystem.paper.opacity(0.82))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
@@ -1492,6 +1507,19 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
             L10n.text("today.feedback.skip")
         case .save:
             L10n.text("today.feedback.save")
+        }
+    }
+
+    var menuTitle: String {
+        switch self {
+        case .wore, .save:
+            title
+        case .like:
+            L10n.text("today.feedback.more_like")
+        case .dislike:
+            L10n.text("today.feedback.avoid_style")
+        case .skip:
+            L10n.text("today.feedback.try_different")
         }
     }
 
