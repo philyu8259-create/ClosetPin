@@ -56,6 +56,18 @@ struct TodayView: View {
         cachedCandidates
     }
 
+    private var recommendationInputWeatherContext: TomorrowWeatherContext? {
+        guard let currentPreference, currentPreference.tomorrowWeatherEnabled else {
+            return nil
+        }
+
+        return tomorrowWeatherSnapshot?.context
+    }
+
+    private var displayedCandidates: [OutfitCandidate] {
+        Array(orderedCandidates.prefix(3))
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -66,7 +78,7 @@ struct TodayView: View {
                     tomorrowPrepSection
                     decisionSupportSection
 
-                    if orderedCandidates.count > 1 {
+                    if displayedCandidates.count > 1 {
                         alternativesSection
                     }
                 }
@@ -121,7 +133,7 @@ struct TodayView: View {
 
     private var editorialHero: some View {
         Group {
-            if let heroCandidate = orderedCandidates.first {
+            if let heroCandidate = displayedCandidates.first {
                 TodayEditorialHero(
                     candidate: heroCandidate,
                     title: recommendationName,
@@ -176,7 +188,7 @@ struct TodayView: View {
 
     private var alternativesSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-            let alternatives = Array(orderedCandidates.dropFirst().enumerated())
+            let alternatives = Array(displayedCandidates.dropFirst().enumerated())
             if !alternatives.isEmpty {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                     Text(L10n.text("today.alternatives.title"))
@@ -230,7 +242,7 @@ struct TodayView: View {
             input: RecommendationInput(
                 scenario: scenario,
                 season: season,
-                tomorrow: TomorrowRecommendationInput(weatherContext: context),
+                tomorrow: TomorrowRecommendationInput(weatherContext: recommendationInputWeatherContext ?? context),
                 maximumResults: 1,
                 preferredFormality: currentPreference?.preferredFormality
             ),
@@ -274,7 +286,8 @@ struct TodayView: View {
 
     private var recommendationRequestKey: String {
         let preferenceKey = currentPreference.map {
-            "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.preferredFormality)"
+            let trimmedLocation = $0.tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.preferredFormality):\($0.tomorrowWeatherEnabled ? 1 : 0):\(trimmedLocation)"
         } ?? "no-preference"
         let itemKey = clothingItems.map {
             "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970)"
@@ -282,13 +295,17 @@ struct TodayView: View {
         let feedbackKey = feedback.map {
             "\($0.id.uuidString):\($0.createdAt.timeIntervalSince1970)"
         }.joined(separator: "|")
+        let weatherContextKey = recommendationInputWeatherContext.map {
+            "\($0.condition.rawValue):\($0.minTemperatureCelsius):\($0.maxTemperatureCelsius):\($0.precipitationProbability):\($0.windSpeedKph)"
+        } ?? ""
 
         return [
             scenario.rawValue,
             season.rawValue,
             preferenceKey,
             itemKey,
-            feedbackKey
+            feedbackKey,
+            weatherContextKey
         ].joined(separator: "::")
     }
 
@@ -346,6 +363,7 @@ struct TodayView: View {
             input: RecommendationInput(
                 scenario: scenario,
                 season: season,
+                tomorrow: TomorrowRecommendationInput(weatherContext: recommendationInputWeatherContext),
                 maximumResults: 3,
                 preferredFormality: currentPreference?.preferredFormality
             ),
@@ -1263,7 +1281,7 @@ private struct TodayActionPanel: View {
     let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
-    private let learningActions: [TodayFeedbackAction] = [.like, .dislike, .skip]
+    private let negativeFeedbackActions: [TodayFeedbackAction] = [.dislike]
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
@@ -1293,15 +1311,18 @@ private struct TodayActionPanel: View {
                 .accessibilityIdentifier("todayFeedback_saved_\(index)")
 
                 Button {
+                    onAction(.swap)
                     onTryAnother()
                 } label: {
-                    Label(TodayFeedbackAction.skip.title, systemImage: TodayFeedbackAction.skip.systemImage)
+                    Label(TodayFeedbackAction.swap.title, systemImage: TodayFeedbackAction.swap.systemImage)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: 36)
                 }
                 .buttonStyle(.bordered)
                 .tint(DesignSystem.secondaryInk)
+                .disabled(isPending(.swap))
                 .accessibilityIdentifier("todayTryAnother_\(index)")
+
             }
 
             HStack(spacing: DesignSystem.Spacing.sm) {
@@ -1313,11 +1334,8 @@ private struct TodayActionPanel: View {
                 Spacer(minLength: DesignSystem.Spacing.sm)
 
                 Menu {
-                    ForEach(learningActions) { action in
+                    ForEach(negativeFeedbackActions) { action in
                         Button {
-                            if action == .skip {
-                                onTryAnother()
-                            }
                             onAction(action)
                         } label: {
                             Label(action.menuTitle, systemImage: action.systemImage)
@@ -1473,9 +1491,8 @@ private struct ConfirmationBanner: View {
 
 private enum TodayFeedbackAction: CaseIterable, Identifiable {
     case wore
-    case like
     case dislike
-    case skip
+    case swap
     case save
 
     var id: String { feedbackType.rawValue }
@@ -1484,12 +1501,10 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         switch self {
         case .wore:
             .wore
-        case .like:
-            .liked
         case .dislike:
             .disliked
-        case .skip:
-            .skipped
+        case .swap:
+            .swapped
         case .save:
             .saved
         }
@@ -1499,12 +1514,10 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         switch self {
         case .wore:
             L10n.text("today.feedback.wore")
-        case .like:
-            L10n.text("today.feedback.like")
         case .dislike:
             L10n.text("today.feedback.dislike")
-        case .skip:
-            L10n.text("today.feedback.skip")
+        case .swap:
+            L10n.text("today.feedback.swap")
         case .save:
             L10n.text("today.feedback.save")
         }
@@ -1514,12 +1527,10 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         switch self {
         case .wore, .save:
             title
-        case .like:
-            L10n.text("today.feedback.more_like")
         case .dislike:
             L10n.text("today.feedback.avoid_style")
-        case .skip:
-            L10n.text("today.feedback.try_different")
+        case .swap:
+            L10n.text("today.feedback.swap")
         }
     }
 
@@ -1527,11 +1538,9 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         switch self {
         case .wore:
             "checkmark.circle.fill"
-        case .like:
-            "hand.thumbsup.fill"
         case .dislike:
             "hand.thumbsdown.fill"
-        case .skip:
+        case .swap:
             "arrow.triangle.2.circlepath"
         case .save:
             "bookmark.fill"
@@ -1540,12 +1549,10 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
 
     var tint: Color {
         switch self {
-        case .wore, .save, .like:
+        case .wore, .save, .swap:
             DesignSystem.accent
         case .dislike:
             DesignSystem.wine
-        case .skip:
-            DesignSystem.secondaryInk
         }
     }
 
@@ -1553,7 +1560,7 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         switch self {
         case .wore, .save:
             true
-        case .like, .dislike, .skip:
+        case .dislike, .swap:
             false
         }
     }
@@ -1573,12 +1580,10 @@ private enum TodayFeedbackAction: CaseIterable, Identifiable {
         return switch self {
         case .wore:
             L10n.text("today.confirmation.wore")
-        case .like:
-            L10n.text("today.confirmation.like")
         case .dislike:
             L10n.text("today.confirmation.dislike")
-        case .skip:
-            L10n.text("today.confirmation.skip")
+        case .swap:
+            L10n.text("today.confirmation.swap")
         case .save:
             L10n.text("today.confirmation.save")
         }

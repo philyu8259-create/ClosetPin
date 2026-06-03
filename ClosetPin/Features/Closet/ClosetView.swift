@@ -5,11 +5,10 @@ struct ClosetView: View {
     @Query(sort: \ClothingItem.createdAt, order: .reverse) private var items: [ClothingItem]
     @State private var activeSheet: ClosetSheet?
     @State private var selectedItem: ClothingItem?
-    @State private var typeFilter: ClosetTypeFilter = .all
-    @State private var statusFilter: ClosetStatusFilter = .all
-    @State private var showsAdvancedFilters = false
+    @State private var activeFilter: ClosetFilter = .all
     @State private var handledAddItemRequest: UUID?
     @State private var searchText = ""
+    @FocusState private var searchFieldIsFocused: Bool
 
     var openAddItemRequest: AddClosetItemRequest?
     var onOpenToday: () -> Void = {}
@@ -18,8 +17,7 @@ struct ClosetView: View {
         .top,
         .bottom,
         .shoes,
-        .bag,
-        .blazer
+        .outerwear
     ]
 
     var body: some View {
@@ -71,10 +69,10 @@ struct ClosetView: View {
     private var closetGrid: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                archiveMasthead
-                todayReadinessCard
                 closetHealthCard
                 filterBar
+                archiveMasthead
+                todayReadinessCard
 
                 if filteredItems.isEmpty {
                     EmptyFilteredClosetView()
@@ -208,6 +206,8 @@ struct ClosetView: View {
                 TextField(L10n.text("closet.search.placeholder"), text: $searchText)
                     .textInputAutocapitalization(.words)
                     .disableAutocorrection(true)
+                    .frame(minHeight: 32)
+                    .focused($searchFieldIsFocused)
                     .accessibilityIdentifier("closetSearchField")
 
                 if !searchText.isEmpty {
@@ -231,39 +231,18 @@ struct ClosetView: View {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
                     .stroke(DesignSystem.border.opacity(0.58), lineWidth: 1)
             }
+            .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+            .onTapGesture {
+                searchFieldIsFocused = true
+            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(typeFilterOptions, id: \.filter) { option in
-                        ContextChip(title: option.title, value: option.filter, selection: $typeFilter)
+                    ForEach(filterOptions, id: \.self) { option in
+                        ContextChip(title: title(for: option), value: option, selection: $activeFilter)
                     }
                 }
                 .padding(.vertical, 1)
-            }
-
-            Button {
-                withAnimation(.snappy(duration: 0.22)) {
-                    showsAdvancedFilters.toggle()
-                }
-            } label: {
-                Label(L10n.text("closet.filter.advanced"), systemImage: showsAdvancedFilters ? "chevron.up" : "slider.horizontal.3")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(DesignSystem.secondaryInk)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("closetAdvancedFiltersButton")
-
-            if showsAdvancedFilters {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: DesignSystem.Spacing.sm) {
-                        ContextChip(title: L10n.text("closet.filter.status_all"), value: ClosetStatusFilter.all, selection: $statusFilter)
-
-                        ForEach(ClothingStatus.allCases) { status in
-                            ContextChip(title: status.displayName, value: ClosetStatusFilter.status(status), selection: $statusFilter)
-                        }
-                    }
-                    .padding(.vertical, 1)
-                }
             }
         }
     }
@@ -308,22 +287,7 @@ struct ClosetView: View {
 
     private var filteredItems: [ClothingItem] {
         items
-            .filter { item in
-                switch typeFilter {
-                case .all:
-                    true
-                case .type(let type):
-                    (item.resolvedType ?? item.type) == type
-                }
-            }
-            .filter { item in
-                switch statusFilter {
-                case .all:
-                    true
-                case .status(let status):
-                    item.resolvedStatus == status
-                }
-            }
+            .filter(matchesActiveFilter)
             .filter(matchesSearch)
             .sorted {
                 if $0.createdAt != $1.createdAt {
@@ -334,6 +298,29 @@ struct ClosetView: View {
                 }
                 return $0.displayColor.localizedCaseInsensitiveCompare($1.displayColor) == .orderedAscending
             }
+    }
+
+    private func matchesActiveFilter(_ item: ClothingItem) -> Bool {
+        switch activeFilter {
+        case .all:
+            return true
+        case .type(let type):
+            return matchesTypeFilter(item, type)
+        case .needsWash:
+            return item.resolvedStatus == .needsWash
+        case .needsRepair:
+            return item.resolvedStatus == .needsRepair
+        }
+    }
+
+    private func matchesTypeFilter(_ item: ClothingItem, _ type: ClothingType) -> Bool {
+        let resolvedType = item.resolvedType ?? item.type
+        switch type {
+        case .outerwear:
+            return resolvedType == .outerwear || resolvedType == .blazer
+        default:
+            return resolvedType == type
+        }
     }
 
     private func matchesSearch(_ item: ClothingItem) -> Bool {
@@ -353,6 +340,36 @@ struct ClosetView: View {
         return searchableText.localizedCaseInsensitiveContains(trimmedQuery)
     }
 
+    private var filterOptions: [ClosetFilter] {
+        [
+            .all,
+            .type(.top),
+            .type(.bottom),
+            .type(.shoes),
+            .type(.outerwear),
+            .needsWash,
+            .needsRepair
+        ]
+    }
+
+    private func title(for filter: ClosetFilter) -> String {
+        switch filter {
+        case .all:
+            L10n.text("closet.filter.all")
+        case .type(let type):
+            switch type {
+            case .outerwear:
+                L10n.text("clothing.type.outerwear")
+            default:
+                type.displayName
+            }
+        case .needsWash:
+            L10n.text("clothing.status.needsWash")
+        case .needsRepair:
+            L10n.text("clothing.status.needsRepair")
+        }
+    }
+
     private var availableItemCount: Int {
         items.filter { $0.status == .available }.count
     }
@@ -365,24 +382,22 @@ struct ClosetView: View {
         items.filter { $0.status == .needsRepair }.count
     }
 
-    private var typeFilterOptions: [ClosetTypeFilterOption] {
-        [
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.all"), filter: .all),
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.tops"), filter: .type(.top)),
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.bottoms"), filter: .type(.bottom)),
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.shoes"), filter: .type(.shoes)),
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.blazers"), filter: .type(.blazer)),
-            ClosetTypeFilterOption(title: L10n.text("closet.filter.bags"), filter: .type(.bag))
-        ]
-    }
-
     private var coveredHealthTypes: Set<ClothingType> {
         Set(
             items
                 .filter { $0.status == .available }
-                .compactMap { $0.resolvedType }
+                .compactMap { normalizedType(for: $0) }
                 .filter(healthCoreTypes.contains)
         )
+    }
+
+    private func normalizedType(for item: ClothingItem) -> ClothingType {
+        let resolvedType = item.resolvedType ?? item.type
+        if resolvedType == .blazer {
+            return .outerwear
+        }
+
+        return resolvedType
     }
 
     private var coveredHealthTypesCount: Int {
@@ -425,19 +440,11 @@ private enum ClosetSheet: Identifiable {
     }
 }
 
-private enum ClosetTypeFilter: Hashable {
+private enum ClosetFilter: Hashable {
     case all
     case type(ClothingType)
-}
-
-private enum ClosetStatusFilter: Hashable {
-    case all
-    case status(ClothingStatus)
-}
-
-private struct ClosetTypeFilterOption: Hashable {
-    let title: String
-    let filter: ClosetTypeFilter
+    case needsWash
+    case needsRepair
 }
 
 private struct GarmentGridCard: View {
@@ -476,10 +483,6 @@ private struct GarmentGridCard: View {
             .padding(DesignSystem.Spacing.md)
         }
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
-                .stroke(.white.opacity(0.52), lineWidth: 1)
-        }
         .padding(6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.surface.opacity(0.82))
@@ -515,7 +518,7 @@ private struct GarmentGridCard: View {
     }
 
     private func statusBadge(text: String, color: Color, isUrgent: Bool) -> some View {
-        Text(text)
+        Label(text, systemImage: item.status.systemImage)
             .font(isUrgent ? .caption2.weight(.bold) : .caption.weight(.medium))
             .foregroundStyle(isUrgent ? .white : color)
             .padding(.horizontal, isUrgent ? 9 : 8)

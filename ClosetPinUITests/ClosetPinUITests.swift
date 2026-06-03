@@ -350,11 +350,11 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(moreButton.waitForExistence(timeout: 3))
         moreButton.tap()
 
-        let goodFitButton = app.buttons["More like this"]
-        XCTAssertTrue(goodFitButton.waitForExistence(timeout: 3))
-        goodFitButton.tap()
+        let avoidStyleButton = app.buttons["Avoid this style"]
+        XCTAssertTrue(avoidStyleButton.waitForExistence(timeout: 3))
+        avoidStyleButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Saved. We will suggest more looks like this."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Got it. We will show fewer looks like this."].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["todayFeedbackUndoButton"].exists)
     }
 

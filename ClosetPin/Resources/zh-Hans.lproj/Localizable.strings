@@ -257,6 +257,7 @@
 "today.feedback.like" = "多推荐类似";
 "today.feedback.dislike" = "不是我的风格";
 "today.feedback.skip" = "换一套";
+"today.feedback.swap" = "换一套";
 "today.feedback.save" = "保存";
 "today.feedback.tune_title" = "微调这条建议";
 "today.feedback.more" = "更多";
@@ -269,6 +270,7 @@
 "today.confirmation.like" = "已记录，之后会多推荐类似搭配。";
 "today.confirmation.dislike" = "知道了，之后会减少类似搭配。";
 "today.confirmation.skip" = "正在换一套。";
+"today.confirmation.swap" = "已为你换一套。";
 "today.confirmation.save" = "已保存到穿搭。";
 "today.confirmation.view_looks" = "去穿搭";
 "today.confirmation.undo" = "撤销";

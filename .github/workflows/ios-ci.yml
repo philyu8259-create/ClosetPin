@@ -27,23 +27,31 @@ jobs:
 
           output_path = sys.argv[1]
 
-          def simctl_list(*args):
-              command = ["xcrun", "simctl", "list", *args, "-j"]
-              return json.loads(subprocess.check_output(command, text=True))
+          def command_json(*args):
+              return json.loads(subprocess.check_output(["xcrun", "simctl", *args, "--json"], text=True))
 
-          devices_payload = simctl_list("devices", "available")
+          def resolve_runtime_name(identifier: str) -> str:
+              runtimes_payload = command_json("list", "runtimes")
+              for runtime in runtimes_payload.get("runtimes", []):
+                  if runtime.get("identifier") == identifier:
+                      return runtime.get("name", "Unknown runtime")
+              return identifier
+
+          devices_payload = command_json("list", "devices", "available")
           available_devices = []
           for runtime_name, devices in devices_payload.get("devices", {}).items():
               if not runtime_name.startswith("com.apple.CoreSimulator.SimRuntime.iOS"):
                   continue
               for device in devices:
                   if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
-                      available_devices.append(device["udid"])
+                      available_devices.append(
+                          (device["name"], device["udid"], runtime_name)
+                      )
 
           if available_devices:
-              destination_id = available_devices[0]
+              destination_name, destination_id, destination_runtime = available_devices[0]
           else:
-              runtimes_payload = simctl_list("runtimes", "available")
+              runtimes_payload = command_json("list", "runtimes", "available")
               runtime_id = next(
                   (
                       runtime["identifier"]
@@ -59,7 +67,7 @@ jobs:
                   "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro",
                   "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
               ]
-              device_types_payload = simctl_list("devicetypes")
+              device_types_payload = command_json("list", "devicetypes")
               device_type_ids = {
                   device_type["identifier"]
                   for device_type in device_types_payload.get("devicetypes", [])
@@ -80,29 +88,51 @@ jobs:
               if device_type_id is None:
                   raise SystemExit("No iPhone simulator device type found on this runner.")
 
+              destination_runtime = runtime_id
+              destination_name = "ClosetPin CI iPhone"
               destination_id = subprocess.check_output(
                   [
                       "xcrun",
                       "simctl",
                       "create",
-                      "ClosetPin CI iPhone",
+                      destination_name,
                       device_type_id,
                       runtime_id,
                   ],
                   text=True,
               ).strip()
 
+          print(f"Selected simulator: name={destination_name} udid={destination_id} runtime={destination_runtime}")
           subprocess.run(["xcrun", "simctl", "boot", destination_id], check=False)
           subprocess.run(["xcrun", "simctl", "bootstatus", destination_id, "-b"], check=True)
+          runtime_name = resolve_runtime_name(destination_runtime)
 
           with open(output_path, "a", encoding="utf-8") as output:
               output.write(f"destination_id={destination_id}\n")
+              output.write(f"destination_name={destination_name}\n")
+              output.write(f"destination_runtime={runtime_name}\n")
           PY
 
       - name: Run tests
         run: |
+          echo "Running tests on: ${{ steps.simulator.outputs.destination_name }} (${{ steps.simulator.outputs.destination_id }}) on ${{ steps.simulator.outputs.destination_runtime }}"
           xcodebuild test \
             -project ClosetPin.xcodeproj \
             -scheme ClosetPin \
             -destination "id=${{ steps.simulator.outputs.destination_id }}" \
             -destination-timeout 180
+
+      - name: CI diagnostics on test failure
+        if: failure()
+        run: |
+          set -euo pipefail
+          echo "xcodebuild version:"
+          xcodebuild -version || true
+          echo "Selected destination:"
+          echo "Name: ${{ steps.simulator.outputs.destination_name }}"
+          echo "UDID: ${{ steps.simulator.outputs.destination_id }}"
+          echo "Runtime: ${{ steps.simulator.outputs.destination_runtime }}"
+          echo "Simctl destinations:"
+          xcrun simctl list devices || true
+          echo "xcodebuild destinations:"
+          xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -showdestinations || true

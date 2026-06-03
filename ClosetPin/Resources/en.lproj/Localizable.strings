@@ -257,6 +257,7 @@
 "today.feedback.like" = "More Like This";
 "today.feedback.dislike" = "Not My Style";
 "today.feedback.skip" = "Try Another";
+"today.feedback.swap" = "Swap Look";
 "today.feedback.save" = "Save";
 "today.feedback.tune_title" = "Tune this suggestion";
 "today.feedback.more" = "More";
@@ -269,6 +270,7 @@
 "today.confirmation.like" = "Saved. We will suggest more looks like this.";
 "today.confirmation.dislike" = "Got it. We will show fewer looks like this.";
 "today.confirmation.skip" = "Trying another option.";
+"today.confirmation.swap" = "Here is a fresh option.";
 "today.confirmation.save" = "Saved to Looks.";
 "today.confirmation.view_looks" = "View Looks";
 "today.confirmation.undo" = "Undo";
