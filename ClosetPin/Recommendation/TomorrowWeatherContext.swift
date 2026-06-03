@@ -1,6 +1,6 @@
 import Foundation
 
-enum TomorrowWeatherCondition: String, Codable {
+enum TomorrowWeatherCondition: String, Codable, Sendable {
     case clear
     case partlyCloudy
     case cloudy
@@ -21,7 +21,7 @@ enum TomorrowWeatherCondition: String, Codable {
     }
 }
 
-struct TomorrowWeatherContext: Equatable {
+struct TomorrowWeatherContext: Equatable, Sendable {
     let condition: TomorrowWeatherCondition
     let minTemperatureCelsius: Int
     let maxTemperatureCelsius: Int

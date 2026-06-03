@@ -4,7 +4,7 @@ import Foundation
 import WeatherKit
 #endif
 
-struct TomorrowWeatherSnapshot: Equatable {
+struct TomorrowWeatherSnapshot: Equatable, Sendable {
     let context: TomorrowWeatherContext
     let locationName: String
     let attributionName: String?
@@ -86,6 +86,27 @@ struct WeatherKitTomorrowWeatherProvider: TomorrowWeatherProviding {
         let calendar = Calendar.current
         let tomorrowStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: referenceDate) ?? referenceDate)
         let dayAfterTomorrow = calendar.date(byAdding: .day, value: 1, to: tomorrowStart) ?? tomorrowStart.addingTimeInterval(86_400)
+        return try await Self.fetchWeatherSnapshot(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude,
+            locationName: trimmedLocation,
+            tomorrowStart: tomorrowStart,
+            dayAfterTomorrow: dayAfterTomorrow
+        )
+#else
+        throw TomorrowWeatherProviderError.weatherUnavailable
+#endif
+    }
+
+#if canImport(WeatherKit)
+    private nonisolated static func fetchWeatherSnapshot(
+        latitude: Double,
+        longitude: Double,
+        locationName: String,
+        tomorrowStart: Date,
+        dayAfterTomorrow: Date
+    ) async throws -> TomorrowWeatherSnapshot {
+        let location = CLLocation(latitude: latitude, longitude: longitude)
         let forecast = try await WeatherService.shared.weather(
             for: location,
             including: .daily(startDate: tomorrowStart, endDate: dayAfterTomorrow)
@@ -104,12 +125,10 @@ struct WeatherKitTomorrowWeatherProvider: TomorrowWeatherProviding {
                 precipitationProbability: Int((tomorrow.precipitationChance * 100).rounded()),
                 windSpeedKph: Int(tomorrow.wind.speed.converted(to: .kilometersPerHour).value.rounded())
             ),
-            locationName: trimmedLocation,
+            locationName: locationName,
             attributionName: attribution?.serviceName,
             attributionURL: attribution?.legalPageURL
         )
-#else
-        throw TomorrowWeatherProviderError.weatherUnavailable
-#endif
     }
+#endif
 }

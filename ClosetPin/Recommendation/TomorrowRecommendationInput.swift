@@ -1,6 +1,6 @@
 import Foundation
 
-struct TomorrowRecommendationInput: Equatable {
+struct TomorrowRecommendationInput: Equatable, Sendable {
     let weatherContext: TomorrowWeatherContext?
 
     init(weatherContext: TomorrowWeatherContext? = nil) {
