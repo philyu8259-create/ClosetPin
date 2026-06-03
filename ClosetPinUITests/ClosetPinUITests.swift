@@ -476,6 +476,7 @@ final class ClosetPinUITests: XCTestCase {
         let app = makeApp()
         app.launchEnvironment["CLOSETPIN_DEBUG_PRESEED_SAMPLE_CAPSULE"] = "1"
         app.launchEnvironment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_ENABLED"] = "1"
+        app.launchEnvironment["CLOSETPIN_DEBUG_TOMORROW_WEATHER_LOCATION"] = "Shanghai"
         app.launch()
 
         app.buttons["appTab_settings"].tap()
@@ -486,8 +487,6 @@ final class ClosetPinUITests: XCTestCase {
             app.swipeUp()
         }
         XCTAssertTrue(locationField.waitForExistence(timeout: 5))
-        locationField.tap()
-        locationField.typeText("Shanghai")
 
         XCTAssertTrue(app.staticTexts["No GPS required. Today will refresh the forecast from this city when available."].exists)
         XCTAssertTrue(app.staticTexts["Ready for Today: Shanghai"].waitForExistence(timeout: 5))
