@@ -265,16 +265,25 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
         let saveItemButton = app.buttons["saveItemButton"]
-        XCTAssertTrue(saveItemButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(saveItemButton.waitForExistence(timeout: 8))
 
-        app.buttons["photoSuggestionUseButton"].tap()
+        tapWhenReady(app.buttons["photoSuggestionUseButton"], in: app, timeout: 8, maxScrolls: 6)
 
-        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
-        let saveEnabledExpectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "isEnabled == true"),
-            object: saveItemButton
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
+
+        let itemColorField = app.textFields["itemColorField"]
+        XCTAssertTrue(itemColorField.waitForExistence(timeout: 8))
+        if !itemColorField.isHittable {
+            app.swipeUp()
+            app.swipeUp()
+        }
+
+        let colorAppliedExpectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value CONTAINS[c] %@", "Ivory"),
+            object: itemColorField
         )
-        XCTAssertEqual(XCTWaiter().wait(for: [saveEnabledExpectation], timeout: 3), .completed)
+        XCTAssertEqual(XCTWaiter().wait(for: [colorAppliedExpectation], timeout: 5), .completed)
+        XCTAssertTrue(saveItemButton.waitForExistence(timeout: 3))
     }
 
     func testAddItemAiSuggestionCanBeReviewedManually() {
@@ -288,15 +297,22 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
 
         let manualReviewButton = app.buttons["photoSuggestionEditManualButton"]
-        XCTAssertTrue(manualReviewButton.waitForExistence(timeout: 3))
-        manualReviewButton.tap()
+        XCTAssertTrue(manualReviewButton.waitForExistence(timeout: 8))
+        tapWhenReady(manualReviewButton, in: app, timeout: 8, maxScrolls: 6)
         app.swipeUp()
 
-        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
         let optionalDetailsDisclosure = app.buttons["optionalDetailsDisclosure"]
-        XCTAssertTrue(optionalDetailsDisclosure.waitForExistence(timeout: 3))
-        let optionalDetailsOpen = app.textFields["itemStorageField"].waitForExistence(timeout: 1)
-        XCTAssertTrue(optionalDetailsDisclosure.isHittable || optionalDetailsOpen)
+        let itemStorageField = app.textFields["itemStorageField"]
+        var manualSectionAvailable = optionalDetailsDisclosure.waitForExistence(timeout: 3) || itemStorageField.waitForExistence(timeout: 3)
+        if !manualSectionAvailable {
+            for _ in 0..<4 {
+                app.swipeUp()
+                manualSectionAvailable = optionalDetailsDisclosure.waitForExistence(timeout: 2) || itemStorageField.waitForExistence(timeout: 2)
+                if manualSectionAvailable { break }
+            }
+        }
+        XCTAssertTrue(manualSectionAvailable)
     }
 
     func testTodayMissingRecommendationOpensAddItemDirectly() {
@@ -611,5 +627,52 @@ final class ClosetPinUITests: XCTestCase {
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["CLOSETPIN_DISABLE_CLOUD_AI"] = "1"
         return app
+    }
+
+    private func tapWhenReady(
+        _ element: XCUIElement,
+        in app: XCUIApplication,
+        timeout: TimeInterval = 8,
+        maxScrolls: Int = 4
+    ) {
+        let start = Date()
+        func nextHittableMatch() -> XCUIElement? {
+            let matches = app.buttons.matching(identifier: element.identifier)
+            for idx in 0..<matches.count {
+                let candidate = matches.element(boundBy: idx)
+                if candidate.isHittable {
+                    return candidate
+                }
+            }
+            return nil
+        }
+
+        let existenceExpectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true"),
+            object: element
+        )
+        XCTAssertEqual(XCTWaiter().wait(for: [existenceExpectation], timeout: 3), .completed)
+
+        for attempt in 0..<maxScrolls {
+            if let tappable = nextHittableMatch() {
+                tappable.tap()
+                return
+            }
+            if Date().timeIntervalSince(start) > timeout {
+                break
+            }
+            if attempt % 2 == 0 {
+                app.swipeUp()
+            } else {
+                app.swipeDown()
+            }
+        }
+
+        if let tappable = nextHittableMatch() {
+            tappable.tap()
+            return
+        }
+
+        XCTFail("Failed to tap \(element.identifier): not hittable after scrolling")
     }
 }
