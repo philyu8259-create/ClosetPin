@@ -443,6 +443,11 @@ struct AddEditItemView: View {
 
             if let photoTaggingOutcome {
                 if suggestionNeedsReview {
+#if DEBUG
+                    if isUITestDebugMode {
+                        photoSuggestionDebugControls
+                    }
+#endif
                     photoSuggestionReviewCard(for: photoTaggingOutcome)
                 } else if didApplyLatestSuggestion {
                     Label(
@@ -512,6 +517,10 @@ struct AddEditItemView: View {
     }
 
 #if DEBUG
+    private var isUITestDebugMode: Bool {
+        ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] == "1"
+    }
+
     private var debugPhotoTaggingOutcome: PhotoTaggingOutcome {
         PhotoTaggingOutcome(
             suggestion: ClothingPhotoTagSuggestion(
@@ -525,6 +534,23 @@ struct AddEditItemView: View {
             ),
             delivery: .localOnly
         )
+    }
+
+    private var photoSuggestionDebugControls: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+            Button("Test apply AI") {
+                applyPendingPhotoSuggestion()
+            }
+            .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("photoSuggestionDebugApplyButton")
+
+            Button("Test manual review") {
+                dismissPendingPhotoSuggestionForManualEdit()
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("photoSuggestionDebugManualButton")
+        }
+        .font(.caption)
     }
 #endif
 

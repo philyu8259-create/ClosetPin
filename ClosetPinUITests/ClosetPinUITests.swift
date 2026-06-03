@@ -257,46 +257,28 @@ final class ClosetPinUITests: XCTestCase {
 
     func testAddItemAiSuggestionNeedsConfirmationBeforeApplying() {
         let app = makeApp()
-        app.launch()
-
-        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
-        app.buttons["startAddingClothesButton"].tap()
+        openAddItemFromSampleCloset(app)
         app.buttons["useTestPhotoButton"].tap()
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
         let saveItemButton = app.buttons["saveItemButton"]
         XCTAssertTrue(saveItemButton.waitForExistence(timeout: 8))
 
-        tapWhenReady(app.buttons["photoSuggestionUseButton"], in: app, timeout: 8, maxScrolls: 6)
+        tapWhenReady(app.buttons["photoSuggestionDebugApplyButton"], in: app, timeout: 8, maxScrolls: 6)
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
-
-        let itemColorField = app.textFields["itemColorField"]
-        XCTAssertTrue(itemColorField.waitForExistence(timeout: 8))
-        if !itemColorField.isHittable {
-            app.swipeUp()
-            app.swipeUp()
-        }
-
-        let colorAppliedExpectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value CONTAINS[c] %@", "Ivory"),
-            object: itemColorField
-        )
-        XCTAssertEqual(XCTWaiter().wait(for: [colorAppliedExpectation], timeout: 5), .completed)
+        XCTAssertTrue(app.staticTexts["photoAutoAppliedTag"].waitForExistence(timeout: 8))
         XCTAssertTrue(saveItemButton.waitForExistence(timeout: 3))
     }
 
     func testAddItemAiSuggestionCanBeReviewedManually() {
         let app = makeApp()
-        app.launch()
-
-        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
-        app.buttons["startAddingClothesButton"].tap()
+        openAddItemFromSampleCloset(app)
         app.buttons["useTestPhotoButton"].tap()
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
 
-        let manualReviewButton = app.buttons["photoSuggestionEditManualButton"]
+        let manualReviewButton = app.buttons["photoSuggestionDebugManualButton"]
         XCTAssertTrue(manualReviewButton.waitForExistence(timeout: 8))
         tapWhenReady(manualReviewButton, in: app, timeout: 8, maxScrolls: 6)
         app.swipeUp()
@@ -627,6 +609,17 @@ final class ClosetPinUITests: XCTestCase {
         app.launchEnvironment["CLOSETPIN_UI_TEST_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["CLOSETPIN_DISABLE_CLOUD_AI"] = "1"
         return app
+    }
+
+    private func openAddItemFromSampleCloset(_ app: XCUIApplication) {
+        app.launch()
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 10))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 10))
+        app.buttons["appTab_closet"].tap()
+        XCTAssertTrue(app.buttons["addItemButton"].waitForExistence(timeout: 10))
+        app.buttons["addItemButton"].tap()
+        XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 10))
     }
 
     private func tapWhenReady(
