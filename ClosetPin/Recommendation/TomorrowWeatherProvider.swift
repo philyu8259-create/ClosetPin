@@ -69,8 +69,6 @@ enum TomorrowWeatherConditionMapper {
 
 @MainActor
 struct WeatherKitTomorrowWeatherProvider: TomorrowWeatherProviding {
-    private let geocoder = CLGeocoder()
-
     func tomorrowWeather(for locationName: String, referenceDate: Date = Date()) async throws -> TomorrowWeatherSnapshot {
         let trimmedLocation = locationName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedLocation.isEmpty else {
@@ -78,17 +76,14 @@ struct WeatherKitTomorrowWeatherProvider: TomorrowWeatherProviding {
         }
 
 #if canImport(WeatherKit)
-        let placemarks = try await geocoder.geocodeAddressString(trimmedLocation)
-        guard let location = placemarks.first?.location else {
-            throw TomorrowWeatherProviderError.locationNotFound
-        }
+        let coordinates = try await Self.coordinates(for: trimmedLocation)
 
         let calendar = Calendar.current
         let tomorrowStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: referenceDate) ?? referenceDate)
         let dayAfterTomorrow = calendar.date(byAdding: .day, value: 1, to: tomorrowStart) ?? tomorrowStart.addingTimeInterval(86_400)
         return try await Self.fetchWeatherSnapshot(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
             locationName: trimmedLocation,
             tomorrowStart: tomorrowStart,
             dayAfterTomorrow: dayAfterTomorrow
@@ -99,6 +94,15 @@ struct WeatherKitTomorrowWeatherProvider: TomorrowWeatherProviding {
     }
 
 #if canImport(WeatherKit)
+    private nonisolated static func coordinates(for locationName: String) async throws -> (latitude: Double, longitude: Double) {
+        let geocoder = CLGeocoder()
+        let placemarks = try await geocoder.geocodeAddressString(locationName)
+        guard let coordinate = placemarks.first?.location?.coordinate else {
+            throw TomorrowWeatherProviderError.locationNotFound
+        }
+        return (coordinate.latitude, coordinate.longitude)
+    }
+
     private nonisolated static func fetchWeatherSnapshot(
         latitude: Double,
         longitude: Double,
