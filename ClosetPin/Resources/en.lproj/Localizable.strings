@@ -88,11 +88,15 @@
 "closet.photo.ai_suggestion.footer" = "AI has organized these details. You can still modify before saving.";
 "closet.photo.ai_suggestion.looks_good" = "Looks good";
 "closet.photo.ai_suggestion.edit" = "Edit details";
+"closet.photo.ai_suggestion.use" = "Use AI draft";
+"closet.photo.ai_suggestion.edit_manual" = "I'll edit manually";
 "closet.photo.ai_suggestion.unknown" = "Not detected";
 "closet.photo.ai_suggestion.auto_applied.format" = "AI applied: %@";
 "closet.photo.ai_suggestion.local.format" = "Local suggestion for %@";
 "closet.photo.ai_suggestion.cloud.format" = "Cloud suggestion for %@";
 "closet.photo.ai_suggestion.cloud_fallback.format" = "Cloud unavailable, used local suggestion for %@";
+"closet.photo.processing.prepare" = "Preparing your photo...";
+"closet.photo.processing.analyze" = "AI is drafting the item details...";
 "closet.photo.save_failed" = "The photo could not be saved. Please try again.";
 "closet.photo.selected_load_failed" = "The selected photo could not be loaded.";
 "closet.photo.selected_read_failed" = "The selected photo could not be read.";

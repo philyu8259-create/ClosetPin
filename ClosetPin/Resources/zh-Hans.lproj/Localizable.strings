@@ -88,11 +88,15 @@
 "closet.photo.ai_suggestion.footer" = "AI 已先整理这些信息；保存前你仍然可以修改。";
 "closet.photo.ai_suggestion.looks_good" = "看起来没问题";
 "closet.photo.ai_suggestion.edit" = "编辑细节";
+"closet.photo.ai_suggestion.use" = "使用 AI 草稿";
+"closet.photo.ai_suggestion.edit_manual" = "我自己来填";
 "closet.photo.ai_suggestion.unknown" = "未识别";
 "closet.photo.ai_suggestion.auto_applied.format" = "AI 已应用：%@";
 "closet.photo.ai_suggestion.local.format" = "本地建议：%@";
 "closet.photo.ai_suggestion.cloud.format" = "云端建议：%@";
 "closet.photo.ai_suggestion.cloud_fallback.format" = "云端不可用，已使用本地建议：%@";
+"closet.photo.processing.prepare" = "正在准备照片……";
+"closet.photo.processing.analyze" = "AI 正在整理单品信息……";
 "closet.photo.save_failed" = "照片未能保存。请再试一次。";
 "closet.photo.selected_load_failed" = "无法加载所选照片。";
 "closet.photo.selected_read_failed" = "无法读取所选照片。";

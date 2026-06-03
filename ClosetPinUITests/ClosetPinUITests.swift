@@ -222,7 +222,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
         XCTAssertFalse(app.buttons["formalityLevel_3"].exists)
 
-        app.buttons["optionalDetailsDisclosure"].tap()
+        app.buttons["photoSuggestionEditManualButton"].tap()
         app.swipeUp()
         XCTAssertTrue(app.buttons["formalityLevel_3"].exists)
     }
@@ -253,6 +253,23 @@ final class ClosetPinUITests: XCTestCase {
         viewClosetButton.tap()
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
+    }
+
+    func testAddItemAiSuggestionNeedsConfirmationBeforeApplying() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["startAddingClothesButton"].tap()
+        app.buttons["useTestPhotoButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Ready to save."].exists)
+
+        app.buttons["photoSuggestionUseButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 3))
     }
 
     func testTodayMissingRecommendationOpensAddItemDirectly() {

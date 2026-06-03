@@ -8,6 +8,16 @@ private enum PhotoPreviewMode: Hashable {
     case original
 }
 
+private enum PhotoPreparationState: Equatable {
+    case idle
+    case preparing
+    case analyzing
+
+    var isBusy: Bool {
+        self != .idle
+    }
+}
+
 private enum FormalityLevelLabel: Int, CaseIterable {
     case lowest = 1
     case low = 2
@@ -218,8 +228,11 @@ struct AddEditItemView: View {
     @State private var photoError: String?
     @State private var photoPreview: PhotoPreviewSheet?
     @State private var photoTaggingOutcome: PhotoTaggingOutcome?
+    @State private var pendingPhotoSuggestion: ClothingPhotoTagSuggestion?
     @State private var suggestionNeedsReview = false
+    @State private var didApplyLatestSuggestion = false
     @State private var photoPreviewMode: PhotoPreviewMode = .display
+    @State private var photoPreparationState: PhotoPreparationState = .idle
     @State private var showPostSaveGuide = false
     @State private var postSaveGuidance: String?
     @State private var showsOptionalDetails = false
@@ -263,7 +276,7 @@ struct AddEditItemView: View {
                     Button(L10n.text("common.save")) {
                         save()
                     }
-                    .disabled(!draft.canSave)
+                    .disabled(photoPreparationState.isBusy || !draft.canSave)
                     .accessibilityIdentifier("saveItemButton")
                 }
             }
@@ -333,7 +346,7 @@ struct AddEditItemView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                    .disabled(photoPreparationState.isBusy || !UIImagePickerController.isSourceTypeAvailable(.camera))
                     .accessibilityIdentifier("takePhotoButton")
 
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
@@ -341,6 +354,7 @@ struct AddEditItemView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+                    .disabled(photoPreparationState.isBusy)
                     .accessibilityIdentifier("chooseFromLibraryButton")
                 }
 
@@ -357,6 +371,20 @@ struct AddEditItemView: View {
                     .font(.caption)
                     .foregroundStyle(DesignSystem.accent)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if photoPreparationState.isBusy {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                            .tint(DesignSystem.accent)
+
+                        Text(photoPreparationMessage)
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 2)
+                    .accessibilityIdentifier("photoProcessingStatus")
+                }
             }
 
             if draft.hasPhoto || displayPreviewImage != nil {
@@ -401,6 +429,13 @@ struct AddEditItemView: View {
                 Button(L10n.text("closet.photo.use_test")) {
                     draft.pendingPhotoJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
                     draft.pendingOriginalPhotoJPEGData = draft.pendingPhotoJPEGData
+                    photoTaggingOutcome = debugPhotoTaggingOutcome
+                    pendingPhotoSuggestion = debugPhotoTaggingOutcome.suggestion
+                    didApplyLatestSuggestion = false
+                    suggestionNeedsReview = true
+                    photoPreviewMode = .display
+                    showPostSaveGuide = false
+                    postSaveGuidance = nil
                     photoError = nil
                 }
                 .accessibilityIdentifier("useTestPhotoButton")
@@ -416,6 +451,7 @@ struct AddEditItemView: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .buttonStyle(.bordered)
+                    .disabled(photoPreparationState.isBusy)
 
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                         Label(L10n.text("closet.photo.replace"), systemImage: "arrow.triangle.2.circlepath")
@@ -423,6 +459,7 @@ struct AddEditItemView: View {
                             .accessibilityIdentifier("photoReplaceButton")
                     }
                     .buttonStyle(.bordered)
+                    .disabled(photoPreparationState.isBusy)
                     .accessibilityIdentifier("photoReplaceButton")
 
                     Spacer()
@@ -457,7 +494,7 @@ struct AddEditItemView: View {
             if let photoTaggingOutcome {
                 if suggestionNeedsReview {
                     photoSuggestionReviewCard(for: photoTaggingOutcome)
-                } else {
+                } else if didApplyLatestSuggestion {
                     Label(
                         L10n.string("closet.photo.ai_suggestion.auto_applied.format", arguments: photoTaggingOutcome.suggestion.type.displayName),
                         systemImage: suggestionStatusIcon(for: photoTaggingOutcome)
@@ -512,6 +549,34 @@ struct AddEditItemView: View {
         }
         return L10n.text("closet.post_save.item_saved")
     }
+
+    private var photoPreparationMessage: String {
+        switch photoPreparationState {
+        case .idle:
+            ""
+        case .preparing:
+            L10n.text("closet.photo.processing.prepare")
+        case .analyzing:
+            L10n.text("closet.photo.processing.analyze")
+        }
+    }
+
+#if DEBUG
+    private var debugPhotoTaggingOutcome: PhotoTaggingOutcome {
+        PhotoTaggingOutcome(
+            suggestion: ClothingPhotoTagSuggestion(
+                type: .top,
+                color: "Ivory",
+                seasons: [SeasonResolver.currentSeason()],
+                formalityLevel: 3,
+                warmthLevel: 2,
+                confidence: 0.82,
+                source: .localHeuristic
+            ),
+            delivery: .localOnly
+        )
+    }
+#endif
 
     private var primaryDetailsSection: some View {
         Section(L10n.text("closet.ai_edit.section")) {
@@ -739,12 +804,15 @@ struct AddEditItemView: View {
         draft = AddEditItemDraft(initialType: .top)
         selectedPhotoItem = nil
         photoTaggingOutcome = nil
+        pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
+        didApplyLatestSuggestion = false
         photoError = nil
         postSaveGuidance = nil
         showPostSaveGuide = false
         photoPreview = nil
         photoPreviewMode = .display
+        photoPreparationState = .idle
         showsOptionalDetails = false
         showsSeasonChooser = false
     }
@@ -754,12 +822,16 @@ struct AddEditItemView: View {
         guard let item else { return }
 
         do {
+            photoPreparationState = .preparing
+            clearPendingSuggestionReview()
             guard let data = try await item.loadTransferable(type: Data.self) else {
                 photoError = L10n.text("closet.photo.selected_load_failed")
+                photoPreparationState = .idle
                 return
             }
-            guard let photoData = ClosetItemPhotoPersistence.processedPhotoData(from: data) else {
+            guard let photoData = await prepareProcessedPhotoData(from: data) else {
                 photoError = L10n.text("closet.photo.selected_read_failed")
+                photoPreparationState = .idle
                 return
             }
             draft.pendingPhotoJPEGData = photoData.displayJPEGData
@@ -769,46 +841,75 @@ struct AddEditItemView: View {
             showPostSaveGuide = false
             postSaveGuidance = nil
             photoError = nil
+            selectedPhotoItem = nil
         } catch {
             photoError = L10n.text("closet.photo.selected_load_failed")
+            photoPreparationState = .idle
+            selectedPhotoItem = nil
         }
     }
 
     private func stageCameraImage(_ image: UIImage) {
-        if let photoData = ClosetItemPhotoPersistence.processedPhotoData(from: image) {
-            draft.pendingPhotoJPEGData = photoData.displayJPEGData
-            draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
-            Task {
-                await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
-            }
-            photoPreviewMode = .display
-            showPostSaveGuide = false
-            postSaveGuidance = nil
-            photoError = nil
-        } else {
+        photoPreparationState = .preparing
+        clearPendingSuggestionReview()
+
+        guard let rawJPEGData = ClosetItemPhotoPersistence.jpegData(from: image) else {
             photoError = L10n.text("closet.photo.captured_save_failed")
+            photoPreparationState = .idle
+            return
         }
+
+        Task {
+            if let photoData = await prepareProcessedPhotoData(from: rawJPEGData) {
+                draft.pendingPhotoJPEGData = photoData.displayJPEGData
+                draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
+                await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+                photoPreviewMode = .display
+                showPostSaveGuide = false
+                postSaveGuidance = nil
+                photoError = nil
+            } else {
+                photoError = L10n.text("closet.photo.captured_save_failed")
+                photoPreparationState = .idle
+            }
+        }
+    }
+
+    private func prepareProcessedPhotoData(from data: Data) async -> ProcessedClosetPhotoData? {
+        await Task.detached(priority: .userInitiated) {
+            ClosetItemPhotoPersistence.processedPhotoData(from: data)
+        }.value
     }
 
     @MainActor
     private func applyPhotoIntelligenceIfAvailable(from data: Data) async {
         guard let image = UIImage(data: data) else {
             photoTaggingOutcome = nil
+            pendingPhotoSuggestion = nil
+            suggestionNeedsReview = false
+            didApplyLatestSuggestion = false
+            photoPreparationState = .idle
             return
         }
 
+        photoPreparationState = .analyzing
         guard let outcome = await photoTaggingPipeline.suggestionOutcome(
             for: image,
             allowsCloudRecognition: allowsCloudPhotoRecognition
         ) else {
             photoTaggingOutcome = nil
+            pendingPhotoSuggestion = nil
             suggestionNeedsReview = false
+            didApplyLatestSuggestion = false
+            photoPreparationState = .idle
             return
         }
 
-        outcome.suggestion.apply(to: &draft)
         photoTaggingOutcome = outcome
+        pendingPhotoSuggestion = outcome.suggestion
         suggestionNeedsReview = true
+        didApplyLatestSuggestion = false
+        photoPreparationState = .idle
     }
 
     private func openCameraForPhoto() {
@@ -819,8 +920,26 @@ struct AddEditItemView: View {
         isCameraPresented = true
     }
 
-    private func photoSuggestionReviewAccepted() {
+    private func applyPendingPhotoSuggestion() {
+        guard let pendingPhotoSuggestion else { return }
+        pendingPhotoSuggestion.apply(to: &draft)
+        self.pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
+        didApplyLatestSuggestion = true
+    }
+
+    private func dismissPendingPhotoSuggestionForManualEdit() {
+        pendingPhotoSuggestion = nil
+        suggestionNeedsReview = false
+        didApplyLatestSuggestion = false
+        showsOptionalDetails = true
+    }
+
+    private func clearPendingSuggestionReview() {
+        photoTaggingOutcome = nil
+        pendingPhotoSuggestion = nil
+        suggestionNeedsReview = false
+        didApplyLatestSuggestion = false
     }
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
@@ -829,6 +948,7 @@ struct AddEditItemView: View {
                 Text(L10n.text("closet.photo.ai_suggestion.title"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
+                    .accessibilityIdentifier("photoSuggestionReviewTitle")
 
                 Text(suggestionStatusText(for: outcome))
                     .font(.caption)
@@ -861,24 +981,23 @@ struct AddEditItemView: View {
                 }
 
                 HStack {
-                    Button(L10n.text("closet.photo.ai_suggestion.looks_good")) {
-                        photoSuggestionReviewAccepted()
+                    Button(L10n.text("closet.photo.ai_suggestion.use")) {
+                        applyPendingPhotoSuggestion()
                     }
-                    .buttonStyle(.bordered)
-                    .accessibilityIdentifier("photoSuggestionLooksGoodButton")
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("photoSuggestionUseButton")
 
                     Spacer()
 
-                    Button(L10n.text("closet.photo.ai_suggestion.edit")) {
-                        showsOptionalDetails = true
-                        photoSuggestionReviewAccepted()
+                    Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
+                        dismissPendingPhotoSuggestionForManualEdit()
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityIdentifier("photoSuggestionEditDetailsButton")
+                    .accessibilityIdentifier("photoSuggestionEditManualButton")
                 }
             }
         }
-        .accessibilityIdentifier("photoSuggestionReviewCard")
     }
 
     private func suggestionRow(label: String, value: String) -> some View {
@@ -1569,6 +1688,12 @@ private struct CameraCaptureView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            DispatchQueue.main.async {
+                dismiss()
+            }
+            return picker
+        }
         picker.sourceType = .camera
         picker.delegate = context.coordinator
         picker.allowsEditing = false

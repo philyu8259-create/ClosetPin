@@ -24,6 +24,7 @@ struct TodayView: View {
     @State private var aiExplanations: [String: String] = [:]
     @State private var stylistRefreshCounter = 0
     @State private var heroRotationIndex = 0
+    @State private var cachedCandidates: [OutfitCandidate] = []
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
@@ -52,16 +53,7 @@ struct TodayView: View {
     }
 
     private var candidates: [OutfitCandidate] {
-        engine.recommend(
-            input: RecommendationInput(
-                scenario: scenario,
-                season: season,
-                maximumResults: 3,
-                preferredFormality: currentPreference?.preferredFormality
-            ),
-            items: clothingItems,
-            feedback: feedback
-        )
+        cachedCandidates
     }
 
     var body: some View {
@@ -94,6 +86,9 @@ struct TodayView: View {
             }
             .onChange(of: season) { _, _ in
                 resetHeroRotation()
+            }
+            .task(id: recommendationRequestKey) {
+                refreshRecommendations()
             }
             .task(id: tomorrowWeatherRequestKey) {
                 await refreshTomorrowWeatherIfNeeded()
@@ -277,6 +272,26 @@ struct TodayView: View {
         preferences.first
     }
 
+    private var recommendationRequestKey: String {
+        let preferenceKey = currentPreference.map {
+            "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970):\($0.preferredFormality)"
+        } ?? "no-preference"
+        let itemKey = clothingItems.map {
+            "\($0.id.uuidString):\($0.updatedAt.timeIntervalSince1970)"
+        }.joined(separator: "|")
+        let feedbackKey = feedback.map {
+            "\($0.id.uuidString):\($0.createdAt.timeIntervalSince1970)"
+        }.joined(separator: "|")
+
+        return [
+            scenario.rawValue,
+            season.rawValue,
+            preferenceKey,
+            itemKey,
+            feedbackKey
+        ].joined(separator: "::")
+    }
+
     private var orderedCandidates: [OutfitCandidate] {
         guard !candidates.isEmpty else { return [] }
         let safeOffset = heroRotationIndex % candidates.count
@@ -324,6 +339,29 @@ struct TodayView: View {
 
         scenario = preferredScenario
         lastAppliedPreferenceScenario = preferredScenario
+    }
+
+    private func refreshRecommendations() {
+        let updatedCandidates = engine.recommend(
+            input: RecommendationInput(
+                scenario: scenario,
+                season: season,
+                maximumResults: 3,
+                preferredFormality: currentPreference?.preferredFormality
+            ),
+            items: clothingItems,
+            feedback: feedback
+        )
+
+        let previousCandidateIDs = cachedCandidates.map(\.id)
+        let updatedCandidateIDs = updatedCandidates.map(\.id)
+        cachedCandidates = updatedCandidates
+
+        if previousCandidateIDs != updatedCandidateIDs {
+            heroRotationIndex = 0
+            let validIDs = Set(updatedCandidateIDs)
+            aiExplanations = aiExplanations.filter { validIDs.contains($0.key) }
+        }
     }
 
     @MainActor
