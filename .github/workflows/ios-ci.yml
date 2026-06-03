@@ -16,28 +16,93 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select iPhone simulator
+      - name: Resolve iPhone simulator
         id: simulator
         run: |
           set -euo pipefail
-          destination_id="$(
-            xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -showdestinations |
-            sed -nE 's/.*\{ platform:iOS Simulator, .*id:([^,]+), .*name:iPhone.*/\1/p' |
-            head -1 |
-            xargs
-          )"
+          python3 - "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import subprocess
+          import sys
 
-          if [ -z "$destination_id" ]; then
-            echo "No iPhone simulator destination found."
-            xcodebuild -project ClosetPin.xcodeproj -scheme ClosetPin -showdestinations
-            exit 1
-          fi
+          output_path = sys.argv[1]
 
-          echo "destination_id=$destination_id" >> "$GITHUB_OUTPUT"
+          def simctl_list(*args):
+              command = ["xcrun", "simctl", "list", *args, "-j"]
+              return json.loads(subprocess.check_output(command, text=True))
+
+          devices_payload = simctl_list("devices", "available")
+          available_devices = []
+          for runtime_name, devices in devices_payload.get("devices", {}).items():
+              if not runtime_name.startswith("com.apple.CoreSimulator.SimRuntime.iOS"):
+                  continue
+              for device in devices:
+                  if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
+                      available_devices.append(device["udid"])
+
+          if available_devices:
+              destination_id = available_devices[0]
+          else:
+              runtimes_payload = simctl_list("runtimes", "available")
+              runtime_id = next(
+                  (
+                      runtime["identifier"]
+                      for runtime in runtimes_payload.get("runtimes", [])
+                      if runtime.get("isAvailable") and runtime.get("identifier", "").startswith("com.apple.CoreSimulator.SimRuntime.iOS")
+                  ),
+                  None
+              )
+              if runtime_id is None:
+                  raise SystemExit("No available iOS runtime found on this runner.")
+
+              preferred_device_types = [
+                  "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro",
+                  "com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro",
+              ]
+              device_types_payload = simctl_list("devicetypes")
+              device_type_ids = {
+                  device_type["identifier"]
+                  for device_type in device_types_payload.get("devicetypes", [])
+              }
+              device_type_id = next(
+                  (identifier for identifier in preferred_device_types if identifier in device_type_ids),
+                  None
+              )
+              if device_type_id is None:
+                  device_type_id = next(
+                      (
+                          device_type["identifier"]
+                          for device_type in device_types_payload.get("devicetypes", [])
+                          if device_type.get("name", "").startswith("iPhone")
+                      ),
+                      None
+                  )
+              if device_type_id is None:
+                  raise SystemExit("No iPhone simulator device type found on this runner.")
+
+              destination_id = subprocess.check_output(
+                  [
+                      "xcrun",
+                      "simctl",
+                      "create",
+                      "ClosetPin CI iPhone",
+                      device_type_id,
+                      runtime_id,
+                  ],
+                  text=True,
+              ).strip()
+
+          subprocess.run(["xcrun", "simctl", "boot", destination_id], check=False)
+          subprocess.run(["xcrun", "simctl", "bootstatus", destination_id, "-b"], check=True)
+
+          with open(output_path, "a", encoding="utf-8") as output:
+              output.write(f"destination_id={destination_id}\n")
+          PY
 
       - name: Run tests
         run: |
           xcodebuild test \
             -project ClosetPin.xcodeproj \
             -scheme ClosetPin \
-            -destination "id=${{ steps.simulator.outputs.destination_id }}"
+            -destination "id=${{ steps.simulator.outputs.destination_id }}" \
+            -destination-timeout 180
