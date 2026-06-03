@@ -142,7 +142,7 @@
 "closet.save_checklist.action_hint" = "建议先补齐照片、颜色和季节，再保存；这样 ClosetPin 才能更稳地给你推荐。";
 "closet.formality.label" = "正式度";
 "closet.formality.format" = "正式度：%d";
-"closet.formality.scale" = "休闲 1 · 平衡 3 · 精致 5";
+"closet.formality.scale" = "休闲 · 干练 · 商务 · 正式 · 精致";
 "closet.formality.preview.format" = "已选择：%@";
 "closet.formality.casual" = "休闲";
 "closet.formality.smart" = "干练";
@@ -186,7 +186,7 @@
 "today.dashboard.body" = "只需要选一次场合，ClosetPin 会检查你的衣橱，先给出一套清晰推荐，需要时再看备选。";
 "today.dashboard.closet_ready.format" = "%d 件可穿";
 "today.dashboard.generate" = "生成今日穿搭";
-"today.dashboard.generate_again" = "换一套看看";
+"today.dashboard.generate_again" = "查看今日主推";
 "today.context.title" = "场合";
 "today.ai_assist.body" = "选场合后，ClosetPin 检查衣橱并说明为什么适合，最终你决定。";
 "today.decision.user.title" = "你来选择";
@@ -297,7 +297,7 @@
 "closet.archive.title" = "你的衣橱";
 "closet.archive.count.format" = "%d 件单品可搭配";
 "closet.today_ready.title" = "可用于今日推荐";
-"closet.today_ready.body.format" = "%d 件可穿单品会参与推荐。添加或编辑后，回到「今日」选场合。";
+"closet.today_ready.body.format" = "%d 件可穿，可直接推荐。";
 "closet.today_ready.open_today" = "打开今日";
 "settings.title" = "我的";
 "settings.summary.kicker" = "穿搭简报";
@@ -309,7 +309,7 @@
 "settings.style_preferences.subtitle" = "先定制你偏好的默认推荐风格，再开始穿搭决策。";
 "settings.default_scenario.label" = "默认场景";
 "settings.preferred_formality.format" = "偏好正式度：%@";
-"settings.formality.scale" = "休闲 1 · 平衡 3 · 精致 5";
+"settings.formality.scale" = "休闲 · 干练 · 商务 · 正式 · 精致";
 "settings.formality.decrease" = "降低正式度";
 "settings.formality.increase" = "提高正式度";
 "settings.workplace_dress_code.placeholder" = "私人穿搭备注";

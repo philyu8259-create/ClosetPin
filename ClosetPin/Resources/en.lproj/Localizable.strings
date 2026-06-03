@@ -142,7 +142,7 @@
 "closet.save_checklist.action_hint" = "Action needed: complete these key fields first to keep data reliable.";
 "closet.formality.label" = "Formality";
 "closet.formality.format" = "Formality: %d";
-"closet.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
+"closet.formality.scale" = "Casual · Smart · Business · Formal · Polished";
 "closet.formality.preview.format" = "Selected: %@";
 "closet.formality.casual" = "Casual";
 "closet.formality.smart" = "Smart";
@@ -186,7 +186,7 @@
 "today.dashboard.body" = "Pick the occasion once. ClosetPin checks your closet and gives you one clear recommendation, with easy alternatives if you want them.";
 "today.dashboard.closet_ready.format" = "%d ready";
 "today.dashboard.generate" = "Generate Today's Look";
-"today.dashboard.generate_again" = "Try Another Look";
+"today.dashboard.generate_again" = "Review Today's Pick";
 "today.context.title" = "Occasion";
 "today.ai_assist.body" = "Pick an occasion. ClosetPin checks your closet and explains why the look fits; you decide.";
 "today.decision.user.title" = "You choose";
@@ -297,7 +297,7 @@
 "closet.archive.title" = "Your Closet";
 "closet.archive.count.format" = "%d pieces ready to style";
 "closet.today_ready.title" = "Ready for Today";
-"closet.today_ready.body.format" = "%d wearable pieces can feed Today. Add or edit here, then choose an occasion.";
+"closet.today_ready.body.format" = "%d ready pieces can be styled today.";
 "closet.today_ready.open_today" = "Open Today";
 "settings.title" = "Profile";
 "settings.summary.kicker" = "Style brief";
@@ -309,7 +309,7 @@
 "settings.style_preferences.subtitle" = "Tune the default recommendation profile for Today.";
 "settings.default_scenario.label" = "Default Scenario";
 "settings.preferred_formality.format" = "Preferred Formality: %@";
-"settings.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
+"settings.formality.scale" = "Casual · Smart · Business · Formal · Polished";
 "settings.formality.decrease" = "Less formal";
 "settings.formality.increase" = "More formal";
 "settings.workplace_dress_code.placeholder" = "Private style notes";
