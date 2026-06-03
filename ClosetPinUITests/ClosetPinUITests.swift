@@ -485,7 +485,7 @@ final class ClosetPinUITests: XCTestCase {
 
         let weatherToggle = app.switches["tomorrowWeatherToggle"]
         XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
-        weatherToggle.tap()
+        enableSwitch(weatherToggle)
         app.swipeUp()
 
         let locationField = app.textFields["tomorrowWeatherLocationField"]
@@ -508,7 +508,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         let weatherToggle = app.switches["tomorrowWeatherToggle"]
         XCTAssertTrue(weatherToggle.waitForExistence(timeout: 3))
-        weatherToggle.tap()
+        enableSwitch(weatherToggle)
 
         app.buttons["appTab_today"].tap()
         XCTAssertTrue(app.staticTexts["Tomorrow weather"].waitForExistence(timeout: 3))
@@ -520,6 +520,23 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         app.swipeUp()
         XCTAssertTrue(app.textFields["tomorrowWeatherLocationField"].waitForExistence(timeout: 5))
+    }
+
+    private func enableSwitch(
+        _ element: XCUIElement,
+        timeout: TimeInterval = 5,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        if (element.value as? String) == "1" {
+            return
+        }
+
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+        let predicate = NSPredicate(format: "value == %@", "1")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
+        XCTAssertEqual(result, .completed, file: file, line: line)
     }
 
     func testSettingsExplainsAiRoleWithoutExtraSetup() {
