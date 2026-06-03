@@ -303,14 +303,14 @@
 "closet.today_ready.open_today" = "打开今日";
 "settings.title" = "我的";
 "settings.summary.kicker" = "穿搭简报";
-"settings.summary.title.format" = "%@ · 正式度 %d";
+"settings.summary.title.format" = "%@ · %@";
 "settings.summary.body" = "这些默认值会先影响「今日」推荐；临时切换场合仍然可以在今日页完成。";
 "settings.preferences.section" = "搭配偏好";
 "settings.preferences.subtitle" = "设定 ClosetPin 打开时优先给你的第一套推荐。";
 "settings.style_preferences.section" = "偏好设置";
 "settings.style_preferences.subtitle" = "先定制你偏好的默认推荐风格，再开始穿搭决策。";
 "settings.default_scenario.label" = "默认场景";
-"settings.preferred_formality.format" = "偏好正式度：%d";
+"settings.preferred_formality.format" = "偏好正式度：%@";
 "settings.formality.scale" = "休闲 1 · 平衡 3 · 精致 5";
 "settings.formality.decrease" = "降低正式度";
 "settings.formality.increase" = "提高正式度";
@@ -319,7 +319,7 @@
 "settings.preferences.autosave.title" = "自动保存";
 "settings.preferences.autosave.body" = "默认场合和正式度会影响「今日」首个推荐；你也可以随时在今日页临时切换场合。";
 "settings.preferences.applied.title" = "已应用到今日";
-"settings.preferences.applied.body.format" = "「今日」会优先使用%@推荐，并按正式度 %d 调整；你仍可在今日页临时切换场合。";
+"settings.preferences.applied.body.format" = "「今日」会优先使用%@推荐，并按正式度 %@ 调整；你仍可在今日页临时切换场合。";
 "settings.ai_privacy.section" = "AI 与隐私";
 "settings.ai_privacy.subtitle" = "先看清 AI 用法，再决定是否开启云端能力。";
 "settings.ai_privacy.photo_title" = "拍照引导闭环";

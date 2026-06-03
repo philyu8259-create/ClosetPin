@@ -303,14 +303,14 @@
 "closet.today_ready.open_today" = "Open Today";
 "settings.title" = "Profile";
 "settings.summary.kicker" = "Style brief";
-"settings.summary.title.format" = "%@ · Formality %d";
+"settings.summary.title.format" = "%@ · %@";
 "settings.summary.body" = "These defaults shape Today before you make any temporary occasion switches.";
 "settings.preferences.section" = "Styling Preferences";
 "settings.preferences.subtitle" = "Set the first recommendation ClosetPin should reach for when the app opens.";
 "settings.style_preferences.section" = "Style Preferences";
 "settings.style_preferences.subtitle" = "Tune the default recommendation profile for Today.";
 "settings.default_scenario.label" = "Default Scenario";
-"settings.preferred_formality.format" = "Preferred Formality: %d";
+"settings.preferred_formality.format" = "Preferred Formality: %@";
 "settings.formality.scale" = "Relaxed 1 · Balanced 3 · Polished 5";
 "settings.formality.decrease" = "Less formal";
 "settings.formality.increase" = "More formal";
@@ -319,7 +319,7 @@
 "settings.preferences.autosave.title" = "Auto-saved";
 "settings.preferences.autosave.body" = "Default occasion and formality shape the first Today recommendation; you can still switch occasion on Today anytime.";
 "settings.preferences.applied.title" = "Applied to Today";
-"settings.preferences.applied.body.format" = "Today will start with %@ recommendations tuned to formality %d. You can still switch occasion on Today anytime.";
+"settings.preferences.applied.body.format" = "Today will start with %@ recommendations tuned to %@ formality. You can still switch occasion on Today anytime.";
 "settings.ai_privacy.section" = "AI & Privacy";
 "settings.ai_privacy.subtitle" = "Understand what AI uses so you can make choices confidently.";
 "settings.ai_privacy.photo_title" = "Photo completion flow";

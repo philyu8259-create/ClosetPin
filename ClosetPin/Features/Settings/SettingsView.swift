@@ -51,7 +51,7 @@ struct SettingsView: View {
                                 title: L10n.text("settings.preferences.applied.title"),
                                 bodyText: L10n.string(
                                     "settings.preferences.applied.body.format",
-                                    arguments: defaultScenario.displayName, preferredFormality
+                                    arguments: defaultScenario.displayName, preferredFormalityLabel(preferredFormality)
                                 )
                             )
                             .accessibilityIdentifier("settingsAppliedPreferenceNote")
@@ -236,7 +236,11 @@ private struct SettingsSummaryCard: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.86))
 
-            Text(L10n.string("settings.summary.title.format", arguments: scenario.displayName, formality))
+            Text(L10n.string(
+                "settings.summary.title.format",
+                arguments: scenario.displayName,
+                preferredFormalityLabel(formality)
+            ))
                 .font(DesignSystem.editorialDisplayFont(size: 30))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -428,7 +432,7 @@ private struct FormalityControl: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            Text(L10n.string("settings.preferred_formality.format", arguments: value))
+            Text(L10n.string("settings.preferred_formality.format", arguments: preferredFormalityLabel(value)))
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
 
@@ -443,7 +447,7 @@ private struct FormalityControl: View {
                 }
 
                 VStack(spacing: 4) {
-                    Text("\(value)")
+                    Text(preferredFormalityLabel(value))
                         .font(DesignSystem.editorialDisplayFont(size: 34))
                         .foregroundStyle(DesignSystem.ink)
 
@@ -468,6 +472,25 @@ private struct FormalityControl: View {
             }
         }
     }
+}
+
+private func preferredFormalityLabel(_ value: Int) -> String {
+    switch clampedFormalityLevel(value) {
+    case 1:
+        L10n.text("closet.formality.level_1")
+    case 2:
+        L10n.text("closet.formality.level_2")
+    case 3:
+        L10n.text("closet.formality.level_3")
+    case 4:
+        L10n.text("closet.formality.level_4")
+    default:
+        L10n.text("closet.formality.level_5")
+    }
+}
+
+private func clampedFormalityLevel(_ value: Int) -> Int {
+    max(1, min(5, value))
 }
 
 private struct TomorrowWeatherSettingsCard: View {
