@@ -372,10 +372,7 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
     private static func normalizedSeasons(_ seasons: Set<SeasonTag>, type: ClothingType, warmthLevel: Int) -> Set<SeasonTag> {
         guard type == .top, warmthLevel <= 2 else { return seasons }
 
-        var normalized = seasons
-        normalized.insert(.summer)
-        normalized.remove(.winter)
-        return normalized
+        return [.summer]
     }
 }
 
@@ -564,7 +561,11 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
     }
 
     private func inferredSeasons(for color: String, type: ClothingType, warmthLevel: Int) -> Set<SeasonTag> {
-        var seasons: Set<SeasonTag> = switch color {
+        if type == .top, warmthLevel <= 2 {
+            return [.summer]
+        }
+
+        let seasons: Set<SeasonTag> = switch color {
         case "black", "navy", "gray", "brown":
             [.autumn, .winter, .spring]
         case "white", "beige", "blue", "green":
@@ -575,10 +576,6 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
             [.spring, .autumn]
         }
 
-        if type == .top, warmthLevel <= 2 {
-            seasons.insert(.summer)
-            seasons.remove(.winter)
-        }
         return seasons
     }
 

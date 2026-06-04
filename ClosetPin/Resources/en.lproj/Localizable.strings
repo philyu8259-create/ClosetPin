@@ -71,7 +71,7 @@
 "closet.photo.use_test" = "Use Test Photo";
 "closet.photo.ready" = "Photo ready to save.";
 "closet.photo.saved" = "Photo saved locally.";
-"closet.photo.auto_cropped" = "Display photo optimized";
+"closet.photo.auto_cropped" = "Garment isolated for display";
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
 "closet.photo.editorial_title" = "Item Photo";

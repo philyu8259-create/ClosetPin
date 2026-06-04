@@ -92,6 +92,10 @@ struct ProcessedClosetPhotoData {
 
 struct ClothingPhotoProcessor {
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
+        if let foregroundImage = visionForegroundDisplayImage(in: image) {
+            return foregroundImage
+        }
+
         guard let cropRect = visionForegroundCropRect(in: image)
                 ?? centeredGarmentCropRect(in: image)
                 ?? saliencyCropRect(in: image)
@@ -114,6 +118,47 @@ struct ClothingPhotoProcessor {
         }
     }
 
+    private static func visionForegroundDisplayImage(in image: UIImage) -> UIImage? {
+        guard #available(iOS 17.0, *),
+              let cgImage = image.cgImage else { return nil }
+
+        let request = VNGenerateForegroundInstanceMaskRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return nil
+        }
+
+        guard let observation = request.results?.first,
+              let instances = bestForegroundInstances(in: observation, handler: handler, sourceSize: image.size),
+              let maskedBuffer = try? observation.generateMaskedImage(
+                ofInstances: instances,
+                from: handler,
+                croppedToInstancesExtent: true
+              ) else {
+            return nil
+        }
+
+        let ciImage = CIImage(cvPixelBuffer: maskedBuffer)
+        let context = CIContext()
+        guard let maskedCGImage = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
+
+        let maskedImage = UIImage(cgImage: maskedCGImage, scale: image.scale, orientation: .up)
+        return compositedForegroundImage(maskedImage)
+    }
+
+    private static func compositedForegroundImage(_ image: UIImage) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: image.size, format: format).image { context in
+            UIColor(red: 0.98, green: 0.96, blue: 0.92, alpha: 1).setFill()
+            context.fill(CGRect(origin: .zero, size: image.size))
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+    }
+
     private static func visionForegroundCropRect(in image: UIImage) -> CGRect? {
         guard #available(iOS 17.0, *),
               let cgImage = image.cgImage else { return nil }
@@ -126,34 +171,54 @@ struct ClothingPhotoProcessor {
             return nil
         }
 
-        guard let observation = request.results?.first else { return nil }
+        guard let observation = request.results?.first,
+              let instances = bestForegroundInstances(in: observation, handler: handler, sourceSize: image.size),
+              let maskBuffer = try? observation.generateScaledMaskForImage(
+                forInstances: instances,
+                from: handler
+              ),
+              let bestRect = maskBoundingRect(maskBuffer, sourceSize: image.size) else { return nil }
+
+        return paddedValidCropRect(bestRect, sourceSize: image.size, paddingRatio: 0.06)
+    }
+
+    @available(iOS 17.0, *)
+    private static func bestForegroundInstances(
+        in observation: VNInstanceMaskObservation,
+        handler: VNImageRequestHandler,
+        sourceSize: CGSize
+    ) -> IndexSet? {
         var bestRect: CGRect?
         var bestScore = 0.0
+        var bestInstances: IndexSet?
 
-        observation.allInstances.forEach { instance in
+        for instance in observation.allInstances {
             let selectedInstances = IndexSet(integer: instance)
             guard let maskBuffer = try? observation.generateScaledMaskForImage(
                 forInstances: selectedInstances,
                 from: handler
             ),
-                let rect = maskBoundingRect(maskBuffer, sourceSize: image.size) else {
-                return
+                let rect = maskBoundingRect(maskBuffer, sourceSize: sourceSize) else {
+                continue
             }
 
-            let center = CGPoint(x: rect.midX / image.size.width, y: rect.midY / image.size.height)
+            let center = CGPoint(x: rect.midX / sourceSize.width, y: rect.midY / sourceSize.height)
             let centerDistance = hypot(center.x - 0.5, center.y - 0.48)
-            let areaRatio = (rect.width * rect.height) / (image.size.width * image.size.height)
-            guard areaRatio > 0.04, areaRatio < 0.92 else { return }
+            let sourceArea = sourceSize.width * sourceSize.height
+            let areaRatio = (rect.width * rect.height) / sourceArea
+            guard areaRatio > 0.04, areaRatio < 0.92 else { continue }
 
-            let score = Double(areaRatio) * max(0.35, 1.35 - centerDistance)
+            let centerWeight = max(0.35, 1.35 - centerDistance)
+            let score = Double(areaRatio) * centerWeight
             if score > bestScore {
                 bestScore = score
                 bestRect = rect
+                bestInstances = selectedInstances
             }
         }
 
-        guard let bestRect else { return nil }
-        return paddedValidCropRect(bestRect, sourceSize: image.size, paddingRatio: 0.06)
+        guard bestRect != nil else { return nil }
+        return bestInstances
     }
 
     private static func maskBoundingRect(_ pixelBuffer: CVPixelBuffer, sourceSize: CGSize) -> CGRect? {

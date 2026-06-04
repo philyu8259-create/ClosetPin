@@ -10,7 +10,7 @@ final class AIStylistClientTests: XCTestCase {
 
         XCTAssertEqual(suggestion.color, "blue")
         XCTAssertEqual(suggestion.type, .top)
-        XCTAssertEqual(suggestion.seasons, [.spring, .summer, .autumn])
+        XCTAssertEqual(suggestion.seasons, [.summer])
         XCTAssertEqual(suggestion.formalityLevel, 3)
         XCTAssertEqual(suggestion.warmthLevel, 2)
         XCTAssertGreaterThan(suggestion.confidence, 0)
@@ -23,8 +23,7 @@ final class AIStylistClientTests: XCTestCase {
 
         XCTAssertEqual(suggestion.type, .top)
         XCTAssertEqual(suggestion.warmthLevel, 2)
-        XCTAssertTrue(suggestion.seasons.contains(.summer))
-        XCTAssertFalse(suggestion.seasons.contains(.winter))
+        XCTAssertEqual(suggestion.seasons, [.summer])
     }
 
     func testLocalPhotoIntelligencePrioritizesCenteredGarmentColorOverPaleBackground() throws {
@@ -34,8 +33,7 @@ final class AIStylistClientTests: XCTestCase {
 
         XCTAssertEqual(suggestion.color, "green")
         XCTAssertEqual(suggestion.type, .top)
-        XCTAssertTrue(suggestion.seasons.contains(.summer))
-        XCTAssertFalse(suggestion.seasons.contains(.winter))
+        XCTAssertEqual(suggestion.seasons, [.summer])
     }
 
     func testPhotoTagSuggestionFillsEmptyDraftFields() {
@@ -163,8 +161,7 @@ final class AIStylistClientTests: XCTestCase {
 
         let suggestion = try XCTUnwrap(CloudPhotoTaggingClient.decodeSuggestion(from: Data(json.utf8)))
 
-        XCTAssertTrue(suggestion.seasons.contains(.summer))
-        XCTAssertFalse(suggestion.seasons.contains(.winter))
+        XCTAssertEqual(suggestion.seasons, [.summer])
     }
 
     func testCloudPhotoTaggingEndpointFallsBackToProductionURL() {

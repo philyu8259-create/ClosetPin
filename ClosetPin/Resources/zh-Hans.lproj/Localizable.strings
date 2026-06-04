@@ -71,7 +71,7 @@
 "closet.photo.use_test" = "使用测试照片";
 "closet.photo.ready" = "照片已准备保存。";
 "closet.photo.saved" = "照片已保存到本地。";
-"closet.photo.auto_cropped" = "展示图已优化";
+"closet.photo.auto_cropped" = "已分离衣物展示图";
 "closet.photo.original" = "原始照片";
 "closet.photo.view_original" = "查看原图";
 "closet.photo.editorial_title" = "单品照片";
