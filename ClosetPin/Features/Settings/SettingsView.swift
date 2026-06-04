@@ -151,7 +151,7 @@ struct SettingsView: View {
 
                 }
                 .padding(18)
-                .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
+                .safeAreaPadding(.bottom, DesignSystem.Spacing.tabBarClearance + DesignSystem.Spacing.md)
             }
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("settings.title"))
