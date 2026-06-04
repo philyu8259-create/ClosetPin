@@ -950,10 +950,19 @@ struct AddEditItemView: View {
         }
 
         photoTaggingOutcome = outcome
-        pendingPhotoSuggestion = outcome.suggestion
-        suggestionNeedsReview = true
-        didApplyLatestSuggestion = false
-        appliedPhotoSuggestionSummary = nil
+        let autoAppliedFields = autoPrefillFields(for: outcome.suggestion)
+        if autoAppliedFields.isEmpty {
+            pendingPhotoSuggestion = outcome.suggestion
+            suggestionNeedsReview = true
+            didApplyLatestSuggestion = false
+            appliedPhotoSuggestionSummary = nil
+        } else {
+            applyPhotoSuggestionValues(outcome.suggestion, fields: autoAppliedFields)
+            pendingPhotoSuggestion = nil
+            suggestionNeedsReview = false
+            didApplyLatestSuggestion = true
+            appliedPhotoSuggestionSummary = appliedSuggestionSummary(for: autoAppliedFields, suggestion: outcome.suggestion)
+        }
         photoPreparationState = .idle
     }
 
@@ -980,21 +989,7 @@ struct AddEditItemView: View {
             return
         }
 
-        if fields.contains(.type) {
-            draft.type = suggestion.type
-        }
-        if fields.contains(.color) {
-            draft.color = suggestion.color
-        }
-        if fields.contains(.seasons) {
-            draft.applyPhotoSuggestedSeasons(suggestion.seasons)
-        }
-        if fields.contains(.formality) {
-            draft.formalityLevel = suggestion.formalityLevel
-        }
-        if fields.contains(.warmth) {
-            draft.warmthLevel = suggestion.warmthLevel
-        }
+        applyPhotoSuggestionValues(suggestion, fields: fields)
 
         appliedPhotoSuggestionSummary = appliedSuggestionSummary(for: fields, suggestion: suggestion)
         self.pendingPhotoSuggestion = nil
@@ -1016,6 +1011,44 @@ struct AddEditItemView: View {
         suggestionNeedsReview = false
         didApplyLatestSuggestion = false
         appliedPhotoSuggestionSummary = nil
+    }
+
+    private func autoPrefillFields(for suggestion: ClothingPhotoTagSuggestion) -> Set<PhotoSuggestionField> {
+        guard item == nil else { return [] }
+
+        var fields: Set<PhotoSuggestionField> = [.type]
+        if !suggestion.color.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !draft.hasColor {
+            fields.insert(.color)
+        }
+        if !suggestion.seasons.isEmpty,
+           draft.selectedSeasons.isEmpty || draft.seasonSelectionSource == .systemDate {
+            fields.insert(.seasons)
+        }
+        if draft.formalityLevel == AddEditItemDraft.defaultFormalityLevel {
+            fields.insert(.formality)
+        }
+        if draft.warmthLevel == AddEditItemDraft.defaultWarmthLevel {
+            fields.insert(.warmth)
+        }
+        return fields
+    }
+
+    private func applyPhotoSuggestionValues(_ suggestion: ClothingPhotoTagSuggestion, fields: Set<PhotoSuggestionField>) {
+        if fields.contains(.type) {
+            draft.type = suggestion.type
+        }
+        if fields.contains(.color) {
+            draft.color = normalizedSuggestionColorForStorage(suggestion.color)
+        }
+        if fields.contains(.seasons) {
+            draft.applyPhotoSuggestedSeasons(suggestion.seasons)
+        }
+        if fields.contains(.formality) {
+            draft.formalityLevel = suggestion.formalityLevel
+        }
+        if fields.contains(.warmth) {
+            draft.warmthLevel = suggestion.warmthLevel
+        }
     }
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
@@ -1288,8 +1321,14 @@ struct AddEditItemView: View {
     }
 
     private func localizedSuggestionColor(for value: String) -> String {
-        ColorResolver.localizedDisplayColor(from: value)
-            ?? value.trimmingCharacters(in: .whitespacesAndNewlines)
+        normalizedSuggestionColorForStorage(value)
+    }
+
+    private func normalizedSuggestionColorForStorage(_ value: String) -> String {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ColorResolver.localizedDisplayColor(from: trimmedValue)
+            ?? ColorResolver.safeDisplayColor(from: trimmedValue)
+            ?? trimmedValue
     }
 
     private func suggestionStatusIcon(for outcome: PhotoTaggingOutcome) -> String {

@@ -165,7 +165,7 @@ enum ColorResolver {
 
     private static func chineseDisplayAlias(for rawColor: String) -> String? {
         let words = normalizedWords(rawColor)
-        if let pattern = words.first(where: { allowedEnglishPatternTokens.contains($0) }) {
+        if let pattern = words.first(where: { allowedEnglishPatternTokens.contains($0) && !["solid", "plain"].contains($0) }) {
             let colorWords = words.filter { allowedEnglishColorTokens.contains($0) }
             if colorWords.isEmpty == false {
                 let colors = colorWords
@@ -175,6 +175,22 @@ enum ColorResolver {
                 if colors.isEmpty == false {
                     return "\(colors)\(chinesePatternTokenAlias(pattern))"
                 }
+            }
+        }
+
+        let colorWords = words.filter { allowedEnglishColorTokens.contains($0) }
+        if colorWords.isEmpty == false {
+            let colors = colorWords
+                .prefix(2)
+                .compactMap(chineseColorTokenAlias)
+                .joined()
+            if colors.isEmpty == false {
+                let modifiers = words
+                    .filter { allowedEnglishModifiers.contains($0) }
+                    .prefix(1)
+                    .map(chineseModifierTokenAlias)
+                    .joined()
+                return "\(modifiers)\(colors)色"
             }
         }
 
@@ -286,6 +302,21 @@ enum ColorResolver {
         }
     }
 
+    private static func chineseModifierTokenAlias(_ token: String) -> String {
+        switch token {
+        case "light", "pale", "soft":
+            "浅"
+        case "dark", "deep":
+            "深"
+        case "dusty", "muted":
+            "灰调"
+        case "bright":
+            "亮"
+        default:
+            ""
+        }
+    }
+
     private static func containsRejectedClothingNoun(in color: String) -> Bool {
         let words = color
             .split { $0 == " " || $0 == "-" }
@@ -306,7 +337,7 @@ enum ColorResolver {
     ]
 
     private static let allowedEnglishModifiers: Set<String> = [
-        "light", "dark", "pale", "deep", "soft", "bright", "muted"
+        "light", "dark", "pale", "deep", "soft", "bright", "muted", "dusty"
     ]
 
     private static let allowedEnglishPatternTokens: Set<String> = [

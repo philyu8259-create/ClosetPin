@@ -91,6 +91,11 @@ struct ProcessedClosetPhotoData {
 }
 
 struct ClothingPhotoProcessor {
+    private struct MaskComponent {
+        let count: Int
+        let score: Double
+    }
+
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
         if let foregroundImage = visionForegroundDisplayImage(in: image) {
             return foregroundImage
@@ -145,7 +150,8 @@ struct ClothingPhotoProcessor {
         guard let maskedCGImage = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
 
         let maskedImage = UIImage(cgImage: maskedCGImage, scale: image.scale, orientation: .up)
-        return compositedForegroundImage(maskedImage)
+        let cleanedImage = cleanedMaskedForegroundImage(maskedImage) ?? maskedImage
+        return compositedForegroundImage(cleanedImage)
     }
 
     private static func compositedForegroundImage(_ image: UIImage) -> UIImage {
@@ -157,6 +163,106 @@ struct ClothingPhotoProcessor {
             context.fill(CGRect(origin: .zero, size: image.size))
             image.draw(in: CGRect(origin: .zero, size: image.size))
         }
+    }
+
+    private static func cleanedMaskedForegroundImage(_ image: UIImage) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 2, height > 2 else { return nil }
+
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        let totalPixels = width * height
+        var visited = [Bool](repeating: false, count: totalPixels)
+        var componentIDs = [Int](repeating: -1, count: totalPixels)
+        var components: [MaskComponent] = []
+        let minimumComponentPixels = max(48, totalPixels / 9000)
+
+        for index in 0..<totalPixels where !visited[index] && alphaIsVisible(in: pixels, index: index, bytesPerPixel: bytesPerPixel) {
+            let componentID = components.count
+            var stack = [index]
+            visited[index] = true
+            componentIDs[index] = componentID
+            var count = 0
+            var sumX = 0
+            var sumY = 0
+
+            while let current = stack.popLast() {
+                let x = current % width
+                let y = current / width
+                count += 1
+                sumX += x
+                sumY += y
+
+                let neighbors = [
+                    x > 0 ? current - 1 : nil,
+                    x < width - 1 ? current + 1 : nil,
+                    y > 0 ? current - width : nil,
+                    y < height - 1 ? current + width : nil
+                ].compactMap { $0 }
+
+                for neighbor in neighbors where !visited[neighbor] && alphaIsVisible(in: pixels, index: neighbor, bytesPerPixel: bytesPerPixel) {
+                    visited[neighbor] = true
+                    componentIDs[neighbor] = componentID
+                    stack.append(neighbor)
+                }
+            }
+
+            let centerX = Double(sumX) / Double(max(count, 1)) / Double(width)
+            let centerY = Double(sumY) / Double(max(count, 1)) / Double(height)
+            let centerDistance = hypot(centerX - 0.5, centerY - 0.5)
+            let score = Double(count) * max(0.35, 1.25 - centerDistance)
+            components.append(MaskComponent(
+                count: count,
+                score: score
+            ))
+        }
+
+        let validComponents = components.enumerated()
+            .filter { $0.element.count >= minimumComponentPixels }
+        guard validComponents.count > 1,
+              let bestComponent = validComponents.max(by: { $0.element.score < $1.element.score }) else {
+            return nil
+        }
+
+        let keepThreshold = max(minimumComponentPixels, Int(Double(bestComponent.element.count) * 0.28))
+        let keptComponentIDs = Set(validComponents.compactMap { id, component in
+            component.count >= keepThreshold || id == bestComponent.offset ? id : nil
+        })
+        guard keptComponentIDs.count < components.count else { return nil }
+
+        for index in 0..<totalPixels where !keptComponentIDs.contains(componentIDs[index]) {
+            let offset = index * bytesPerPixel
+            pixels[offset] = 0
+            pixels[offset + 1] = 0
+            pixels[offset + 2] = 0
+            pixels[offset + 3] = 0
+        }
+
+        guard let cleanedCGImage = context.makeImage() else { return nil }
+        return UIImage(cgImage: cleanedCGImage, scale: image.scale, orientation: .up)
+    }
+
+    private static func alphaIsVisible(in pixels: [UInt8], index: Int, bytesPerPixel: Int) -> Bool {
+        pixels[index * bytesPerPixel + 3] > 12
     }
 
     private static func visionForegroundCropRect(in image: UIImage) -> CGRect? {
