@@ -121,6 +121,8 @@ struct ClothingPhotoProcessor {
     private struct MaskComponent {
         let count: Int
         let score: Double
+        let touchesEdge: Bool
+        let centerDistance: Double
     }
 
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
@@ -132,7 +134,8 @@ struct ClothingPhotoProcessor {
                 ?? centeredGarmentCropRect(in: image)
                 ?? saliencyCropRect(in: image)
                 ?? foregroundCropRect(in: image) else { return image }
-        return croppedImage(from: image, cropRect: cropRect)
+        let croppedImage = croppedImage(from: image, cropRect: cropRect)
+        return imageByRemovingCornerBackground(from: croppedImage) ?? croppedImage
     }
 
     private static func croppedImage(from image: UIImage, cropRect: CGRect) -> UIImage {
@@ -179,10 +182,11 @@ struct ClothingPhotoProcessor {
 
         let maskedImage = UIImage(cgImage: maskedCGImage, scale: image.scale, orientation: .up)
         let cleanedImage = cleanedMaskedForegroundImage(maskedImage) ?? maskedImage
-        guard foregroundMaskLooksUsable(cleanedImage, sourceSize: image.size) else {
+        let displayImage = imageByRemovingCornerBackground(from: cleanedImage) ?? cleanedImage
+        guard foregroundMaskLooksUsable(displayImage, sourceSize: image.size) else {
             return nil
         }
-        return cleanedImage
+        return displayImage
     }
 
     private static func cleanedMaskedForegroundImage(_ image: UIImage) -> UIImage? {
@@ -224,6 +228,10 @@ struct ClothingPhotoProcessor {
             var count = 0
             var sumX = 0
             var sumY = 0
+            var minX = width
+            var minY = height
+            var maxX = 0
+            var maxY = 0
 
             while let current = stack.popLast() {
                 let x = current % width
@@ -231,6 +239,10 @@ struct ClothingPhotoProcessor {
                 count += 1
                 sumX += x
                 sumY += y
+                minX = min(minX, x)
+                minY = min(minY, y)
+                maxX = max(maxX, x)
+                maxY = max(maxY, y)
 
                 let neighbors = [
                     x > 0 ? current - 1 : nil,
@@ -249,25 +261,48 @@ struct ClothingPhotoProcessor {
             let centerX = Double(sumX) / Double(max(count, 1)) / Double(width)
             let centerY = Double(sumY) / Double(max(count, 1)) / Double(height)
             let centerDistance = hypot(centerX - 0.5, centerY - 0.5)
+            let touchesEdge = minX == 0 || minY == 0 || maxX == width - 1 || maxY == height - 1
             let score = Double(count) * max(0.35, 1.25 - centerDistance)
             components.append(MaskComponent(
                 count: count,
-                score: score
+                score: score,
+                touchesEdge: touchesEdge,
+                centerDistance: centerDistance
             ))
         }
 
         let validComponents = components.enumerated()
             .filter { $0.element.count >= minimumComponentPixels }
-        guard validComponents.count > 1,
+        guard !validComponents.isEmpty,
               let bestComponent = validComponents.max(by: { $0.element.score < $1.element.score }) else {
             return nil
         }
 
-        let keepThreshold = max(minimumComponentPixels, Int(Double(bestComponent.element.count) * 0.28))
-        let keptComponentIDs = Set(validComponents.compactMap { id, component in
-            component.count >= keepThreshold || id == bestComponent.offset ? id : nil
-        })
-        guard keptComponentIDs.count < components.count else { return nil }
+        let keepThreshold = max(minimumComponentPixels, Int(Double(bestComponent.element.count) * 0.25))
+        let visibleCount = validComponents.reduce(0) { $0 + $1.element.count }
+        let visibleRatio = Double(visibleCount) / Double(max(totalPixels, 1))
+        guard visibleRatio > 0.035, visibleRatio < 0.94 else { return nil }
+        var keptComponentIDs = Set<Int>()
+        for component in validComponents {
+            if component.offset == bestComponent.offset || component.element.count >= keepThreshold {
+                if isLikelyBackgroundSlab(
+                    component.element,
+                    comparedTo: bestComponent.element,
+                    totalPixels: totalPixels
+                ) {
+                    continue
+                }
+                keptComponentIDs.insert(component.offset)
+            }
+        }
+        guard !keptComponentIDs.isEmpty else { return nil }
+
+        var keptVisibleCount = 0
+        for index in 0..<totalPixels where keptComponentIDs.contains(componentIDs[index]) {
+            keptVisibleCount += 1
+        }
+        let keptVisibleRatio = Double(keptVisibleCount) / Double(max(totalPixels, 1))
+        guard keptVisibleRatio > 0.01, keptVisibleRatio < 0.94 else { return nil }
 
         for index in 0..<totalPixels where !keptComponentIDs.contains(componentIDs[index]) {
             let offset = index * bytesPerPixel
@@ -281,8 +316,154 @@ struct ClothingPhotoProcessor {
         return UIImage(cgImage: cleanedCGImage, scale: image.scale, orientation: .up)
     }
 
+    private static func isLikelyBackgroundSlab(
+        _ component: MaskComponent,
+        comparedTo bestComponent: MaskComponent,
+        totalPixels: Int
+    ) -> Bool {
+        let isLarge = component.count > max(
+            totalPixels / 5,
+            Int(Double(bestComponent.count) * 0.7)
+        )
+        let isPeripheral = component.centerDistance > 0.18
+        return component.touchesEdge && isLarge && isPeripheral
+    }
+
     private static func alphaIsVisible(in pixels: [UInt8], index: Int, bytesPerPixel: Int) -> Bool {
         pixels[index * bytesPerPixel + 3] > 12
+    }
+
+    private static func imageByRemovingCornerBackground(from image: UIImage) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 12, height > 12 else { return nil }
+
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let background = averageVisibleCornerColor(in: pixels, width: width, height: height, bytesPerRow: bytesPerRow) else {
+            return nil
+        }
+
+        var visibleCount = 0
+        var removedCount = 0
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * bytesPerPixel
+                let alpha = pixels[offset + 3]
+                guard alpha > 20 else { continue }
+
+                visibleCount += 1
+                let difference = abs(Int(pixels[offset]) - background.red)
+                    + abs(Int(pixels[offset + 1]) - background.green)
+                    + abs(Int(pixels[offset + 2]) - background.blue)
+                if difference < 82 {
+                    pixels[offset] = 0
+                    pixels[offset + 1] = 0
+                    pixels[offset + 2] = 0
+                    pixels[offset + 3] = 0
+                    removedCount += 1
+                }
+            }
+        }
+
+        let minimumRemovedPixels = max(24, visibleCount / 18)
+        guard removedCount >= minimumRemovedPixels,
+              removedCount < Int(Double(visibleCount) * 0.82),
+              let visibleBounds = alphaBounds(in: pixels, width: width, height: height, bytesPerPixel: bytesPerPixel),
+              let cleanedCGImage = context.makeImage() else {
+            return nil
+        }
+
+        let paddedBounds = paddedAlphaBounds(visibleBounds, imageSize: CGSize(width: width, height: height))
+        guard let croppedCGImage = cleanedCGImage.cropping(to: paddedBounds) else { return nil }
+        return UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: .up)
+    }
+
+    private static func averageVisibleCornerColor(
+        in pixels: [UInt8],
+        width: Int,
+        height: Int,
+        bytesPerRow: Int
+    ) -> (red: Int, green: Int, blue: Int)? {
+        let sampleSize = max(3, min(width, height, 18))
+        let origins = [
+            (x: 0, y: 0),
+            (x: width - sampleSize, y: 0),
+            (x: 0, y: height - sampleSize),
+            (x: width - sampleSize, y: height - sampleSize)
+        ]
+        var red = 0
+        var green = 0
+        var blue = 0
+        var count = 0
+
+        for origin in origins {
+            for y in origin.y..<(origin.y + sampleSize) {
+                for x in origin.x..<(origin.x + sampleSize) {
+                    let offset = y * bytesPerRow + x * 4
+                    guard pixels[offset + 3] > 20 else { continue }
+                    red += Int(pixels[offset])
+                    green += Int(pixels[offset + 1])
+                    blue += Int(pixels[offset + 2])
+                    count += 1
+                }
+            }
+        }
+
+        guard count >= sampleSize else { return nil }
+        return (red / count, green / count, blue / count)
+    }
+
+    private static func alphaBounds(
+        in pixels: [UInt8],
+        width: Int,
+        height: Int,
+        bytesPerPixel: Int
+    ) -> CGRect? {
+        var minX = width
+        var minY = height
+        var maxX = 0
+        var maxY = 0
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let index = y * width + x
+                if alphaIsVisible(in: pixels, index: index, bytesPerPixel: bytesPerPixel) {
+                    minX = min(minX, x)
+                    minY = min(minY, y)
+                    maxX = max(maxX, x)
+                    maxY = max(maxY, y)
+                }
+            }
+        }
+
+        guard minX <= maxX, minY <= maxY else { return nil }
+        return CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
+    }
+
+    private static func paddedAlphaBounds(_ bounds: CGRect, imageSize: CGSize) -> CGRect {
+        let padding = max(2, max(bounds.width, bounds.height) * 0.04)
+        return bounds
+            .insetBy(dx: -padding, dy: -padding)
+            .intersection(CGRect(origin: .zero, size: imageSize))
+            .integral
     }
 
     private static func foregroundMaskLooksUsable(_ image: UIImage, sourceSize: CGSize) -> Bool {
@@ -315,6 +496,41 @@ struct ClothingPhotoProcessor {
         var minY = height
         var maxX = 0
         var maxY = 0
+        var largestComponent = 0
+        var largestEdgeComponent = 0
+        let totalPixels = width * height
+
+        var visited = [Bool](repeating: false, count: totalPixels)
+        for index in 0..<totalPixels where !visited[index] && alphaIsVisible(in: pixels, index: index, bytesPerPixel: bytesPerPixel) {
+            var stack = [index]
+            visited[index] = true
+            var componentCount = 0
+            var touchesEdge = false
+
+            while let current = stack.popLast() {
+                let x = current % width
+                let y = current / width
+                componentCount += 1
+                touchesEdge = touchesEdge || x == 0 || y == 0 || x == width - 1 || y == height - 1
+
+                let neighbors = [
+                    x > 0 ? current - 1 : nil,
+                    x < width - 1 ? current + 1 : nil,
+                    y > 0 ? current - width : nil,
+                    y < height - 1 ? current + width : nil
+                ].compactMap { $0 }
+
+                for neighbor in neighbors where !visited[neighbor] && alphaIsVisible(in: pixels, index: neighbor, bytesPerPixel: bytesPerPixel) {
+                    visited[neighbor] = true
+                    stack.append(neighbor)
+                }
+            }
+
+            largestComponent = max(largestComponent, componentCount)
+            if touchesEdge {
+                largestEdgeComponent = max(largestEdgeComponent, componentCount)
+            }
+        }
 
         for y in 0..<height {
             for x in 0..<width {
@@ -329,9 +545,15 @@ struct ClothingPhotoProcessor {
             }
         }
 
-        let totalPixels = width * height
         let visibleRatio = Double(visibleCount) / Double(max(totalPixels, 1))
-        guard visibleRatio > 0.045, visibleRatio < 0.995, minX <= maxX, minY <= maxY else {
+        let edgeDominanceRatio = Double(largestEdgeComponent) / Double(max(totalPixels, 1))
+        let dominantRatio = Double(largestComponent) / Double(max(totalPixels, 1))
+        guard visibleRatio > 0.045,
+              visibleRatio < 0.995,
+              edgeDominanceRatio < 0.45,
+              dominantRatio < 0.97,
+              minX <= maxX,
+              minY <= maxY else {
             return false
         }
 
@@ -607,6 +829,9 @@ struct ClothingPhotoProcessor {
             let centerDistance = hypot(centroidX - 0.5, centroidY - 0.48)
             let widthRatio = Double(maxX - minX + 1) / Double(width)
             let heightRatio = Double(maxY - minY + 1) / Double(height)
+            let touchesEdge = minX == 0 || minY == 0 || maxX == width - 1 || maxY == height - 1
+            let componentAreaRatio = Double(count) / Double(max(1, width * height))
+            guard !(touchesEdge && componentAreaRatio > 0.18) else { continue }
             guard widthRatio > 0.12, heightRatio > 0.16 else { continue }
 
             let score = Double(count) * max(0.25, 1.25 - centerDistance)
@@ -711,7 +936,7 @@ struct ClothingPhotoProcessor {
 
         let sourceArea = sourceSize.width * sourceSize.height
         let cropArea = paddedRect.width * paddedRect.height
-        guard cropArea < sourceArea * 0.94, cropArea > sourceArea * 0.04 else { return nil }
+        guard cropArea < sourceArea * 0.82, cropArea > sourceArea * 0.06 else { return nil }
 
         return paddedRect
     }
