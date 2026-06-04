@@ -300,20 +300,23 @@ struct AddEditItemView: View {
                     }
                 }
 
-                HStack(spacing: 10) {
+                VStack(spacing: 10) {
                     Button {
                         openCameraForPhoto()
                     } label: {
                         Label(L10n.text("closet.photo.take"), systemImage: "camera")
                             .frame(maxWidth: .infinity)
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.accent)
                     .disabled(photoPreparationState.isBusy || !UIImagePickerController.isSourceTypeAvailable(.camera))
                     .accessibilityIdentifier("takePhotoButton")
 
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                         Label(L10n.text("closet.photo.choose_library"), systemImage: "photo.on.rectangle")
                             .frame(maxWidth: .infinity)
+                            .lineLimit(1)
                     }
                     .buttonStyle(.bordered)
                     .disabled(photoPreparationState.isBusy)

@@ -476,6 +476,10 @@ private struct PreferenceOptionButton: View {
 
 private struct FormalityControl: View {
     @Binding var value: Int
+    private let levels = [1, 2, 3, 4, 5]
+    private let columns = [
+        GridItem(.adaptive(minimum: 110, maximum: .infinity), spacing: DesignSystem.Spacing.xs),
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
@@ -483,40 +487,34 @@ private struct FormalityControl: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
 
-            HStack(spacing: DesignSystem.Spacing.md) {
-                SettingsRoundButton(
-                    systemImage: "minus",
-                    accessibilityLabel: L10n.text("settings.formality.decrease"),
-                    accessibilityIdentifier: "settingsFormalityDecreaseButton",
-                    isDisabled: value <= 1
-                ) {
-                    value = max(1, value - 1)
-                }
+            LazyVGrid(columns: columns, spacing: DesignSystem.Spacing.xs) {
+                ForEach(levels, id: \.self) { option in
+                    let isSelected = value == option
 
-                VStack(spacing: 4) {
-                    Text(preferredFormalityLabel(value))
-                        .font(DesignSystem.editorialDisplayFont(size: 34))
-                        .foregroundStyle(DesignSystem.ink)
-
-                    Text(L10n.text("settings.formality.scale"))
-                        .font(.caption)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(DesignSystem.surface.opacity(0.86))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
-
-                SettingsRoundButton(
-                    systemImage: "plus",
-                    accessibilityLabel: L10n.text("settings.formality.increase"),
-                    accessibilityIdentifier: "settingsFormalityIncreaseButton",
-                    isDisabled: value >= 5
-                ) {
-                    value = min(5, value + 1)
+                    Button {
+                        value = option
+                    } label: {
+                        Text(preferredFormalityLabel(option))
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(isSelected ? .white : DesignSystem.ink)
+                            .background(isSelected ? DesignSystem.accent : DesignSystem.paper)
+                            .clipShape(Capsule(style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .overlay {
+                        Capsule(style: .continuous)
+                            .stroke(isSelected ? DesignSystem.accent.opacity(0.2) : DesignSystem.border.opacity(0.75), lineWidth: 1)
+                    }
+                    .accessibilityIdentifier("formalityLevel_\(option)")
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
+            .padding(.bottom, 2)
         }
     }
 }

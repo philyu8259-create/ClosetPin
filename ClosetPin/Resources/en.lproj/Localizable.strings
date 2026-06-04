@@ -60,7 +60,7 @@
 "closet.photo.section" = "Photo";
 "closet.photo.camera_unavailable" = "Camera is not available on this device.";
 "closet.photo.take" = "Take Photo";
-"closet.photo.choose_library" = "Choose from Library";
+"closet.photo.choose_library" = "Choose from Photos";
 "closet.photo.help" = "Add a clear photo for this piece.";
 "closet.photo.use_test" = "Use Test Photo";
 "closet.photo.ready" = "Photo ready to save.";

@@ -60,7 +60,7 @@
 "closet.photo.section" = "照片";
 "closet.photo.camera_unavailable" = "此设备无法使用相机。";
 "closet.photo.take" = "拍照";
-"closet.photo.choose_library" = "从照片图库选择";
+"closet.photo.choose_library" = "从相册选择";
 "closet.photo.help" = "为这件单品添加一张清晰照片。";
 "closet.photo.use_test" = "使用测试照片";
 "closet.photo.ready" = "照片已准备保存。";
