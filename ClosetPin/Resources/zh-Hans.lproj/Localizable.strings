@@ -85,6 +85,8 @@
 "closet.photo.original_not_ready" = "如果原图可用，会在这里显示。";
 "closet.photo.retake" = "重拍";
 "closet.photo.replace" = "替换照片";
+"closet.photo.rotate" = "旋转";
+"closet.photo.rotate_failed" = "无法旋转照片。请再试一次。";
 "closet.photo.adjust_crop" = "调整裁剪";
 "closet.photo.ai_suggestion.title" = "AI 建议确认";
 "closet.photo.ai_suggestion.type" = "类型";
@@ -209,6 +211,7 @@
 "today.season.auto_note" = "ClosetPin 会先按系统日期判断季节，日常使用不需要每天手动选择。";
 "today.edit.kicker" = "今日编辑";
 "today.visual.kicker" = "穿搭预览";
+"today.preview.count.format" = "%d 件单品";
 "today.tomorrow.prep.title" = "明日准备";
 "today.tomorrow.weather_summary.format" = "明日：%@。%d℃ - %d℃。降水 %d%% · 风速 %d 公里/小时";
 "today.tomorrow.weather_status.title" = "明日天气";

@@ -52,6 +52,20 @@ struct RecommendationEngine {
             weatherContext: weatherContext,
             category: .outerwear
         ) : []
+        let bags = filteredAndPreselected(
+            groupedItems[.bag] ?? [],
+            threshold: threshold,
+            targetFormality: targetFormality,
+            weatherContext: weatherContext,
+            category: .bag
+        )
+        let accessories = filteredAndPreselected(
+            groupedItems[.accessory] ?? [],
+            threshold: threshold,
+            targetFormality: targetFormality,
+            weatherContext: weatherContext,
+            category: .accessory
+        )
 
         let isHotMeeting = input.scenario == .importantMeeting && (weatherContext?.isHot == true)
         let requiresBlazerForMeeting = input.scenario == .importantMeeting && !(weatherContext?.isHot == true)
@@ -67,6 +81,8 @@ struct RecommendationEngine {
                 shoes: shoes,
                 blazers: [],
                 outerwear: outerwear,
+                bags: bags,
+                accessories: accessories,
                 targetFormality: targetFormality,
                 requiresBlazer: false,
                 weatherContext: weatherContext
@@ -79,6 +95,8 @@ struct RecommendationEngine {
                 shoes: shoes,
                 blazers: blazers,
                 outerwear: outerwear,
+                bags: bags,
+                accessories: accessories,
                 targetFormality: targetFormality,
                 requiresBlazer: false,
                 weatherContext: weatherContext
@@ -91,6 +109,8 @@ struct RecommendationEngine {
                 shoes: shoes,
                 blazers: blazerCandidatesForMeeting,
                 outerwear: outerwear,
+                bags: bags,
+                accessories: accessories,
                 targetFormality: targetFormality,
                 requiresBlazer: requiresBlazerForMeeting,
                 weatherContext: weatherContext
@@ -121,7 +141,7 @@ private extension RecommendationEngine {
     }
 
     var recommendableTypes: Set<ClothingType> {
-        [.top, .bottom, .shoes, .blazer, .outerwear]
+        [.top, .bottom, .shoes, .blazer, .outerwear, .bag, .accessory]
     }
 
     func requiredFormality(for scenario: OutfitScenario) -> Int {
@@ -189,6 +209,8 @@ private extension RecommendationEngine {
         shoes: [ClothingItem],
         blazers: [ClothingItem],
         outerwear: [ClothingItem],
+        bags: [ClothingItem],
+        accessories: [ClothingItem],
         targetFormality: Int,
         requiresBlazer: Bool = false,
         weatherContext: TomorrowWeatherContext?
@@ -215,7 +237,13 @@ private extension RecommendationEngine {
                             for blazer in blazers {
                                 candidates.append(makeCandidate(
                                     scenario: scenario,
-                                    items: baseItems + [blazer],
+                                    items: enrichedItems(
+                                        baseItems + [blazer],
+                                        bags: bags,
+                                        accessories: accessories,
+                                        targetFormality: targetFormality,
+                                        weatherContext: weatherContext
+                                    ),
                                     targetFormality: targetFormality,
                                     weatherContext: weatherContext
                                 ))
@@ -223,7 +251,13 @@ private extension RecommendationEngine {
                         } else {
                             candidates.append(makeCandidate(
                                 scenario: scenario,
-                                items: baseItems,
+                                items: enrichedItems(
+                                    baseItems,
+                                    bags: bags,
+                                    accessories: accessories,
+                                    targetFormality: targetFormality,
+                                    weatherContext: weatherContext
+                                ),
                                 targetFormality: targetFormality,
                                 weatherContext: weatherContext
                             ))
@@ -231,7 +265,13 @@ private extension RecommendationEngine {
                             for blazer in blazers {
                                 candidates.append(makeCandidate(
                                     scenario: scenario,
-                                    items: baseItems + [blazer],
+                                    items: enrichedItems(
+                                        baseItems + [blazer],
+                                        bags: bags,
+                                        accessories: accessories,
+                                        targetFormality: targetFormality,
+                                        weatherContext: weatherContext
+                                    ),
                                     targetFormality: targetFormality,
                                     weatherContext: weatherContext
                                 ))
@@ -243,6 +283,61 @@ private extension RecommendationEngine {
         }
 
         return candidates
+    }
+
+    func enrichedItems(
+        _ baseItems: [ClothingItem],
+        bags: [ClothingItem],
+        accessories: [ClothingItem],
+        targetFormality: Int,
+        weatherContext: TomorrowWeatherContext?
+    ) -> [ClothingItem] {
+        var items = baseItems
+
+        if let bag = bestOptionalItem(from: bags, excluding: items, targetFormality: targetFormality, weatherContext: weatherContext) {
+            items.append(bag)
+        }
+
+        if let accessory = bestOptionalItem(from: accessories, excluding: items, targetFormality: targetFormality, weatherContext: weatherContext) {
+            items.append(accessory)
+        }
+
+        return items
+    }
+
+    func bestOptionalItem(
+        from options: [ClothingItem],
+        excluding selectedItems: [ClothingItem],
+        targetFormality: Int,
+        weatherContext: TomorrowWeatherContext?
+    ) -> ClothingItem? {
+        let selectedIDs = Set(selectedItems.map(\.id))
+
+        return options
+            .filter { !selectedIDs.contains($0.id) }
+            .max { lhs, rhs in
+                let lhsScore = optionalItemScore(lhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
+                let rhsScore = optionalItemScore(rhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
+                if lhsScore != rhsScore {
+                    return lhsScore < rhsScore
+                }
+                return lhs.id.uuidString > rhs.id.uuidString
+            }
+    }
+
+    func optionalItemScore(
+        _ item: ClothingItem,
+        selectedItems: [ClothingItem],
+        targetFormality: Int,
+        weatherContext: TomorrowWeatherContext?
+    ) -> Int {
+        let type = item.resolvedType ?? .accessory
+        let formalityFit = max(0, 5 - abs(item.formalityLevel - targetFormality)) * 4
+        let weatherFit = weatherSuitabilityScore(for: item, type: type, in: weatherContext)
+        let repeatedColorBonus = selectedItems.contains { $0.displayColor == item.displayColor } ? 4 : 0
+        let neutralBonus = ColorResolver.localizedDisplayColor(from: item.color) != nil ? 2 : 0
+
+        return formalityFit + weatherFit + repeatedColorBonus + neutralBonus
     }
 
     func makeCandidate(

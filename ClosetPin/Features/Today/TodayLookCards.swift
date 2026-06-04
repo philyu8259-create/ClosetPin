@@ -41,22 +41,74 @@ struct TodayEditorialHero: View {
                 }
             }
 
-            EditorialImageSurface(
-                image: coverImage,
-                height: 148
-            ) {
-                Text(L10n.text("today.visual.kicker"))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-            }
+            OutfitHeroPreviewSurface(items: candidate.items)
             .allowsHitTesting(false)
 
             TodayIncludedItemsSection(items: candidate.items, index: 0)
         }
     }
+}
 
-    private var coverImage: UIImage? {
-        candidate.items.compactMap { WardrobePhoto.localImage(for: $0) }.first
+private struct OutfitHeroPreviewSurface: View {
+    let items: [ClothingItem]
+
+    private var visualItems: [OutfitVisualItem] {
+        OutfitVisualItem.makeItems(from: items)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(L10n.text("today.visual.kicker"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignSystem.accent)
+
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Text(L10n.string("today.preview.count.format", arguments: visualItems.count))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(DesignSystem.secondaryInk)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(visualItems) { visualItem in
+                        VStack(alignment: .leading, spacing: 5) {
+                            WardrobePhotoThumbnail(
+                                image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
+                                fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
+                                cornerRadius: 12,
+                                contentMode: .fit
+                            )
+                            .frame(width: 112, height: 112)
+
+                            Text(visualItem.type.displayName)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(DesignSystem.ink)
+                                .lineLimit(1)
+                        }
+                        .frame(width: 112, alignment: .topLeading)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            LinearGradient(
+                colors: [
+                    DesignSystem.surface.opacity(0.96),
+                    DesignSystem.paper.opacity(0.9)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.55), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 8)
     }
 }
 

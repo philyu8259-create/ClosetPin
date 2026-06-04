@@ -420,6 +420,16 @@ struct AddEditItemView: View {
                     .disabled(photoPreparationState.isBusy)
                     .accessibilityIdentifier("photoReplaceButton")
 
+                    Button {
+                        rotatePendingPhotoClockwise()
+                    } label: {
+                        Label(L10n.text("closet.photo.rotate"), systemImage: "rotate.right")
+                            .font(.footnote.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(photoPreparationState.isBusy || !hasPendingPhotoData)
+                    .accessibilityIdentifier("photoRotateButton")
+
                     Spacer()
                 }
 
@@ -483,6 +493,10 @@ struct AddEditItemView: View {
             return UIImage(data: data)
         }
         return WardrobePhoto.localImage(at: draft.originalPhotoLocalPath)
+    }
+
+    private var hasPendingPhotoData: Bool {
+        draft.pendingOriginalPhotoJPEGData != nil || draft.pendingPhotoJPEGData != nil
     }
 
     private var previewImage: UIImage? {
@@ -800,8 +814,8 @@ struct AddEditItemView: View {
                     imageStore: imageStore
                 )
                 stagedWrite = write
-                finalizedDraft.photoLocalPath = write.display.finalURL.path
-                finalizedDraft.originalPhotoLocalPath = write.original.finalURL.path
+                finalizedDraft.photoLocalPath = imageStore.storagePath(for: write.display.finalURL)
+                finalizedDraft.originalPhotoLocalPath = imageStore.storagePath(for: write.original.finalURL)
                 finalizedDraft.pendingPhotoJPEGData = nil
                 finalizedDraft.pendingOriginalPhotoJPEGData = nil
             }
@@ -923,9 +937,40 @@ struct AddEditItemView: View {
         }
     }
 
+    private func rotatePendingPhotoClockwise() {
+        guard let sourceData = draft.pendingOriginalPhotoJPEGData ?? draft.pendingPhotoJPEGData else { return }
+
+        photoPreparationState = .preparing
+        clearPendingSuggestionReview()
+
+        Task {
+            guard let rotatedData = await rotatedJPEGData(from: sourceData),
+                  let photoData = await prepareProcessedPhotoData(from: rotatedData) else {
+                photoError = L10n.text("closet.photo.rotate_failed")
+                photoPreparationState = .idle
+                return
+            }
+
+            draft.pendingPhotoJPEGData = photoData.displayJPEGData
+            draft.pendingOriginalPhotoJPEGData = photoData.originalJPEGData
+            await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
+            photoPreviewMode = .display
+            showPostSaveGuide = false
+            photoError = nil
+        }
+    }
+
     private func prepareProcessedPhotoData(from data: Data) async -> ProcessedClosetPhotoData? {
         await Task.detached(priority: .userInitiated) {
             ClosetItemPhotoPersistence.processedPhotoData(from: data)
+        }.value
+    }
+
+    private func rotatedJPEGData(from data: Data) async -> Data? {
+        await Task.detached(priority: .userInitiated) {
+            guard let image = UIImage(data: data) else { return nil }
+            let rotatedImage = rotatedImageClockwise(image)
+            return ClosetItemPhotoPersistence.jpegData(from: rotatedImage)
         }.value
     }
 
@@ -1346,6 +1391,30 @@ struct AddEditItemView: View {
         case .localAfterCloudUnavailable:
             "icloud"
         }
+    }
+}
+
+private func rotatedImageClockwise(_ image: UIImage) -> UIImage {
+    let targetSize = CGSize(width: image.size.height, height: image.size.width)
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = image.scale
+
+    return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+        guard let context = UIGraphicsGetCurrentContext() else {
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+            return
+        }
+
+        context.translateBy(x: targetSize.width / 2, y: targetSize.height / 2)
+        context.rotate(by: .pi / 2)
+        image.draw(
+            in: CGRect(
+                x: -image.size.width / 2,
+                y: -image.size.height / 2,
+                width: image.size.width,
+                height: image.size.height
+            )
+        )
     }
 }
 

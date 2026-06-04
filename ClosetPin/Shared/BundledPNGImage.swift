@@ -20,7 +20,8 @@ enum WardrobePhoto {
         let trimmedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPath.isEmpty else { return nil }
 
-        if let image = UIImage(contentsOfFile: trimmedPath) {
+        if let resolvedURL = ImageStore.localURL(for: trimmedPath),
+           let image = UIImage(contentsOfFile: resolvedURL.path) {
             return image
         }
 
@@ -142,9 +143,8 @@ struct OutfitVisualBoard: View {
     let allowsDetailNavigation: Bool
 
     private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
     ]
 
     init(items: [ClothingItem], allowsDetailNavigation: Bool = false) {
@@ -158,7 +158,7 @@ struct OutfitVisualBoard: View {
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
+        LazyVGrid(columns: columns, spacing: 10) {
             ForEach(visualItems) { visualItem in
                 if allowsDetailNavigation, let item = visualItem.item {
                     NavigationLink {
@@ -183,10 +183,12 @@ private struct OutfitVisualTile: View {
         VStack(alignment: .leading, spacing: 6) {
             WardrobePhotoThumbnail(
                 image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
-                fallbackColor: ColorResolver.swatchColor(for: visualItem.color),
-                cornerRadius: 7
+                fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
+                cornerRadius: 10,
+                contentMode: .fit
             )
-            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .frame(height: 132)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(visualItem.type.displayName)
@@ -200,6 +202,15 @@ private struct OutfitVisualTile: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity)
+        .frame(height: 178, alignment: .top)
+        .background(DesignSystem.surface.opacity(0.82))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
         }
         .accessibilityLabel(visualItem.displayName)
     }

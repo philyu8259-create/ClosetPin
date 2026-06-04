@@ -4,40 +4,40 @@ struct GarmentGridCard: View {
     let item: ClothingItem
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            WardrobePhotoThumbnail(item: item, cornerRadius: DesignSystem.Radius.md)
-                .aspectRatio(0.86, contentMode: .fit)
-
-            LinearGradient(
-                colors: [
-                    .clear,
-                    .black.opacity(0.1),
-                    .black.opacity(0.72)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            WardrobePhotoThumbnail(
+                image: WardrobePhoto.localImage(for: item),
+                fallbackColor: ColorResolver.swatchColor(for: item.color).opacity(0.24),
+                cornerRadius: DesignSystem.Radius.md,
+                contentMode: .fit
             )
-            .allowsHitTesting(false)
+            .frame(maxWidth: .infinity)
+            .frame(height: 174)
+            .background(DesignSystem.paper)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                 Text(item.displayColor)
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DesignSystem.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
                 Text(metadataText)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.82))
+                    .foregroundStyle(DesignSystem.secondaryInk)
                     .lineLimit(1)
 
                 statusBadge
             }
-            .padding(DesignSystem.Spacing.md)
+            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .padding(.bottom, DesignSystem.Spacing.sm)
+
+            Spacer(minLength: 0)
         }
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+        .frame(maxWidth: .infinity)
+        .frame(height: 248, alignment: .top)
         .padding(6)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.surface.opacity(0.82))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 12)

@@ -85,6 +85,8 @@
 "closet.photo.original_not_ready" = "Original image will appear if available.";
 "closet.photo.retake" = "Retake";
 "closet.photo.replace" = "Replace photo";
+"closet.photo.rotate" = "Rotate";
+"closet.photo.rotate_failed" = "The photo could not be rotated. Please try again.";
 "closet.photo.adjust_crop" = "Adjust crop";
 "closet.photo.ai_suggestion.title" = "AI suggestion review";
 "closet.photo.ai_suggestion.type" = "Type";
@@ -209,6 +211,7 @@
 "today.season.auto_note" = "ClosetPin starts with your system date so you do not have to choose a season every morning.";
 "today.edit.kicker" = "Today's Edit";
 "today.visual.kicker" = "Outfit preview";
+"today.preview.count.format" = "%d items";
 "today.tomorrow.prep.title" = "Tomorrow Prep";
 "today.tomorrow.weather_summary.format" = "Tomorrow: %@. %d°C - %d°C. Rain %d%% · Wind %d km/h";
 "today.tomorrow.weather_status.title" = "Tomorrow weather";

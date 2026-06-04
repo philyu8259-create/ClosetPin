@@ -79,9 +79,8 @@ struct ClosetItemPhotoPersistence {
     }
 
     private static func removePhoto(at path: String) {
-        guard !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              FileManager.default.fileExists(atPath: path) else { return }
-        try? FileManager.default.removeItem(atPath: path)
+        guard let url = ImageStore.localURL(for: path) else { return }
+        try? FileManager.default.removeItem(at: url)
     }
 }
 
