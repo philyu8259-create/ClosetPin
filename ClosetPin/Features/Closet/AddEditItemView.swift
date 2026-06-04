@@ -967,7 +967,7 @@ struct AddEditItemView: View {
 
     private func applyPendingPhotoSuggestion() {
         guard let pendingPhotoSuggestion else { return }
-        applyPendingPhotoSuggestion(fields: suggestedChangeFields(for: pendingPhotoSuggestion))
+        applyPendingPhotoSuggestion(fields: applicableSuggestionFields(for: pendingPhotoSuggestion))
     }
 
     private func applyPendingPhotoSuggestion(fields: Set<PhotoSuggestionField>) {
@@ -980,7 +980,6 @@ struct AddEditItemView: View {
             return
         }
 
-        appliedPhotoSuggestionSummary = appliedSuggestionSummary(for: fields)
         if fields.contains(.type) {
             draft.type = suggestion.type
         }
@@ -997,6 +996,7 @@ struct AddEditItemView: View {
             draft.warmthLevel = suggestion.warmthLevel
         }
 
+        appliedPhotoSuggestionSummary = appliedSuggestionSummary(for: fields, suggestion: suggestion)
         self.pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
         didApplyLatestSuggestion = true
@@ -1146,15 +1146,41 @@ struct AddEditItemView: View {
         return changes
     }
 
-    private func suggestedChangeFields(for suggestion: ClothingPhotoTagSuggestion) -> Set<PhotoSuggestionField> {
-        Set(suggestedChanges(for: suggestion).map(\.field))
+    private func applicableSuggestionFields(for suggestion: ClothingPhotoTagSuggestion) -> Set<PhotoSuggestionField> {
+        var fields: Set<PhotoSuggestionField> = [.type, .formality, .warmth]
+        if !suggestion.color.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            fields.insert(.color)
+        }
+        if !suggestion.seasons.isEmpty {
+            fields.insert(.seasons)
+        }
+        return fields
     }
 
-    private func appliedSuggestionSummary(for fields: Set<PhotoSuggestionField>) -> String {
+    private func appliedSuggestionSummary(for fields: Set<PhotoSuggestionField>, suggestion: ClothingPhotoTagSuggestion) -> String {
         PhotoSuggestionField.allCases
             .filter { fields.contains($0) }
-            .map(suggestionFieldLabel)
+            .map { appliedSuggestionValue(for: $0, suggestion: suggestion) }
             .joined(separator: " · ")
+    }
+
+    private func appliedSuggestionValue(for field: PhotoSuggestionField, suggestion: ClothingPhotoTagSuggestion) -> String {
+        switch field {
+        case .type:
+            return "\(suggestionFieldLabel(for: field)): \(suggestion.type.displayName)"
+        case .color:
+            return "\(suggestionFieldLabel(for: field)): \(localizedSuggestionColor(for: suggestion.color))"
+        case .seasons:
+            let seasons = SeasonTag.allCases
+                .filter { suggestion.seasons.contains($0) }
+                .map(\.displayName)
+                .joined(separator: L10n.text("common.list_separator"))
+            return "\(suggestionFieldLabel(for: field)): \(seasons)"
+        case .formality:
+            return "\(suggestionFieldLabel(for: field)): \(formalityLabel(for: suggestion.formalityLevel))"
+        case .warmth:
+            return "\(suggestionFieldLabel(for: field)): \(warmthLabel(for: suggestion.warmthLevel))"
+        }
     }
 
     private func suggestionFieldLabel(for field: PhotoSuggestionField) -> String {

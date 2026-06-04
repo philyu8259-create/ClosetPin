@@ -290,10 +290,18 @@ final class ClosetPinUITests: XCTestCase {
         let saveItemButton = app.buttons["saveItemButton"]
         XCTAssertTrue(saveItemButton.waitForExistence(timeout: 8))
 
-        tapWhenReady(app.buttons["photoSuggestionDebugApplyButton"], in: app, timeout: 8, maxScrolls: 6)
+        tapWhenReady(app.buttons["photoSuggestionUseButton"], in: app, timeout: 8, maxScrolls: 6)
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["photoAutoAppliedTag"].waitForExistence(timeout: 8))
+        let appliedTag = app.staticTexts["photoAutoAppliedTag"]
+        XCTAssertTrue(appliedTag.waitForExistence(timeout: 8))
+        XCTAssertTrue(appliedTag.label.contains("Color: Ivory"))
+        XCTAssertTrue(appliedTag.label.contains("Seasons:"))
+        XCTAssertTrue(appliedTag.label.contains("Warmth:"))
+
+        let colorField = app.textFields["itemColorField"]
+        XCTAssertTrue(colorField.waitForExistence(timeout: 3))
+        XCTAssertEqual(colorField.value as? String, "Ivory")
         XCTAssertTrue(saveItemButton.waitForExistence(timeout: 3))
     }
 
