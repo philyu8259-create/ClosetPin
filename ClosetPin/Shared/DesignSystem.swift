@@ -177,9 +177,9 @@ struct ContextChip<Value: Hashable>: View {
                 .font(.footnote.weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
-                .padding(.horizontal, 13)
-                .padding(.vertical, 8)
-                .frame(minHeight: 34)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .frame(minHeight: 44)
                 .foregroundStyle(isSelected ? .white : DesignSystem.ink)
                 .background(isSelected ? DesignSystem.accent : DesignSystem.paper.opacity(0.96))
                 .clipShape(Capsule(style: .continuous))
@@ -187,6 +187,7 @@ struct ContextChip<Value: Hashable>: View {
                     Capsule(style: .continuous)
                         .stroke(isSelected ? DesignSystem.accent.opacity(0.16) : DesignSystem.border.opacity(0.55), lineWidth: 1)
                 }
+                .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

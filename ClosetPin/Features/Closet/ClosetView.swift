@@ -299,11 +299,14 @@ struct ClosetView: View {
                 searchFieldIsFocused = true
             }
 
-            LazyVGrid(columns: filterChipColumns, alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                ForEach(filterOptions, id: \.self) { option in
-                    ContextChip(title: title(for: option), value: option, selection: $activeFilter)
-                        .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(filterOptions, id: \.self) { option in
+                        ContextChip(title: title(for: option), value: option, selection: $activeFilter)
+                            .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
+                    }
                 }
+                .padding(.vertical, 2)
             }
             .accessibilityIdentifier("closetFilterChips")
         }
@@ -425,11 +428,20 @@ struct ClosetView: View {
             .type(.outerwear)
         ])
 
+        if hasItems(matching: .bag) {
+            options.append(.type(.bag))
+        }
+        if hasItems(matching: .accessory) {
+            options.append(.type(.accessory))
+        }
+
         return options
     }
 
-    private var filterChipColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 128), spacing: DesignSystem.Spacing.sm)]
+    private func hasItems(matching type: ClothingType) -> Bool {
+        items.contains { item in
+            matchesTypeFilter(item, type)
+        }
     }
 
     private func title(for filter: ClosetFilter) -> String {
