@@ -8,32 +8,65 @@ struct TodayDecisionGuideCard: View {
     ]
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.sm) {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
             ForEach(Array(steps.enumerated()), id: \.element.titleKey) { index, step in
-                Label(L10n.text(step.titleKey), systemImage: step.icon)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(index == 1 ? DesignSystem.accent : DesignSystem.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                    .frame(maxWidth: .infinity)
+                DecisionGuideStep(
+                    title: L10n.text(step.titleKey),
+                    icon: step.icon,
+                    isPrimary: index == 1
+                )
 
                 if index < steps.count - 1 {
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(DesignSystem.secondaryInk.opacity(0.65))
+                    Image(systemName: "chevron.forward")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DesignSystem.border)
+                        .padding(.top, 1)
                 }
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.md)
         .padding(.vertical, DesignSystem.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.paper.opacity(0.88))
+        .background(DesignSystem.paper.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
-                .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
+                .stroke(DesignSystem.border.opacity(0.54), lineWidth: 1)
         }
         .accessibilityIdentifier("todayDecisionGuide")
+    }
+}
+
+private struct DecisionGuideStep: View {
+    let title: String
+    let icon: String
+    let isPrimary: Bool
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(isPrimary ? DesignSystem.accent.opacity(0.16) : DesignSystem.paper.opacity(0.75))
+                    .frame(width: 28, height: 28)
+                    .overlay(
+                        Circle()
+                            .stroke(isPrimary ? DesignSystem.accent.opacity(0.45) : DesignSystem.border, lineWidth: 1)
+                    )
+
+                Image(systemName: icon)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isPrimary ? DesignSystem.accent : DesignSystem.secondaryInk)
+            }
+
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(isPrimary ? DesignSystem.accent : DesignSystem.secondaryInk)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

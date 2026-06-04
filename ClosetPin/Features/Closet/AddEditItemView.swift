@@ -994,15 +994,28 @@ struct AddEditItemView: View {
         let changes = suggestedChanges(for: outcome.suggestion)
 
         return LuxurySurfaceCard {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                Text(L10n.text("closet.photo.ai_suggestion.title"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.ink)
-                    .accessibilityIdentifier("photoSuggestionReviewTitle")
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "sparkles")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 24, height: 24)
+                        .background(DesignSystem.accent)
+                        .clipShape(Circle())
+                        .padding(.top, 1)
 
-                Text(suggestionStatusText(for: outcome))
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n.text("closet.photo.ai_suggestion.title"))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+                            .accessibilityIdentifier("photoSuggestionReviewTitle")
+
+                        Text(suggestionStatusText(for: outcome))
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
 
                 Divider()
 
@@ -1020,28 +1033,24 @@ struct AddEditItemView: View {
 
                 if suggestionNeedsReview {
                     Text(L10n.text("closet.photo.ai_suggestion.footer"))
-                        .font(.caption2)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .padding(.top, 2)
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.ink.opacity(0.9))
 
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                        HStack {
-                            Button(L10n.text("closet.photo.ai_suggestion.use")) {
-                                applyPendingPhotoSuggestion()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(DesignSystem.accent)
-                            .accessibilityIdentifier("photoSuggestionUseButton")
-
-                            Spacer()
-
-                            Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
-                                dismissPendingPhotoSuggestionForManualEdit()
-                            }
-                            .buttonStyle(.borderless)
-                            .accessibilityIdentifier("photoSuggestionEditManualButton")
+                    HStack {
+                        Button(L10n.text("closet.photo.ai_suggestion.use")) {
+                            applyPendingPhotoSuggestion()
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(DesignSystem.accent)
+                        .accessibilityIdentifier("photoSuggestionUseButton")
 
+                        Spacer()
+
+                        Button(L10n.text("closet.photo.ai_suggestion.edit_manual")) {
+                            dismissPendingPhotoSuggestionForManualEdit()
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityIdentifier("photoSuggestionEditManualButton")
                     }
                 }
             }
@@ -1086,16 +1095,22 @@ struct AddEditItemView: View {
     }
 
     private func suggestionRow(label: String, value: String) -> some View {
-        HStack {
+        HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
             Text(label)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .lineLimit(1)
+
             Spacer(minLength: 8)
+
             Text(value.isEmpty ? L10n.text("closet.photo.ai_suggestion.unknown") : value)
                 .font(.caption)
                 .foregroundStyle(DesignSystem.ink)
                 .multilineTextAlignment(.trailing)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(DesignSystem.surface.opacity(0.88))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
     }
 

@@ -72,65 +72,79 @@ struct SettingsView: View {
                     }
 
                     LuxurySurfaceCard(isElevated: tomorrowWeatherEnabled) {
-                        SettingsSectionHeader(
-                            title: L10n.text("settings.ai_privacy.section"),
-                            subtitle: L10n.text("settings.ai_privacy.subtitle")
-                        )
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                            SettingsSectionHeader(
+                                title: L10n.text("settings.ai_privacy.section"),
+                                subtitle: L10n.text("settings.ai_privacy.subtitle")
+                            )
 
-                        SettingsNoteRow(
-                            systemImage: "camera.badge.ellipsis",
-                            title: L10n.text("settings.ai_privacy.photo_title"),
-                            bodyText: L10n.text("settings.ai_privacy.photo_body")
-                        )
+                            SettingsNoteRow(
+                                systemImage: "camera.badge.ellipsis",
+                                title: L10n.text("settings.ai_privacy.photo_title"),
+                                bodyText: L10n.text("settings.ai_privacy.photo_body"),
+                                isCompact: true
+                            )
 
-                        AIAssistStatusCard(
-                            cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
-                            tomorrowWeatherEnabled: tomorrowWeatherEnabled
-                        )
+                            AIAssistStatusCard(
+                                cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
+                                tomorrowWeatherEnabled: tomorrowWeatherEnabled
+                            )
 
-                        Divider()
+                            Divider()
 
-                        CloudPhotoRecognitionToggle(isOn: $cloudPhotoRecognitionEnabled)
+                            SettingsSubsectionHeader(
+                                systemImage: "photo.badge.plus",
+                                title: L10n.text("settings.privacy.cloud_photo_recognition.title"),
+                                bodyText: ""
+                            )
 
-                        SettingsNoteRow(
-                            systemImage: "person.crop.circle.badge.questionmark",
-                            title: L10n.text("settings.privacy.ai.title"),
-                            bodyText: L10n.text("settings.privacy.ai.body")
-                        )
+                            CloudPhotoRecognitionToggle(isOn: $cloudPhotoRecognitionEnabled)
 
-                        SettingsNoteRow(
-                            systemImage: "lock.shield",
-                            title: L10n.text("settings.privacy.local.title"),
-                            bodyText: L10n.text("settings.privacy.local.body")
-                        )
+                            VStack(spacing: DesignSystem.Spacing.sm) {
+                                SettingsNoteRow(
+                                    systemImage: "person.crop.circle.badge.questionmark",
+                                    title: L10n.text("settings.privacy.ai.title"),
+                                    bodyText: L10n.text("settings.privacy.ai.body"),
+                                    isCompact: true
+                                )
+
+                                SettingsNoteRow(
+                                    systemImage: "lock.shield",
+                                    title: L10n.text("settings.privacy.local.title"),
+                                    bodyText: L10n.text("settings.privacy.local.body"),
+                                    isCompact: true
+                                )
+                            }
+                        }
                     }
 
                     LuxurySurfaceCard {
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                             SettingsSectionHeader(
                                 title: L10n.text("settings.language.section"),
-                                subtitle: L10n.text("settings.language.subtitle")
+                                subtitle: ""
                             )
 
                             SettingsNoteRow(
                                 systemImage: "globe",
                                 title: L10n.text("settings.language.title"),
-                                bodyText: systemLanguageName()
+                                bodyText: systemLanguageName(),
+                                isCompact: true
                             )
-                        }
-                    }
 
-                    LuxurySurfaceCard {
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                            Divider()
+                                .padding(.vertical, 2)
+
                             SettingsSectionHeader(
                                 title: L10n.text("settings.about.section"),
-                                subtitle: L10n.text("settings.about.subtitle")
+                                subtitle: ""
                             )
 
                             SettingsNoteRow(
                                 systemImage: "info.circle",
                                 title: L10n.text("settings.about.title"),
-                                bodyText: L10n.string("settings.about.body.format", arguments: appVersionLabel())
+                                bodyText: L10n.string("settings.about.body.format", arguments: appVersionLabel()),
+                                isCompact: true
                             )
                         }
                     }
@@ -281,11 +295,44 @@ private struct SettingsSectionHeader: View {
                 .font(DesignSystem.editorialSectionFont(size: 22))
                 .foregroundStyle(DesignSystem.ink)
 
-            Text(subtitle)
-                .font(.footnote)
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .fixedSize(horizontal: false, vertical: true)
+            if !subtitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+    }
+}
+
+private struct SettingsSubsectionHeader: View {
+    let systemImage: String
+    let title: String
+    let bodyText: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(DesignSystem.accent)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+
+                if !bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(bodyText)
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(10)
+        .background(DesignSystem.surface.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
     }
 }
 
@@ -610,25 +657,26 @@ private struct SettingsNoteRow: View {
     let systemImage: String
     let title: String
     let bodyText: String
+    var isCompact: Bool = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: isCompact ? 10 : 12) {
             Image(systemName: systemImage)
-                .font(.title3)
+                .font(isCompact ? .callout : .title3)
                 .foregroundStyle(DesignSystem.accent)
-                .frame(width: 26)
+                .frame(width: isCompact ? 22 : 26)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(isCompact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
 
                 Text(bodyText)
-                    .font(.footnote)
+                    .font(isCompact ? .caption : .footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, isCompact ? 2 : 4)
     }
 }

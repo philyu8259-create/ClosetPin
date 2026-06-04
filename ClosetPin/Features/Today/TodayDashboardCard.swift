@@ -10,36 +10,43 @@ struct DailyStylingDashboardCard: View {
     var body: some View {
         LuxurySurfaceCard(isElevated: true) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.md) {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                         Text(L10n.text("today.dashboard.kicker"))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(DesignSystem.accent)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .tracking(0.45)
                             .textCase(.uppercase)
 
                         Text(L10n.text("today.dashboard.title"))
                             .font(DesignSystem.editorialDisplayFont(size: 24))
                             .foregroundStyle(DesignSystem.ink)
                             .lineLimit(2)
-                            .minimumScaleFactor(0.86)
+                            .minimumScaleFactor(0.9)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Spacer(minLength: DesignSystem.Spacing.sm)
 
                     Image(systemName: "sparkles")
-                        .font(.title3.weight(.semibold))
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(DesignSystem.premiumGold)
-                        .frame(width: 42, height: 42)
-                        .background(DesignSystem.premiumGold.opacity(0.16))
+                        .frame(width: 40, height: 40)
+                        .background(
+                            Circle()
+                                .stroke(DesignSystem.premiumGold.opacity(0.28), lineWidth: 1)
+                                .background(Circle().fill(DesignSystem.premiumGold.opacity(0.12)))
+                        )
                         .clipShape(Circle())
                 }
 
                 Text(L10n.text("today.dashboard.body"))
-                    .font(.subheadline)
+                    .font(.caption2)
                     .foregroundStyle(DesignSystem.secondaryInk)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.86)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, 2)
 
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     DashboardTag(title: scenarioName, icon: "calendar.badge.checkmark")
@@ -71,17 +78,17 @@ struct DashboardTag: View {
 
     var body: some View {
         Label(title, systemImage: icon)
-            .font(.caption.weight(.semibold))
+            .font(.caption2.weight(.semibold))
             .lineLimit(1)
-            .minimumScaleFactor(0.76)
+            .minimumScaleFactor(0.72)
             .foregroundStyle(DesignSystem.ink)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(DesignSystem.surface.opacity(0.86))
+            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .padding(.vertical, 6)
+            .background(DesignSystem.surface.opacity(0.9))
             .clipShape(Capsule(style: .continuous))
             .overlay {
                 Capsule(style: .continuous)
-                    .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
+                    .stroke(DesignSystem.premiumGold.opacity(0.35), lineWidth: 0.8)
             }
     }
 }
