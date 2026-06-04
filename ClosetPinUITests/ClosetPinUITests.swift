@@ -297,6 +297,34 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(manualSectionAvailable)
     }
 
+    func testAddItemAiSuggestionCanApplyOnlyColor() {
+        let app = makeApp()
+        openAddItemFromSampleCloset(app)
+        app.buttons["useTestPhotoButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
+        let useColorButton = app.buttons["photoSuggestionUseColorButton"]
+
+        tapWhenReady(useColorButton, in: app, timeout: 8, maxScrolls: 12)
+
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
+        let colorField = app.textFields["itemColorField"]
+        XCTAssertTrue(colorField.waitForExistence(timeout: 3))
+        XCTAssertEqual(colorField.value as? String, "Ivory")
+        let appliedTag = app.staticTexts["photoAutoAppliedTag"]
+        XCTAssertTrue(appliedTag.waitForExistence(timeout: 8))
+        XCTAssertTrue(appliedTag.label.contains("Color"))
+        XCTAssertFalse(appliedTag.label.contains("Seasons"))
+
+        app.swipeUp()
+        let systemSeasonSummary = app.staticTexts
+            .matching(NSPredicate(format: "label CONTAINS %@", "from system date"))
+            .firstMatch
+        XCTAssertTrue(systemSeasonSummary.waitForExistence(timeout: 3))
+        XCTAssertTrue(systemSeasonSummary.label.contains("from system date"))
+        XCTAssertFalse(systemSeasonSummary.label.contains("suggested from photo"))
+    }
+
     func testTodayMissingRecommendationOpensAddItemDirectly() {
         let app = makeApp()
         app.launch()

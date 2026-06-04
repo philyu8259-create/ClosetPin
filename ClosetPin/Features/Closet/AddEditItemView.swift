@@ -193,6 +193,7 @@ struct AddEditItemView: View {
     @State private var pendingPhotoSuggestion: ClothingPhotoTagSuggestion?
     @State private var suggestionNeedsReview = false
     @State private var didApplyLatestSuggestion = false
+    @State private var appliedPhotoSuggestionSummary: String?
     @State private var photoPreviewMode: PhotoPreviewMode = .display
     @State private var photoPreparationState: PhotoPreparationState = .idle
     @State private var showPostSaveGuide = false
@@ -454,7 +455,7 @@ struct AddEditItemView: View {
                     photoSuggestionReviewCard(for: photoTaggingOutcome)
                 } else if didApplyLatestSuggestion {
                     Label(
-                        L10n.string("closet.photo.ai_suggestion.auto_applied.format", arguments: photoTaggingOutcome.suggestion.type.displayName),
+                        L10n.string("closet.photo.ai_suggestion.auto_applied.format", arguments: appliedPhotoSuggestionSummary ?? photoTaggingOutcome.suggestion.type.displayName),
                         systemImage: suggestionStatusIcon(for: photoTaggingOutcome)
                     )
                     .font(.caption)
@@ -525,11 +526,13 @@ struct AddEditItemView: View {
     }
 
     private var debugPhotoTaggingOutcome: PhotoTaggingOutcome {
-        PhotoTaggingOutcome(
+        let currentSeason = SeasonResolver.currentSeason()
+        let suggestedSeasons = Set(SeasonTag.allCases.filter { $0 != currentSeason })
+        return PhotoTaggingOutcome(
             suggestion: ClothingPhotoTagSuggestion(
                 type: .top,
                 color: "Ivory",
-                seasons: [SeasonResolver.currentSeason()],
+                seasons: suggestedSeasons,
                 formalityLevel: 3,
                 warmthLevel: 2,
                 confidence: 0.82,
@@ -831,6 +834,7 @@ struct AddEditItemView: View {
         pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
         didApplyLatestSuggestion = false
+        appliedPhotoSuggestionSummary = nil
         photoError = nil
         postSaveGuidance = nil
         showPostSaveGuide = false
@@ -912,6 +916,7 @@ struct AddEditItemView: View {
             pendingPhotoSuggestion = nil
             suggestionNeedsReview = false
             didApplyLatestSuggestion = false
+            appliedPhotoSuggestionSummary = nil
             photoPreparationState = .idle
             return
         }
@@ -925,6 +930,7 @@ struct AddEditItemView: View {
             pendingPhotoSuggestion = nil
             suggestionNeedsReview = false
             didApplyLatestSuggestion = false
+            appliedPhotoSuggestionSummary = nil
             photoPreparationState = .idle
             return
         }
@@ -933,6 +939,7 @@ struct AddEditItemView: View {
         pendingPhotoSuggestion = outcome.suggestion
         suggestionNeedsReview = true
         didApplyLatestSuggestion = false
+        appliedPhotoSuggestionSummary = nil
         photoPreparationState = .idle
     }
 
@@ -955,9 +962,11 @@ struct AddEditItemView: View {
             self.pendingPhotoSuggestion = nil
             suggestionNeedsReview = false
             didApplyLatestSuggestion = false
+            appliedPhotoSuggestionSummary = nil
             return
         }
 
+        appliedPhotoSuggestionSummary = appliedSuggestionSummary(for: fields)
         if fields.contains(.type) {
             draft.type = suggestion.type
         }
@@ -983,6 +992,7 @@ struct AddEditItemView: View {
         pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
         didApplyLatestSuggestion = false
+        appliedPhotoSuggestionSummary = nil
         showsOptionalDetails = true
     }
 
@@ -991,10 +1001,13 @@ struct AddEditItemView: View {
         pendingPhotoSuggestion = nil
         suggestionNeedsReview = false
         didApplyLatestSuggestion = false
+        appliedPhotoSuggestionSummary = nil
     }
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
         let changes = suggestedChanges(for: outcome.suggestion)
+        let canApplyOnlyColor = changes.contains { $0.field == .color }
+        let canApplyOnlySeasons = changes.contains { $0.field == .seasons }
 
         return LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -1055,6 +1068,28 @@ struct AddEditItemView: View {
                         .buttonStyle(.borderless)
                         .accessibilityIdentifier("photoSuggestionEditManualButton")
                     }
+
+                    if canApplyOnlyColor || canApplyOnlySeasons {
+                        HStack(spacing: DesignSystem.Spacing.sm) {
+                            if canApplyOnlyColor {
+                                Button(L10n.text("closet.photo.ai_suggestion.apply_color")) {
+                                    applyPendingPhotoSuggestion(fields: [.color])
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .accessibilityIdentifier("photoSuggestionUseColorButton")
+                            }
+
+                            if canApplyOnlySeasons {
+                                Button(L10n.text("closet.photo.ai_suggestion.apply_seasons")) {
+                                    applyPendingPhotoSuggestion(fields: [.seasons])
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .accessibilityIdentifier("photoSuggestionUseSeasonButton")
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1095,6 +1130,28 @@ struct AddEditItemView: View {
 
     private func suggestedChangeFields(for suggestion: ClothingPhotoTagSuggestion) -> Set<PhotoSuggestionField> {
         Set(suggestedChanges(for: suggestion).map(\.field))
+    }
+
+    private func appliedSuggestionSummary(for fields: Set<PhotoSuggestionField>) -> String {
+        PhotoSuggestionField.allCases
+            .filter { fields.contains($0) }
+            .map(suggestionFieldLabel)
+            .joined(separator: " · ")
+    }
+
+    private func suggestionFieldLabel(for field: PhotoSuggestionField) -> String {
+        switch field {
+        case .type:
+            L10n.text("closet.photo.ai_suggestion.type")
+        case .color:
+            L10n.text("closet.photo.ai_suggestion.color")
+        case .seasons:
+            L10n.text("closet.photo.ai_suggestion.seasons")
+        case .formality:
+            L10n.text("closet.photo.ai_suggestion.formality")
+        case .warmth:
+            L10n.text("closet.photo.ai_suggestion.warmth")
+        }
     }
 
     private func suggestionRow(label: String, value: String) -> some View {
