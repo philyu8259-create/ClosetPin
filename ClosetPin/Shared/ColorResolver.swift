@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum ColorResolver {
-    enum SwatchKind: Equatable {
+    enum SwatchKind: Hashable {
         case black
         case white
         case navy

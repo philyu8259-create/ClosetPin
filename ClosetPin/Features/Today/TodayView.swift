@@ -386,7 +386,7 @@ struct TodayView: View {
                 scenario: scenario,
                 season: season,
                 tomorrow: TomorrowRecommendationInput(weatherContext: recommendationInputWeatherContext),
-                maximumResults: 3,
+                maximumResults: 12,
                 preferredFormality: currentPreference?.preferredFormality
             ),
             items: clothingItems,

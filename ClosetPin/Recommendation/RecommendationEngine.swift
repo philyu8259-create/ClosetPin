@@ -1,18 +1,22 @@
 import Foundation
 
 private let maximumItemsPerCategory = 12
+private let diversifiedCandidatePoolLimit = 48
 
 struct RecommendationEngine {
     func recommend(
         input: RecommendationInput,
         items: [ClothingItem],
-        feedback _: [OutfitFeedback]
+        feedback: [OutfitFeedback]
     ) -> [OutfitCandidate] {
         guard input.maximumResults > 0 else { return [] }
 
         let groupedItems = Dictionary(grouping: eligibleItems(from: items, for: input.season)) { item in
             item.resolvedType ?? .accessory
         }
+        let itemsByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+        let avoidedCoreSignatures = avoidedCoreSignatures(from: feedback, itemsByID: itemsByID, scenario: input.scenario)
+        let avoidedItemIDSets = avoidedItemIDSets(from: feedback, scenario: input.scenario)
         let weatherContext = input.tomorrow.weatherContext
 
         let threshold = requiredFormality(for: input.scenario)
@@ -117,19 +121,169 @@ struct RecommendationEngine {
             )
         }
 
-        return candidates
+        let rankedCandidates = candidates
             .sorted { lhs, rhs in
-                if lhs.score != rhs.score {
-                    return lhs.score > rhs.score
+                let lhsScore = adjustedScore(
+                    for: lhs,
+                    avoidedCoreSignatures: avoidedCoreSignatures,
+                    avoidedItemIDSets: avoidedItemIDSets
+                )
+                let rhsScore = adjustedScore(
+                    for: rhs,
+                    avoidedCoreSignatures: avoidedCoreSignatures,
+                    avoidedItemIDSets: avoidedItemIDSets
+                )
+                if lhsScore != rhsScore {
+                    return lhsScore > rhsScore
                 }
                 return lhs.explanationSeed < rhs.explanationSeed
             }
-            .prefix(input.maximumResults)
-            .map { $0 }
+
+        return diversifiedCandidates(
+            from: Array(rankedCandidates.prefix(max(diversifiedCandidatePoolLimit, input.maximumResults))),
+            maximumResults: input.maximumResults,
+            avoidedCoreSignatures: avoidedCoreSignatures,
+            avoidedItemIDSets: avoidedItemIDSets
+        )
     }
 }
 
 private extension RecommendationEngine {
+    func adjustedScore(
+        for candidate: OutfitCandidate,
+        avoidedCoreSignatures: Set<String>,
+        avoidedItemIDSets: [Set<UUID>]
+    ) -> Int {
+        let candidateItemIDs = Set(candidate.items.map(\.id))
+        let isRecentlyRejectedOutfit = avoidedItemIDSets.contains { avoidedIDs in
+            avoidedIDs.isSubset(of: candidateItemIDs)
+        }
+        let recentlyRejectedPenalty = avoidedCoreSignatures.contains(coreSignature(for: candidate.items)) || isRecentlyRejectedOutfit ? 96 : 0
+        return candidate.score - recentlyRejectedPenalty
+    }
+
+    func diversifiedCandidates(
+        from candidates: [OutfitCandidate],
+        maximumResults: Int,
+        avoidedCoreSignatures: Set<String>,
+        avoidedItemIDSets: [Set<UUID>]
+    ) -> [OutfitCandidate] {
+        guard maximumResults > 0 else { return [] }
+        var selected: [OutfitCandidate] = []
+        var remaining = candidates
+
+        while selected.count < maximumResults, remaining.isEmpty == false {
+            let nextIndex = remaining.indices.max { lhsIndex, rhsIndex in
+                let lhs = remaining[lhsIndex]
+                let rhs = remaining[rhsIndex]
+                let lhsScore = diversifiedSelectionScore(
+                    for: lhs,
+                    selectedCandidates: selected,
+                    avoidedCoreSignatures: avoidedCoreSignatures,
+                    avoidedItemIDSets: avoidedItemIDSets
+                )
+                let rhsScore = diversifiedSelectionScore(
+                    for: rhs,
+                    selectedCandidates: selected,
+                    avoidedCoreSignatures: avoidedCoreSignatures,
+                    avoidedItemIDSets: avoidedItemIDSets
+                )
+                if lhsScore != rhsScore {
+                    return lhsScore < rhsScore
+                }
+                return lhs.explanationSeed > rhs.explanationSeed
+            }
+
+            guard let nextIndex else { break }
+            selected.append(remaining.remove(at: nextIndex))
+        }
+
+        return selected
+    }
+
+    func diversifiedSelectionScore(
+        for candidate: OutfitCandidate,
+        selectedCandidates: [OutfitCandidate],
+        avoidedCoreSignatures: Set<String>,
+        avoidedItemIDSets: [Set<UUID>]
+    ) -> Int {
+        let feedbackAdjustedScore = adjustedScore(
+            for: candidate,
+            avoidedCoreSignatures: avoidedCoreSignatures,
+            avoidedItemIDSets: avoidedItemIDSets
+        )
+        guard selectedCandidates.isEmpty == false else { return feedbackAdjustedScore }
+
+        let similarityPenalty = selectedCandidates
+            .map { outfitSimilarityPenalty(candidate.items, $0.items) }
+            .max() ?? 0
+        return feedbackAdjustedScore - similarityPenalty
+    }
+
+    func outfitSimilarityPenalty(_ lhs: [ClothingItem], _ rhs: [ClothingItem]) -> Int {
+        let lhsByType = itemsByResolvedType(lhs)
+        let rhsByType = itemsByResolvedType(rhs)
+        var penalty = 0
+
+        if lhsByType[.bottom]?.id == rhsByType[.bottom]?.id {
+            penalty += 28
+        }
+        if lhsByType[.shoes]?.id == rhsByType[.shoes]?.id {
+            penalty += 24
+        }
+        if lhsByType[.top]?.id == rhsByType[.top]?.id {
+            penalty += 16
+        }
+        if lhsByType[.outerwear]?.id == rhsByType[.outerwear]?.id || lhsByType[.blazer]?.id == rhsByType[.blazer]?.id {
+            penalty += 8
+        }
+        if lhsByType[.bag]?.id == rhsByType[.bag]?.id {
+            penalty += 4
+        }
+
+        return penalty
+    }
+
+    func itemsByResolvedType(_ items: [ClothingItem]) -> [ClothingType: ClothingItem] {
+        Dictionary(items.map { ($0.resolvedType ?? .accessory, $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    func avoidedCoreSignatures(
+        from feedback: [OutfitFeedback],
+        itemsByID: [UUID: ClothingItem],
+        scenario: OutfitScenario
+    ) -> Set<String> {
+        let avoidTypes: Set<FeedbackType> = [.disliked, .skipped, .swapped]
+
+        return Set(feedback
+            .filter { $0.scenario == scenario && avoidTypes.contains($0.feedbackType) }
+            .sorted { $0.createdAt > $1.createdAt }
+            .prefix(12)
+            .compactMap { feedback in
+                let feedbackItems = feedback.itemIds.compactMap { itemsByID[$0] }
+                return coreSignature(for: feedbackItems)
+            })
+    }
+
+    func avoidedItemIDSets(from feedback: [OutfitFeedback], scenario: OutfitScenario) -> [Set<UUID>] {
+        let avoidTypes: Set<FeedbackType> = [.disliked, .skipped, .swapped]
+
+        return feedback
+            .filter { $0.scenario == scenario && avoidTypes.contains($0.feedbackType) }
+            .sorted { $0.createdAt > $1.createdAt }
+            .prefix(12)
+            .map { Set($0.itemIds) }
+    }
+
+    func coreSignature(for items: [ClothingItem]) -> String {
+        let byType = itemsByResolvedType(items)
+        return [
+            byType[.top]?.id.uuidString ?? "no-top",
+            byType[.bottom]?.id.uuidString ?? "no-bottom",
+            byType[.shoes]?.id.uuidString ?? "no-shoes"
+        ].joined(separator: "|")
+    }
+
     func eligibleItems(from items: [ClothingItem], for season: SeasonTag) -> [ClothingItem] {
         items.filter { item in
             guard let type = item.resolvedType else { return false }
@@ -390,8 +544,37 @@ private extension RecommendationEngine {
         }
         let uniqueColorCount = Set(items.map(\.color)).count
         let colorVarietyPenalty = max(0, uniqueColorCount - 2) * 2
+        let colorHarmonyScore = colorHarmonyScore(for: items)
 
-        return formalityScore + scenarioBonus + weatherPreferenceScore - colorVarietyPenalty
+        return formalityScore + scenarioBonus + weatherPreferenceScore + colorHarmonyScore - colorVarietyPenalty
+    }
+
+    func colorHarmonyScore(for items: [ClothingItem]) -> Int {
+        let swatchKinds = items.map { ColorResolver.swatchKind(for: $0.color) }
+        let uniqueKinds = Set(swatchKinds)
+        let accentKinds = uniqueKinds.filter { !neutralSwatchKinds.contains($0) }
+        let neutralCount = swatchKinds.filter { neutralSwatchKinds.contains($0) }.count
+        var score = 0
+
+        if neutralCount >= 2 {
+            score += 8
+        }
+        if accentKinds.count <= 1 {
+            score += 8
+        } else {
+            score -= (accentKinds.count - 1) * 7
+        }
+        if uniqueKinds.count <= 3 {
+            score += 4
+        } else {
+            score -= (uniqueKinds.count - 3) * 4
+        }
+
+        return score
+    }
+
+    var neutralSwatchKinds: Set<ColorResolver.SwatchKind> {
+        [.black, .white, .navy, .gray, .brown]
     }
 
     func weatherContextScore(_ item: ClothingItem, type: ClothingType, in context: TomorrowWeatherContext) -> Int {

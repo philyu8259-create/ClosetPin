@@ -190,6 +190,7 @@ struct ContextChip<Value: Hashable>: View {
                 .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
+        .contentShape(Capsule(style: .continuous))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 

@@ -321,6 +321,52 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertEqual(candidates.count, 2)
     }
 
+    func testRecommendationsDiversifyCorePiecesAcrossTopResults() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001001")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001002")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001003")!, type: .top, color: "green", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001004")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001005")!, type: .bottom, color: "charcoal", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001006")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001007")!, type: .shoes, color: "brown", formalityLevel: 4)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 4),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 4)
+        let bottomIDs = Set(candidates.compactMap { itemID(of: .bottom, in: $0) })
+        let shoeIDs = Set(candidates.compactMap { itemID(of: .shoes, in: $0) })
+        XCTAssertGreaterThan(bottomIDs.count, 1)
+        XCTAssertGreaterThan(shoeIDs.count, 1)
+    }
+
+    func testSwappedFeedbackMovesSameCoreOutfitAwayFromFirstRecommendation() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002001")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002002")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002003")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002004")!, type: .bottom, color: "charcoal", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002005")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002006")!, type: .shoes, color: "brown", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
+        let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
+        let swapFeedback = OutfitFeedback(
+            feedbackType: .swapped,
+            itemIds: firstCandidate.items.map(\.id),
+            scenario: .dailyOffice
+        )
+
+        let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: [swapFeedback]).first)
+
+        XCTAssertNotEqual(coreSignature(for: firstCandidate), coreSignature(for: nextCandidate))
+    }
+
     func testPreferredFormalityChangesDailyOfficeRanking() throws {
         let relaxedTop = clothingItem(type: .top, color: "soft blue", formalityLevel: 2)
         let relaxedBottom = clothingItem(type: .bottom, color: "khaki", formalityLevel: 2)
@@ -440,5 +486,17 @@ private extension RecommendationEngineTests {
             storageLocation: "closet",
             status: status
         )
+    }
+
+    func itemID(of type: ClothingType, in candidate: OutfitCandidate) -> UUID? {
+        candidate.items.first { ($0.resolvedType ?? .accessory) == type }?.id
+    }
+
+    func coreSignature(for candidate: OutfitCandidate) -> String {
+        [
+            itemID(of: .top, in: candidate)?.uuidString ?? "no-top",
+            itemID(of: .bottom, in: candidate)?.uuidString ?? "no-bottom",
+            itemID(of: .shoes, in: candidate)?.uuidString ?? "no-shoes"
+        ].joined(separator: "|")
     }
 }
