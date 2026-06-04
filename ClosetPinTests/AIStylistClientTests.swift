@@ -16,6 +16,17 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertGreaterThan(suggestion.confidence, 0)
     }
 
+    func testLocalPhotoIntelligenceTreatsLightweightTopsAsSummerReady() throws {
+        let image = makeSolidImage(color: .systemGray)
+
+        let suggestion = try XCTUnwrap(LocalPhotoIntelligenceClient().suggestTags(for: image))
+
+        XCTAssertEqual(suggestion.type, .top)
+        XCTAssertEqual(suggestion.warmthLevel, 2)
+        XCTAssertTrue(suggestion.seasons.contains(.summer))
+        XCTAssertFalse(suggestion.seasons.contains(.winter))
+    }
+
     func testPhotoTagSuggestionFillsEmptyDraftFields() {
         var draft = AddEditItemDraft()
         let suggestion = ClothingPhotoTagSuggestion(
@@ -116,6 +127,31 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertEqual(suggestion.warmthLevel, 1)
         XCTAssertEqual(suggestion.confidence, 0.82, accuracy: 0.001)
         XCTAssertEqual(suggestion.source, .remoteAI)
+    }
+
+    func testCloudPhotoTaggingClientNormalizesLightweightTopSeasons() throws {
+        let json = """
+        {
+          "type": "top",
+          "color": "green",
+          "seasons": ["spring", "autumn", "winter"],
+          "formalityLevel": 3,
+          "warmthLevel": 2,
+          "confidence": 0.9
+        }
+        """
+
+        let suggestion = try XCTUnwrap(CloudPhotoTaggingClient.decodeSuggestion(from: Data(json.utf8)))
+
+        XCTAssertTrue(suggestion.seasons.contains(.summer))
+        XCTAssertFalse(suggestion.seasons.contains(.winter))
+    }
+
+    func testCloudPhotoTaggingEndpointFallsBackToProductionURL() {
+        XCTAssertEqual(
+            CloudPhotoTaggingEndpoint.configuredURL?.absoluteString,
+            "https://xufanzhilian.com/api/closetpin/photo-tags"
+        )
     }
 
     func testCloudStylistExplanationRequestContainsOnlyCurrentOutfitMetadata() throws {

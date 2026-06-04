@@ -2,6 +2,7 @@
 "common.cancel" = "取消";
 "common.save" = "保存";
 "common.try_again" = "请再试一次。";
+"common.list_separator" = "、";
 
 "tab.today" = "今日";
 "tab.closet" = "衣橱";
@@ -32,6 +33,11 @@
 "closet.add_item.accessibility" = "添加单品";
 "closet.empty.title" = "建立你的衣橱";
 "closet.empty.description" = "先添加一张清晰照片。AI 会帮你整理信息，衣橱越完整，今日推荐越顺手。";
+"closet.sample.title" = "示例衣橱";
+"closet.sample.body" = "这些只是起步示例。你可以随时添加自己的衣物，也可以清除示例，回到自己的衣橱。";
+"closet.sample.add_mine" = "添加我的衣物";
+"closet.sample.clear" = "清除示例";
+"closet.sample.error_title" = "未能更新示例衣橱";
 "closet.filter.all" = "全部";
 "closet.filter.tops" = "上衣";
 "closet.filter.bottoms" = "下装";
@@ -65,7 +71,7 @@
 "closet.photo.use_test" = "使用测试照片";
 "closet.photo.ready" = "照片已准备保存。";
 "closet.photo.saved" = "照片已保存到本地。";
-"closet.photo.auto_cropped" = "已自动裁切展示图";
+"closet.photo.auto_cropped" = "展示图已优化";
 "closet.photo.original" = "原始照片";
 "closet.photo.view_original" = "查看原图";
 "closet.photo.editorial_title" = "单品照片";
@@ -140,6 +146,7 @@
 "closet.save_checklist.season" = "选择季节";
 "closet.save_checklist.storage" = "填写收纳位置";
 "closet.save_checklist.action_hint" = "先补齐必填基础项，其余细节之后再慢慢加。";
+"closet.save_missing_requirements.format" = "保存前请先完成：%@。";
 "closet.formality.label" = "正式度";
 "closet.formality.format" = "正式度：%d";
 "closet.formality.scale" = "休闲 · 干练 · 商务 · 正式 · 精致";

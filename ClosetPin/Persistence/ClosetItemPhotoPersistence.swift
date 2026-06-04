@@ -1,4 +1,5 @@
 import UIKit
+import Vision
 
 struct ClosetItemPhotoPersistence {
     static func jpegData(from image: UIImage) -> Data? {
@@ -91,7 +92,11 @@ struct ProcessedClosetPhotoData {
 
 struct ClothingPhotoProcessor {
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
-        guard let cropRect = foregroundCropRect(in: image) else { return image }
+        guard let cropRect = saliencyCropRect(in: image) ?? foregroundCropRect(in: image) else { return image }
+        return croppedImage(from: image, cropRect: cropRect)
+    }
+
+    private static func croppedImage(from image: UIImage, cropRect: CGRect) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         return UIGraphicsImageRenderer(size: cropRect.size, format: format).image { _ in
@@ -104,6 +109,39 @@ struct ClothingPhotoProcessor {
                 )
             )
         }
+    }
+
+    private static func saliencyCropRect(in image: UIImage) -> CGRect? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        let request = VNGenerateAttentionBasedSaliencyImageRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return nil
+        }
+
+        guard let observation = request.results?.first,
+              let objects = observation.salientObjects,
+              !objects.isEmpty else {
+            return nil
+        }
+
+        let unionBox = objects
+            .map(\.boundingBox)
+            .reduce(CGRect.null) { $0.union($1) }
+        guard !unionBox.isNull, !unionBox.isEmpty else { return nil }
+
+        let width = image.size.width
+        let height = image.size.height
+        let convertedRect = CGRect(
+            x: unionBox.minX * width,
+            y: (1 - unionBox.maxY) * height,
+            width: unionBox.width * width,
+            height: unionBox.height * height
+        )
+        return paddedValidCropRect(convertedRect, sourceSize: image.size, paddingRatio: 0.16)
     }
 
     private static func foregroundCropRect(in image: UIImage) -> CGRect? {
@@ -165,21 +203,34 @@ struct ClothingPhotoProcessor {
         let cropArea = cropWidth * cropHeight
         guard cropArea < Int(Double(sourceArea) * 0.92) else { return nil }
 
-        let paddingX = max(2, Int(Double(cropWidth) * 0.14))
-        let paddingY = max(2, Int(Double(cropHeight) * 0.14))
-        let paddedMinX = max(0, minX - paddingX)
-        let paddedMinY = max(0, minY - paddingY)
-        let paddedMaxX = min(width - 1, maxX + paddingX)
-        let paddedMaxY = min(height - 1, maxY + paddingY)
-
         let scaleX = image.size.width / CGFloat(width)
         let scaleY = image.size.height / CGFloat(height)
-        return CGRect(
-            x: CGFloat(paddedMinX) * scaleX,
-            y: CGFloat(paddedMinY) * scaleY,
-            width: CGFloat(paddedMaxX - paddedMinX + 1) * scaleX,
-            height: CGFloat(paddedMaxY - paddedMinY + 1) * scaleY
+        let detectedRect = CGRect(
+            x: CGFloat(minX) * scaleX,
+            y: CGFloat(minY) * scaleY,
+            width: CGFloat(cropWidth) * scaleX,
+            height: CGFloat(cropHeight) * scaleY
         )
+        return paddedValidCropRect(detectedRect, sourceSize: image.size, paddingRatio: 0.14)
+    }
+
+    private static func paddedValidCropRect(_ rect: CGRect, sourceSize: CGSize, paddingRatio: CGFloat) -> CGRect? {
+        guard sourceSize.width > 2, sourceSize.height > 2 else { return nil }
+
+        let paddingX = max(2, rect.width * paddingRatio)
+        let paddingY = max(2, rect.height * paddingRatio)
+        let paddedRect = rect
+            .insetBy(dx: -paddingX, dy: -paddingY)
+            .intersection(CGRect(origin: .zero, size: sourceSize))
+            .integral
+
+        guard paddedRect.width > 8, paddedRect.height > 8 else { return nil }
+
+        let sourceArea = sourceSize.width * sourceSize.height
+        let cropArea = paddedRect.width * paddedRect.height
+        guard cropArea < sourceArea * 0.94, cropArea > sourceArea * 0.04 else { return nil }
+
+        return paddedRect
     }
 
     private static func averageCornerColor(in pixels: [UInt8], width: Int, height: Int, bytesPerRow: Int) -> (red: Int, green: Int, blue: Int) {

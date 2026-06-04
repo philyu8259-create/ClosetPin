@@ -335,15 +335,25 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
         }
 
         let seasons = Set(response.seasons.compactMap(SeasonTag.init(rawValue:)))
+        let warmthLevel = response.warmthLevel.clamped(to: 1...5)
         return ClothingPhotoTagSuggestion(
             type: type,
             color: response.color.trimmingCharacters(in: .whitespacesAndNewlines),
-            seasons: seasons.isEmpty ? [.spring, .autumn] : seasons,
+            seasons: Self.normalizedSeasons(seasons.isEmpty ? [.spring, .autumn] : seasons, type: type, warmthLevel: warmthLevel),
             formalityLevel: response.formalityLevel.clamped(to: 1...5),
-            warmthLevel: response.warmthLevel.clamped(to: 1...5),
+            warmthLevel: warmthLevel,
             confidence: response.confidence.clamped(to: 0...1),
             source: .remoteAI
         )
+    }
+
+    private static func normalizedSeasons(_ seasons: Set<SeasonTag>, type: ClothingType, warmthLevel: Int) -> Set<SeasonTag> {
+        guard type == .top, warmthLevel <= 2 else { return seasons }
+
+        var normalized = seasons
+        normalized.insert(.summer)
+        normalized.remove(.winter)
+        return normalized
     }
 }
 
@@ -365,7 +375,7 @@ private struct CloudPhotoTaggingResponse: Decodable {
     let confidence: Double
 }
 
-private enum CloudPhotoTaggingEndpoint {
+enum CloudPhotoTaggingEndpoint {
     static var configuredURL: URL? {
 #if DEBUG
         if ProcessInfo.processInfo.environment["CLOSETPIN_DISABLE_CLOUD_AI"] == "1" {
@@ -383,11 +393,9 @@ private enum CloudPhotoTaggingEndpoint {
            let url = normalizedURL(from: environmentValue) {
             return url
         }
-
-        return nil
-#else
-        return productionURL
 #endif
+
+        return productionURL
     }
 
     private static let productionURL = URL(string: "https://xufanzhilian.com/api/closetpin/photo-tags")
@@ -404,13 +412,14 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
         guard let dominantColor = dominantColor(in: image) else { return nil }
         let color = closestColorName(to: dominantColor)
         let type = inferredType(for: image)
+        let warmthLevel = inferredWarmth(for: color, type: type)
 
         return ClothingPhotoTagSuggestion(
             type: type,
             color: color,
-            seasons: inferredSeasons(for: color),
+            seasons: inferredSeasons(for: color, type: type, warmthLevel: warmthLevel),
             formalityLevel: inferredFormality(for: color, type: type),
-            warmthLevel: inferredWarmth(for: color, type: type),
+            warmthLevel: warmthLevel,
             confidence: 0.45,
             source: .localHeuristic
         )
@@ -491,8 +500,8 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
         return .top
     }
 
-    private func inferredSeasons(for color: String) -> Set<SeasonTag> {
-        switch color {
+    private func inferredSeasons(for color: String, type: ClothingType, warmthLevel: Int) -> Set<SeasonTag> {
+        var seasons: Set<SeasonTag> = switch color {
         case "black", "navy", "gray", "brown":
             [.autumn, .winter, .spring]
         case "white", "beige", "blue", "green":
@@ -502,6 +511,12 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
         default:
             [.spring, .autumn]
         }
+
+        if type == .top, warmthLevel <= 2 {
+            seasons.insert(.summer)
+            seasons.remove(.winter)
+        }
+        return seasons
     }
 
     private func inferredFormality(for color: String, type: ClothingType) -> Int {
@@ -512,7 +527,10 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
     }
 
     private func inferredWarmth(for color: String, type: ClothingType) -> Int {
-        if type == .outerwear || ["black", "brown", "gray"].contains(color) {
+        if type == .outerwear {
+            return 4
+        }
+        if type == .blazer {
             return 3
         }
         return 2

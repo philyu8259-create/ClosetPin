@@ -2,6 +2,7 @@
 "common.cancel" = "Cancel";
 "common.save" = "Save";
 "common.try_again" = "Please try again.";
+"common.list_separator" = ", ";
 
 "tab.today" = "Today";
 "tab.closet" = "Closet";
@@ -32,6 +33,11 @@
 "closet.add_item.accessibility" = "Add item";
 "closet.empty.title" = "Build Your Closet";
 "closet.empty.description" = "Add one clear photo first. AI will help fill the details, and Today gets smarter as your closet grows.";
+"closet.sample.title" = "Sample closet";
+"closet.sample.body" = "These starter pieces are examples. Add your own clothes whenever you're ready, or clear the sample set.";
+"closet.sample.add_mine" = "Add mine";
+"closet.sample.clear" = "Clear sample";
+"closet.sample.error_title" = "Sample Closet Was Not Updated";
 "closet.filter.all" = "All";
 "closet.filter.tops" = "Tops";
 "closet.filter.bottoms" = "Bottoms";
@@ -65,7 +71,7 @@
 "closet.photo.use_test" = "Use Test Photo";
 "closet.photo.ready" = "Photo ready to save.";
 "closet.photo.saved" = "Photo saved locally.";
-"closet.photo.auto_cropped" = "Auto-cropped display photo";
+"closet.photo.auto_cropped" = "Display photo optimized";
 "closet.photo.original" = "Original Photo";
 "closet.photo.view_original" = "View Original";
 "closet.photo.editorial_title" = "Item Photo";
@@ -140,6 +146,7 @@
 "closet.save_checklist.season" = "Choose a season";
 "closet.save_checklist.storage" = "Add a storage location";
 "closet.save_checklist.action_hint" = "Complete the required basics first. Everything else can wait.";
+"closet.save_missing_requirements.format" = "Before saving, please complete: %@.";
 "closet.formality.label" = "Formality";
 "closet.formality.format" = "Formality: %d";
 "closet.formality.scale" = "Casual · Smart · Business · Formal · Polished";

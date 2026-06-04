@@ -2,11 +2,13 @@ import SwiftData
 import SwiftUI
 
 struct ClosetView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \ClothingItem.createdAt, order: .reverse) private var items: [ClothingItem]
     @State private var activeSheet: ClosetSheet?
     @State private var activeFilter: ClosetFilter = .all
     @State private var handledAddItemRequest: UUID?
     @State private var searchText = ""
+    @State private var closetError: String?
     @FocusState private var searchFieldIsFocused: Bool
 
     var openAddItemRequest: AddClosetItemRequest?
@@ -30,6 +32,14 @@ struct ClosetView: View {
             }
             .background(DesignSystem.background)
             .navigationTitle(L10n.text("closet.title"))
+            .alert(L10n.text("closet.sample.error_title"), isPresented: Binding(
+                get: { closetError != nil },
+                set: { if !$0 { closetError = nil } }
+            )) {
+                Button(L10n.text("common.ok"), role: .cancel) {}
+            } message: {
+                Text(closetError ?? L10n.text("common.try_again"))
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -68,6 +78,9 @@ struct ClosetView: View {
     private var closetGrid: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                if hasSampleCapsule {
+                    sampleCapsuleCard
+                }
                 closetHealthCard
                 filterBar
                 archiveMasthead
@@ -96,6 +109,52 @@ struct ClosetView: View {
             .padding(18)
             .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var sampleCapsuleCard: some View {
+        LuxurySurfaceCard(isElevated: false) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "sparkles.rectangle.stack.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .frame(width: 30)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n.text("closet.sample.title"))
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+
+                        Text(L10n.text("closet.sample.body"))
+                            .font(.subheadline)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Button {
+                        activeSheet = .add(initialType: nil)
+                    } label: {
+                        Label(L10n.text("closet.sample.add_mine"), systemImage: "plus")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("sampleClosetAddMineButton")
+
+                    Button(role: .destructive) {
+                        removeSampleCapsule()
+                    } label: {
+                        Text(L10n.text("closet.sample.clear"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("sampleClosetClearButton")
+                }
+                .controlSize(.small)
+            }
         }
     }
 
@@ -406,6 +465,19 @@ struct ClosetView: View {
 
     private var availableItemCount: Int {
         items.filter { $0.status == .available }.count
+    }
+
+    private var hasSampleCapsule: Bool {
+        items.contains { SeedData.workCapsuleItemIDs.contains($0.id) }
+    }
+
+    private func removeSampleCapsule() {
+        do {
+            _ = try WorkCapsuleSeeder.removeSampleCapsule(in: modelContext)
+            resetClosetFilters()
+        } catch {
+            closetError = error.localizedDescription
+        }
     }
 
     private var isFilteringClosetForCurrentReadinessContext: Bool {

@@ -241,7 +241,7 @@ struct AddEditItemView: View {
                     Button(L10n.text("common.save")) {
                         save()
                     }
-                    .disabled(photoPreparationState.isBusy || !draft.canSave)
+                    .disabled(photoPreparationState.isBusy)
                     .accessibilityIdentifier("saveItemButton")
                 }
             }
@@ -639,6 +639,19 @@ struct AddEditItemView: View {
         return requirements
     }
 
+    private var requiredSuggestionFieldsForSave: Set<PhotoSuggestionField> {
+        guard let suggestion = pendingPhotoSuggestion else { return [] }
+
+        var fields: Set<PhotoSuggestionField> = []
+        if !draft.hasColor, !suggestion.color.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            fields.insert(.color)
+        }
+        if !draft.hasSeasonSelection, !suggestion.seasons.isEmpty {
+            fields.insert(.seasons)
+        }
+        return fields
+    }
+
     private var optionalDetailsSection: some View {
         Section {
             DisclosureGroup(isExpanded: $showsOptionalDetails) {
@@ -749,7 +762,20 @@ struct AddEditItemView: View {
     }
 
     private func save() {
-        guard draft.canSave else { return }
+        if !draft.canSave {
+            let fields = requiredSuggestionFieldsForSave
+            if !fields.isEmpty {
+                applyPendingPhotoSuggestion(fields: fields)
+            }
+        }
+
+        guard draft.canSave else {
+            saveError = L10n.string(
+                "closet.save_missing_requirements.format",
+                arguments: missingPrimaryRequirements.joined(separator: L10n.text("common.list_separator"))
+            )
+            return
+        }
 
         var insertedItem: ClothingItem?
         let snapshot = item.map(ClothingItemSnapshot.init(item:))
@@ -799,8 +825,8 @@ struct AddEditItemView: View {
             }
 
             if item == nil {
-                showPostSaveGuide = true
                 suggestionNeedsReview = false
+                dismiss()
                 return
             }
 

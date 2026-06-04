@@ -21,6 +21,25 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testSampleClosetCanReturnToPersonalCloset() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        XCTAssertTrue(app.staticTexts["Sample closet"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["sampleClosetAddMineButton"].exists)
+        app.buttons["sampleClosetClearButton"].tap()
+
+        let canAddFromCloset = app.buttons["addItemButton"].waitForExistence(timeout: 3)
+        let canAddFromOnboarding = app.buttons["startAddingClothesButton"].waitForExistence(timeout: 3)
+        XCTAssertTrue(canAddFromCloset || canAddFromOnboarding)
+        XCTAssertFalse(app.staticTexts["Sample closet"].exists)
+    }
+
     func testCompletedOnboardingWithEmptyClosetShowsActionableTabs() {
         let app = makeApp()
         app.launchEnvironment["CLOSETPIN_DEBUG_HAS_COMPLETED_ONBOARDING"] = "1"
@@ -248,9 +267,16 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ready to save."].waitForExistence(timeout: 3))
         app.buttons["saveItemButton"].tap()
 
-        let viewClosetButton = app.buttons["postSaveViewClosetButton"]
-        XCTAssertTrue(viewClosetButton.waitForExistence(timeout: 3))
-        viewClosetButton.tap()
+        XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
+    }
+
+    func testAddItemSaveUsesPendingAiColorWhenMissing() {
+        let app = makeApp()
+        openAddItemFromSampleCloset(app)
+        app.buttons["useTestPhotoButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
+        app.buttons["saveItemButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
     }
@@ -342,10 +368,7 @@ final class ClosetPinUITests: XCTestCase {
         colorField.typeText("Ivory")
 
         app.buttons["saveItemButton"].tap()
-        if app.buttons["postSaveViewClosetButton"].waitForExistence(timeout: 1) {
-            app.buttons["postSaveViewClosetButton"].tap()
-            app.buttons["appTab_today"].tap()
-        }
+        app.buttons["appTab_today"].tap()
 
         XCTAssertTrue(app.staticTexts["Add one bottom to generate office outfits."].waitForExistence(timeout: 3))
 
@@ -589,7 +612,7 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
 
-        tapWhenReady(app.buttons["postSaveGenerateTodayButton"], in: app)
+        app.buttons["appTab_today"].tap()
         XCTAssertTrue(app.buttons["todayFeedback_wore_0"].waitForExistence(timeout: 5))
     }
 

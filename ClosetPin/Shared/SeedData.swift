@@ -2,6 +2,18 @@ import Foundation
 import SwiftData
 
 enum SeedData {
+    static let workCapsuleItemIDs: Set<UUID> = Set([
+        "11111111-1111-1111-1111-111111111111",
+        "22222222-2222-2222-2222-222222222222",
+        "33333333-3333-3333-3333-333333333333",
+        "44444444-4444-4444-4444-444444444444",
+        "55555555-5555-5555-5555-555555555555",
+        "66666666-6666-6666-6666-666666666666",
+        "77777777-7777-7777-7777-777777777777",
+        "88888888-8888-8888-8888-888888888888",
+        "99999999-9999-9999-9999-999999999999"
+    ].map { UUID(uuidString: $0)! })
+
     static func workCapsuleItems(bundle: Bundle = .main) -> [ClothingItem] {
         let timestamp = Date(timeIntervalSince1970: 1_767_225_600)
         let sampleNeedsWashEnabled = ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_SAMPLE_NEEDS_WASH"] == "1"
@@ -149,7 +161,7 @@ enum WorkCapsuleSeeder {
     @discardableResult
     static func insertSampleCapsule(in modelContext: ModelContext) throws -> Int {
         let seedItems = SeedData.workCapsuleItems()
-        let seedIDs = Set(seedItems.map(\.id))
+        let seedIDs = SeedData.workCapsuleItemIDs
         let existingItems = try modelContext.fetch(FetchDescriptor<ClothingItem>())
         let existingSeedIDs = Set(existingItems.map(\.id)).intersection(seedIDs)
         let itemsToInsert = seedItems.filter { !existingSeedIDs.contains($0.id) }
@@ -167,6 +179,26 @@ enum WorkCapsuleSeeder {
             for item in itemsToInsert {
                 modelContext.delete(item)
             }
+            modelContext.rollback()
+            throw error
+        }
+    }
+
+    @discardableResult
+    static func removeSampleCapsule(in modelContext: ModelContext) throws -> Int {
+        let existingItems = try modelContext.fetch(FetchDescriptor<ClothingItem>())
+        let sampleItems = existingItems.filter { SeedData.workCapsuleItemIDs.contains($0.id) }
+
+        guard !sampleItems.isEmpty else { return 0 }
+
+        for item in sampleItems {
+            modelContext.delete(item)
+        }
+
+        do {
+            try modelContext.save()
+            return sampleItems.count
+        } catch {
             modelContext.rollback()
             throw error
         }
