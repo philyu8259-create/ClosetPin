@@ -447,25 +447,66 @@ struct LocalPhotoIntelligenceClient: ClothingPhotoTaggingClient {
 
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        var red = 0
-        var green = 0
-        var blue = 0
-        var count = 0
+        var coloredRed = 0.0
+        var coloredGreen = 0.0
+        var coloredBlue = 0.0
+        var coloredWeight = 0.0
+        var fallbackRed = 0.0
+        var fallbackGreen = 0.0
+        var fallbackBlue = 0.0
+        var fallbackWeight = 0.0
 
         for y in 0..<height {
             for x in 0..<width {
                 let offset = y * bytesPerRow + x * bytesPerPixel
                 let alpha = pixels[offset + 3]
                 guard alpha > 20 else { continue }
-                red += Int(pixels[offset])
-                green += Int(pixels[offset + 1])
-                blue += Int(pixels[offset + 2])
-                count += 1
+
+                let red = Double(pixels[offset])
+                let green = Double(pixels[offset + 1])
+                let blue = Double(pixels[offset + 2])
+                let maximum = max(red, green, blue)
+                let minimum = min(red, green, blue)
+                let saturation = maximum == 0 ? 0 : (maximum - minimum) / maximum
+                let brightness = maximum / 255
+                guard brightness > 0.08 else { continue }
+
+                let normalizedX = (Double(x) + 0.5) / Double(width)
+                let normalizedY = (Double(y) + 0.5) / Double(height)
+                let centerDistance = hypot(normalizedX - 0.5, normalizedY - 0.48)
+                let centerWeight = max(0.28, 1.25 - centerDistance * 1.5)
+
+                let isLikelyBackground = brightness > 0.88 && saturation < 0.18
+                if !isLikelyBackground {
+                    fallbackRed += red * centerWeight
+                    fallbackGreen += green * centerWeight
+                    fallbackBlue += blue * centerWeight
+                    fallbackWeight += centerWeight
+                }
+
+                guard saturation > 0.14, brightness < 0.96 else { continue }
+                let colorWeight = centerWeight * (1 + saturation * 2)
+                coloredRed += red * colorWeight
+                coloredGreen += green * colorWeight
+                coloredBlue += blue * colorWeight
+                coloredWeight += colorWeight
             }
         }
 
-        guard count > 0 else { return nil }
-        return RGBColor(red: red / count, green: green / count, blue: blue / count)
+        if coloredWeight > 8 {
+            return RGBColor(
+                red: Int(coloredRed / coloredWeight),
+                green: Int(coloredGreen / coloredWeight),
+                blue: Int(coloredBlue / coloredWeight)
+            )
+        }
+
+        guard fallbackWeight > 0 else { return nil }
+        return RGBColor(
+            red: Int(fallbackRed / fallbackWeight),
+            green: Int(fallbackGreen / fallbackWeight),
+            blue: Int(fallbackBlue / fallbackWeight)
+        )
     }
 
     private func closestColorName(to color: RGBColor) -> String {

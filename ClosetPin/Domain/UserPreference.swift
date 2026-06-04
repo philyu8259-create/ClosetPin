@@ -11,7 +11,7 @@ final class UserPreference {
     var preferredStyles: [String]
     var avoidedStyles: [String]
     var workplaceDressCode: String
-    var cloudPhotoRecognitionEnabled: Bool = false
+    var cloudPhotoRecognitionEnabled: Bool = true
     var tomorrowWeatherEnabled: Bool = false
     var tomorrowWeatherLocationName: String = ""
     var createdAt: Date
@@ -26,7 +26,7 @@ final class UserPreference {
         preferredStyles: [String] = [],
         avoidedStyles: [String] = [],
         workplaceDressCode: String = "",
-        cloudPhotoRecognitionEnabled: Bool = false,
+        cloudPhotoRecognitionEnabled: Bool = true,
         tomorrowWeatherEnabled: Bool = false,
         tomorrowWeatherLocationName: String = "",
         createdAt: Date = Date(),

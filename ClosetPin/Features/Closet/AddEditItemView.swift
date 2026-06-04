@@ -1265,7 +1265,7 @@ struct AddEditItemView: View {
     }
 
     private var allowsCloudPhotoRecognition: Bool {
-        preferences.first?.cloudPhotoRecognitionEnabled ?? false
+        preferences.first?.cloudPhotoRecognitionEnabled ?? true
     }
 
     private func suggestionStatusText(for outcome: PhotoTaggingOutcome) -> String {

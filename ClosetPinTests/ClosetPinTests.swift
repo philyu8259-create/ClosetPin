@@ -112,7 +112,7 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(preference.preferredStyles, [])
         XCTAssertEqual(preference.avoidedStyles, [])
         XCTAssertEqual(preference.workplaceDressCode, "")
-        XCTAssertFalse(preference.cloudPhotoRecognitionEnabled)
+        XCTAssertTrue(preference.cloudPhotoRecognitionEnabled)
         XCTAssertFalse(preference.tomorrowWeatherEnabled)
         XCTAssertEqual(preference.tomorrowWeatherLocationName, "")
         XCTAssertLessThanOrEqual(abs(preference.createdAt.timeIntervalSinceNow), 1)

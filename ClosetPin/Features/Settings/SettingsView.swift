@@ -8,7 +8,7 @@ struct SettingsView: View {
     @State private var defaultScenario: OutfitScenario = .dailyOffice
     @State private var preferredFormality = 3
     @State private var workplaceDressCode = ""
-    @State private var cloudPhotoRecognitionEnabled = false
+    @State private var cloudPhotoRecognitionEnabled = true
     @State private var tomorrowWeatherEnabled = false
     @State private var tomorrowWeatherLocationName = ""
     @State private var hasLoadedPreference = false

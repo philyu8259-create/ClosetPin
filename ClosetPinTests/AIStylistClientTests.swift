@@ -27,6 +27,17 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertFalse(suggestion.seasons.contains(.winter))
     }
 
+    func testLocalPhotoIntelligencePrioritizesCenteredGarmentColorOverPaleBackground() throws {
+        let image = makeGarmentImage(background: .systemGray5, garment: UIColor(red: 0.16, green: 0.45, blue: 0.24, alpha: 1))
+
+        let suggestion = try XCTUnwrap(LocalPhotoIntelligenceClient().suggestTags(for: image))
+
+        XCTAssertEqual(suggestion.color, "green")
+        XCTAssertEqual(suggestion.type, .top)
+        XCTAssertTrue(suggestion.seasons.contains(.summer))
+        XCTAssertFalse(suggestion.seasons.contains(.winter))
+    }
+
     func testPhotoTagSuggestionFillsEmptyDraftFields() {
         var draft = AddEditItemDraft()
         let suggestion = ClothingPhotoTagSuggestion(
@@ -644,6 +655,20 @@ private extension AIStylistClientTests {
         UIGraphicsImageRenderer(size: CGSize(width: 60, height: 80)).image { context in
             color.setFill()
             context.fill(CGRect(x: 0, y: 0, width: 60, height: 80))
+        }
+    }
+
+    func makeGarmentImage(background: UIColor, garment: UIColor) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 120, height: 160)).image { context in
+            background.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 120, height: 160))
+
+            garment.setFill()
+            context.fill(CGRect(x: 30, y: 34, width: 60, height: 92))
+
+            UIColor(white: 0.22, alpha: 1).setFill()
+            context.fill(CGRect(x: 30, y: 58, width: 60, height: 8))
+            context.fill(CGRect(x: 54, y: 34, width: 8, height: 92))
         }
     }
 }
