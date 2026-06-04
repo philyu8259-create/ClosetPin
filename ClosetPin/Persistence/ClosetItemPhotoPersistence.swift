@@ -151,6 +151,9 @@ struct ClothingPhotoProcessor {
 
         let maskedImage = UIImage(cgImage: maskedCGImage, scale: image.scale, orientation: .up)
         let cleanedImage = cleanedMaskedForegroundImage(maskedImage) ?? maskedImage
+        guard foregroundMaskLooksUsable(cleanedImage, sourceSize: image.size) else {
+            return nil
+        }
         return compositedForegroundImage(cleanedImage)
     }
 
@@ -263,6 +266,71 @@ struct ClothingPhotoProcessor {
 
     private static func alphaIsVisible(in pixels: [UInt8], index: Int, bytesPerPixel: Int) -> Bool {
         pixels[index * bytesPerPixel + 3] > 12
+    }
+
+    private static func foregroundMaskLooksUsable(_ image: UIImage, sourceSize: CGSize) -> Bool {
+        guard let cgImage = image.cgImage else { return false }
+
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 16, height > 16 else { return false }
+
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return false
+        }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        var visibleCount = 0
+        var minX = width
+        var minY = height
+        var maxX = 0
+        var maxY = 0
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let index = y * width + x
+                if alphaIsVisible(in: pixels, index: index, bytesPerPixel: bytesPerPixel) {
+                    visibleCount += 1
+                    minX = min(minX, x)
+                    minY = min(minY, y)
+                    maxX = max(maxX, x)
+                    maxY = max(maxY, y)
+                }
+            }
+        }
+
+        let totalPixels = width * height
+        let visibleRatio = Double(visibleCount) / Double(max(totalPixels, 1))
+        guard visibleRatio > 0.045, visibleRatio < 0.995, minX <= maxX, minY <= maxY else {
+            return false
+        }
+
+        let boundsWidthRatio = Double(maxX - minX + 1) / Double(width)
+        let boundsHeightRatio = Double(maxY - minY + 1) / Double(height)
+        guard boundsWidthRatio > 0.18, boundsHeightRatio > 0.18 else {
+            return false
+        }
+
+        let outputArea = image.size.width * image.size.height
+        let sourceArea = sourceSize.width * sourceSize.height
+        guard sourceArea <= 0 || (outputArea / sourceArea) > 0.035 else {
+            return false
+        }
+
+        return true
     }
 
     private static func visionForegroundCropRect(in image: UIImage) -> CGRect? {

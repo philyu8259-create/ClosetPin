@@ -81,6 +81,7 @@
 "closet.photo.preview_mode" = "预览模式";
 "closet.photo.preview.display" = "处理图";
 "closet.photo.preview.original" = "原图";
+"closet.photo.original_selected" = "将使用原图保存展示";
 "closet.photo.original_not_ready" = "如果原图可用，会在这里显示。";
 "closet.photo.retake" = "重拍";
 "closet.photo.replace" = "替换照片";

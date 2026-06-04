@@ -427,6 +427,10 @@ struct AddEditItemView: View {
                     Label(L10n.text("closet.photo.auto_cropped"), systemImage: "crop")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else {
+                    Label(L10n.text("closet.photo.original_selected"), systemImage: "photo")
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
                 }
             }
 
@@ -784,9 +788,11 @@ struct AddEditItemView: View {
         do {
             var finalizedDraft = draft
             if let pendingPhotoJPEGData = draft.pendingPhotoJPEGData {
+                let pendingOriginalPhotoJPEGData = draft.pendingOriginalPhotoJPEGData ?? pendingPhotoJPEGData
+                let displayJPEGData = photoPreviewMode == .original ? pendingOriginalPhotoJPEGData : pendingPhotoJPEGData
                 let photoData = ProcessedClosetPhotoData(
-                    displayJPEGData: pendingPhotoJPEGData,
-                    originalJPEGData: draft.pendingOriginalPhotoJPEGData ?? pendingPhotoJPEGData
+                    displayJPEGData: displayJPEGData,
+                    originalJPEGData: pendingOriginalPhotoJPEGData
                 )
                 let write = try ClosetItemPhotoPersistence.stagePhotoData(
                     photoData,
