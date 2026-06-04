@@ -75,7 +75,6 @@
 "closet.photo.preview_mode" = "Preview mode";
 "closet.photo.preview.display" = "Processed";
 "closet.photo.preview.original" = "Original";
-"closet.photo.preview.disabled_placeholder" = "Original preview not available for this photo.";
 "closet.photo.original_not_ready" = "Original image will appear if available.";
 "closet.photo.retake" = "Retake";
 "closet.photo.replace" = "Replace photo";

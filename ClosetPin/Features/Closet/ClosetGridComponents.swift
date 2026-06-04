@@ -45,9 +45,7 @@ struct GarmentGridCard: View {
     }
 
     private var metadataText: String {
-        let storage = item.displayStorageLocation
-        guard !storage.isEmpty else { return item.type.displayName }
-        return "\(item.type.displayName) · \(storage)"
+        item.type.displayName
     }
 
     @ViewBuilder

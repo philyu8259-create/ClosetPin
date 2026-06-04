@@ -373,12 +373,6 @@ struct AddEditItemView: View {
                         }
                         .pickerStyle(.segmented)
                         .frame(maxWidth: 212)
-                    } else {
-                        HStack(spacing: 8) {
-                            Text(L10n.text("closet.photo.preview.disabled_placeholder"))
-                                .font(.caption)
-                                .foregroundStyle(DesignSystem.secondaryInk)
-                        }
                     }
                 }
 
