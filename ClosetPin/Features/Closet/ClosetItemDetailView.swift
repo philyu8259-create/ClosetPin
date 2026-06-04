@@ -165,32 +165,17 @@ private struct ClosetDetailHeroCard: View {
     let onViewOriginal: () -> Void
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            WardrobePhotoThumbnail(item: item, cornerRadius: DesignSystem.Radius.editorialHero)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            ZStack(alignment: .bottomTrailing) {
+                WardrobePhotoThumbnail(
+                    image: WardrobePhoto.localImage(for: item),
+                    fallbackColor: DesignSystem.paper,
+                    cornerRadius: DesignSystem.Radius.editorialHero,
+                    contentMode: .fit
+                )
                 .frame(maxWidth: .infinity)
                 .frame(height: 360)
-
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.68)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            .allowsHitTesting(false)
-
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                HStack {
-                    DetailPill(text: item.status.displayName, tint: DesignSystem.statusColor(for: item.status), isInverted: true)
-                    Spacer()
-                }
-
-                Text(item.displayTitle)
-                    .font(DesignSystem.editorialDisplayFont(size: 34))
-                    .foregroundStyle(.white)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(item.displayStorageLocation)
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.84))
+                .shadow(color: DesignSystem.editorialShadow, radius: 24, x: 0, y: 16)
 
                 if WardrobePhoto.localImage(at: item.originalPhotoLocalPath) != nil {
                     Button(action: onViewOriginal) {
@@ -198,15 +183,26 @@ private struct ClosetDetailHeroCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.white.opacity(0.22))
+                    .tint(.black.opacity(0.58))
                     .foregroundStyle(.white)
+                    .padding(DesignSystem.Spacing.md)
                     .accessibilityIdentifier("viewOriginalPhotoButton")
                 }
             }
-            .padding(DesignSystem.Spacing.xl)
+
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.sm) {
+                DetailPill(text: item.status.displayName, tint: DesignSystem.statusColor(for: item.status))
+
+                if !item.displayStorageLocation.isEmpty {
+                    Text(item.displayStorageLocation)
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+            }
         }
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
-        .shadow(color: DesignSystem.editorialShadow, radius: 28, x: 0, y: 18)
         .accessibilityIdentifier("closetDetailHeroCard")
     }
 }

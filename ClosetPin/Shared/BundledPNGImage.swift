@@ -44,21 +44,29 @@ enum WardrobePhoto {
     }
 }
 
+enum WardrobePhotoContentMode {
+    case fill
+    case fit
+}
+
 struct WardrobePhotoThumbnail: View {
     let image: UIImage?
     let fallbackColor: Color
     let cornerRadius: CGFloat
+    let contentMode: WardrobePhotoContentMode
 
-    init(item: ClothingItem, cornerRadius: CGFloat = 7) {
+    init(item: ClothingItem, cornerRadius: CGFloat = 7, contentMode: WardrobePhotoContentMode = .fill) {
         self.image = WardrobePhoto.localImage(for: item)
         self.fallbackColor = ColorResolver.swatchColor(for: item.color)
         self.cornerRadius = cornerRadius
+        self.contentMode = contentMode
     }
 
-    init(image: UIImage?, fallbackColor: Color, cornerRadius: CGFloat = 7) {
+    init(image: UIImage?, fallbackColor: Color, cornerRadius: CGFloat = 7, contentMode: WardrobePhotoContentMode = .fill) {
         self.image = image
         self.fallbackColor = fallbackColor
         self.cornerRadius = cornerRadius
+        self.contentMode = contentMode
     }
 
     var body: some View {
@@ -67,9 +75,7 @@ struct WardrobePhotoThumbnail: View {
                 .fill(fallbackColor)
 
             if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
+                renderedImage(image)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -78,6 +84,21 @@ struct WardrobePhotoThumbnail: View {
                 .stroke(.quaternary, lineWidth: 1)
         }
         .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private func renderedImage(_ image: UIImage) -> some View {
+        switch contentMode {
+        case .fill:
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        case .fit:
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding(DesignSystem.Spacing.md)
+        }
     }
 }
 
