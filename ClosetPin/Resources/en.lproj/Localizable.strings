@@ -171,7 +171,7 @@
 "closet.post_save.continue_note" = "Saved. Add more pieces or return to Closet.";
 "closet.post_save.item_saved" = "Saved successfully.";
 "closet.post_save.continue" = "Continue adding";
-"closet.post_save.generate_today" = "Generate today’s look";
+"closet.post_save.generate_today" = "Open Today’s Look";
 "closet.post_save.view_closet" = "View in closet";
 "closet.post_save.generate_hint" = "Great. Open Today and generate a look from your updated closet.";
 "closet.level_indicator.format" = "Level %d of 5";

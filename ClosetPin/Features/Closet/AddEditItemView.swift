@@ -183,6 +183,7 @@ struct AddEditItemView: View {
     private let item: ClothingItem?
     private let imageStore: ImageStore
     private let photoTaggingPipeline: PhotoTaggingPipeline
+    private let onOpenToday: () -> Void
     @State private var draft: AddEditItemDraft
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var isCameraPresented = false
@@ -205,11 +206,13 @@ struct AddEditItemView: View {
         item: ClothingItem? = nil,
         imageStore: ImageStore = ImageStore(),
         photoTaggingPipeline: PhotoTaggingPipeline = .appDefault(),
-        initialType: ClothingType = .top
+        initialType: ClothingType = .top,
+        onOpenToday: @escaping () -> Void = {}
     ) {
         self.item = item
         self.imageStore = imageStore
         self.photoTaggingPipeline = photoTaggingPipeline
+        self.onOpenToday = onOpenToday
         _draft = State(initialValue: AddEditItemDraft(item: item, initialType: initialType))
     }
 
@@ -710,7 +713,8 @@ struct AddEditItemView: View {
                     .accessibilityIdentifier("postSaveContinueAddingButton")
 
                     Button(L10n.text("closet.post_save.generate_today")) {
-                        postSaveGuidance = L10n.text("closet.post_save.generate_hint")
+                        dismiss()
+                        onOpenToday()
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)

@@ -171,7 +171,7 @@
 "closet.post_save.continue_note" = "已保存。你可以继续添加，也可以回到衣橱。";
 "closet.post_save.item_saved" = "已保存。";
 "closet.post_save.continue" = "继续添加";
-"closet.post_save.generate_today" = "生成今日穿搭";
+"closet.post_save.generate_today" = "去看今日穿搭";
 "closet.post_save.view_closet" = "查看衣橱";
 "closet.post_save.generate_hint" = "很好。打开今日页，就可以基于更新后的衣橱生成穿搭。";
 "closet.level_indicator.format" = "第 %d 档，共 5 档";

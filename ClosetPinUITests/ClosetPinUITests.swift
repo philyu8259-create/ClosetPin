@@ -588,6 +588,9 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["saveItemButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Ivory"].waitForExistence(timeout: 3))
+
+        tapWhenReady(app.buttons["postSaveGenerateTodayButton"], in: app)
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].waitForExistence(timeout: 5))
     }
 
     func testClosetItemCanEditStatusAndFormality() {

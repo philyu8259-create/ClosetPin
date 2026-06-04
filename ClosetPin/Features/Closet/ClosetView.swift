@@ -44,7 +44,7 @@ struct ClosetView: View {
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .add(let initialType):
-                    AddEditItemView(initialType: initialType ?? .top)
+                    AddEditItemView(initialType: initialType ?? .top, onOpenToday: onOpenToday)
                 }
             }
             .navigationDestination(for: ClothingItem.self) { item in
