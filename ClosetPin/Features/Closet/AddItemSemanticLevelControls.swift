@@ -35,9 +35,9 @@ enum WarmthLevelLabel: Int, CaseIterable {
         case .light:
             L10n.text("closet.warmth.level_1")
         case .moderate:
-            L10n.text("closet.warmth.medium")
+            L10n.text("closet.warmth.level_2")
         case .warm:
-            L10n.text("closet.warmth.level_4")
+            L10n.text("closet.warmth.level_3")
         case .heavier:
             L10n.text("closet.warmth.level_4")
         case .heavy:

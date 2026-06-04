@@ -495,8 +495,8 @@ final class ClosetPinUITests: XCTestCase {
         }
         XCTAssertTrue(locationField.waitForExistence(timeout: 5))
 
-        XCTAssertTrue(app.staticTexts["No GPS required. Today will refresh the forecast from this city when available."].exists)
-        XCTAssertTrue(app.staticTexts["Ready for Today: Shanghai"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Type one city. No location permission needed."].exists)
+        XCTAssertTrue(app.staticTexts["Using city: Shanghai"].waitForExistence(timeout: 5))
     }
 
     func testTodayWeatherMissingCityCanOpenSettingsDirectly() {
