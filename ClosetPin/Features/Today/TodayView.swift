@@ -74,8 +74,7 @@ struct TodayView: View {
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                        dailyDashboard
-                            .id(Self.heroAnchorID)
+                        dailyDashboard(using: scrollProxy)
                         editorialHero
                         contextStrip
                         tomorrowPrepSection
@@ -151,6 +150,7 @@ struct TodayView: View {
                         record(action, for: heroCandidate)
                     }
                 )
+                .id(Self.heroAnchorID)
             } else {
                 let missingRecommendation = missingRecommendationPrompt
                 MissingRecommendationView(
@@ -339,13 +339,15 @@ struct TodayView: View {
         ].joined(separator: ":")
     }
 
-    private var dailyDashboard: some View {
+    private func dailyDashboard(using scrollProxy: ScrollViewProxy) -> some View {
         DailyStylingDashboardCard(
             scenarioName: scenario.displayName,
             seasonName: season.displayName,
             closetSummary: L10n.string("today.dashboard.closet_ready.format", arguments: readyItemCount),
             hasRecommendation: candidates.first != nil,
-            onGenerate: regenerateTodayLook
+            onGenerate: {
+                handleDashboardPrimaryAction(using: scrollProxy)
+            }
         )
     }
 
@@ -353,6 +355,17 @@ struct TodayView: View {
         clothingItems.filter { item in
             item.resolvedStatus == .available && item.seasons.contains(season)
         }.count
+    }
+
+    private func handleDashboardPrimaryAction(using scrollProxy: ScrollViewProxy) {
+        guard !candidates.isEmpty else {
+            regenerateTodayLook()
+            return
+        }
+
+        withAnimation(.snappy(duration: 0.22)) {
+            scrollProxy.scrollTo(Self.heroAnchorID, anchor: .top)
+        }
     }
 
     private func applyPreferenceDefaultsIfNeeded() {
