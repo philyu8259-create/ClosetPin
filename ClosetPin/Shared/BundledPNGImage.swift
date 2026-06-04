@@ -118,6 +118,14 @@ struct OutfitVisualItem: Identifiable, Equatable {
         ColorResolver.localizedDisplayColor(from: color) ?? color
     }
 
+    var displayStorageLocation: String {
+        item?.displayStorageLocation ?? ""
+    }
+
+    var hasStorageLocation: Bool {
+        displayStorageLocation.isEmpty == false
+    }
+
     static func makeItems(from items: [ClothingItem]) -> [OutfitVisualItem] {
         items.map { item in
             OutfitVisualItem(
@@ -181,14 +189,35 @@ private struct OutfitVisualTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            WardrobePhotoThumbnail(
-                image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
-                fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
-                cornerRadius: 10,
-                contentMode: .fit
-            )
-            .frame(maxWidth: .infinity)
-            .frame(height: 132)
+            ZStack(alignment: .bottomTrailing) {
+                WardrobePhotoThumbnail(
+                    image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
+                    fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
+                    cornerRadius: 10,
+                    contentMode: .fit
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 132)
+
+                if visualItem.hasStorageLocation {
+                    Text(visualItem.displayStorageLocation)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink.opacity(0.9))
+                        .lineLimit(1)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(DesignSystem.paper.opacity(0.9))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .stroke(DesignSystem.border.opacity(0.45), lineWidth: 1)
+                        )
+                        .padding(8)
+                        .accessibilityIdentifier("outfitVisualStorageLocationBadge")
+                }
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(visualItem.type.displayName)
