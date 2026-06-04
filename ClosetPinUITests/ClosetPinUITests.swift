@@ -369,7 +369,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
         woreButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Marked as worn today. You can find it in Looks."].waitForExistence(timeout: 3))
     }
 
     func testTodayRecommendationCanRecordPreferenceFeedback() {
@@ -379,7 +379,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Tune this suggestion"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Need a change?"].waitForExistence(timeout: 3))
 
         let moreButton = app.buttons["todayFeedbackMore_0"]
         XCTAssertTrue(moreButton.waitForExistence(timeout: 3))
@@ -555,7 +555,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["appTab_settings"].tap()
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["AI & Privacy"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Understand what AI uses so you can make choices confidently."].exists)
+        XCTAssertTrue(app.staticTexts["AI only steps in where it saves you time, and you stay in control."].exists)
         XCTAssertTrue(app.staticTexts["Photo tags"].exists)
         XCTAssertTrue(app.staticTexts["Local first"].exists)
         XCTAssertTrue(app.staticTexts["Outfit explanations"].exists)

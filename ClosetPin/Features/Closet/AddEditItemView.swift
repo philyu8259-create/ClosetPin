@@ -198,7 +198,6 @@ struct AddEditItemView: View {
     @State private var photoPreviewMode: PhotoPreviewMode = .display
     @State private var photoPreparationState: PhotoPreparationState = .idle
     @State private var showPostSaveGuide = false
-    @State private var postSaveGuidance: String?
     @State private var showsOptionalDetails = false
     @State private var showsSeasonChooser = false
 
@@ -401,7 +400,6 @@ struct AddEditItemView: View {
                     suggestionNeedsReview = true
                     photoPreviewMode = .display
                     showPostSaveGuide = false
-                    postSaveGuidance = nil
                     photoError = nil
                 }
                 .accessibilityIdentifier("useTestPhotoButton")
@@ -502,10 +500,6 @@ struct AddEditItemView: View {
     }
 
     private var postSaveMessage: String {
-        if let guidance = postSaveGuidance {
-            return guidance
-        }
-
         if item == nil {
             return L10n.text("closet.post_save.continue_note")
         }
@@ -812,7 +806,6 @@ struct AddEditItemView: View {
 
             if item == nil {
                 showPostSaveGuide = true
-                postSaveGuidance = nil
                 suggestionNeedsReview = false
                 return
             }
@@ -840,7 +833,6 @@ struct AddEditItemView: View {
         didApplyLatestSuggestion = false
         appliedPhotoSuggestionSummary = nil
         photoError = nil
-        postSaveGuidance = nil
         showPostSaveGuide = false
         photoPreview = nil
         photoPreviewMode = .display
@@ -871,7 +863,6 @@ struct AddEditItemView: View {
             await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
             photoPreviewMode = .display
             showPostSaveGuide = false
-            postSaveGuidance = nil
             photoError = nil
             selectedPhotoItem = nil
         } catch {
@@ -898,7 +889,6 @@ struct AddEditItemView: View {
                 await applyPhotoIntelligenceIfAvailable(from: photoData.displayJPEGData)
                 photoPreviewMode = .display
                 showPostSaveGuide = false
-                postSaveGuidance = nil
                 photoError = nil
             } else {
                 photoError = L10n.text("closet.photo.captured_save_failed")
