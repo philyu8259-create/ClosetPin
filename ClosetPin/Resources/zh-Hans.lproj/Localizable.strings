@@ -335,6 +335,7 @@
 "settings.ai_status.ranking.detail" = "ClosetPin 结合场合、衣橱、自动季节、正式度和历史偏好（真实穿过/保存）来解释推荐原因。";
 "settings.ai_status.weather.title" = "天气辅助";
 "settings.ai_status.weather.status.optional" = "可选";
+"settings.ai_status.weather.status.needs_city" = "需填写城市";
 "settings.ai_status.weather.status.on" = "已开启";
 "settings.ai_status.weather.detail" = "只有你开启城市天气后，才会调整明日穿搭建议。";
 "settings.weather.section" = "明日天气";

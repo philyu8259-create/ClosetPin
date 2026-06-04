@@ -87,7 +87,8 @@ struct SettingsView: View {
 
                             AIAssistStatusCard(
                                 cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
-                                tomorrowWeatherEnabled: tomorrowWeatherEnabled
+                                tomorrowWeatherEnabled: tomorrowWeatherEnabled,
+                                tomorrowWeatherLocationName: tomorrowWeatherLocationName
                             )
 
                             Divider()
@@ -339,6 +340,17 @@ private struct SettingsSubsectionHeader: View {
 private struct AIAssistStatusCard: View {
     let cloudPhotoRecognitionEnabled: Bool
     let tomorrowWeatherEnabled: Bool
+    let tomorrowWeatherLocationName: String
+
+    private var tomorrowWeatherStatus: String {
+        guard tomorrowWeatherEnabled else {
+            return L10n.text("settings.ai_status.weather.status.optional")
+        }
+        let trimmedLocation = tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedLocation.isEmpty
+            ? L10n.text("settings.ai_status.weather.status.needs_city")
+            : L10n.text("settings.ai_status.weather.status.on")
+    }
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.sm) {
@@ -361,9 +373,7 @@ private struct AIAssistStatusCard: View {
             AIAssistStatusRow(
                 systemImage: "cloud.sun",
                 title: L10n.text("settings.ai_status.weather.title"),
-                status: tomorrowWeatherEnabled
-                    ? L10n.text("settings.ai_status.weather.status.on")
-                    : L10n.text("settings.ai_status.weather.status.optional"),
+                status: tomorrowWeatherStatus,
                 detail: L10n.text("settings.ai_status.weather.detail")
             )
         }

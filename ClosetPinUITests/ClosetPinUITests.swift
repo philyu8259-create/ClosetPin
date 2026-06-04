@@ -514,6 +514,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         app.swipeUp()
         XCTAssertTrue(app.textFields["tomorrowWeatherLocationField"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Needs city"].waitForExistence(timeout: 3))
     }
 
     func testSettingsExplainsAiRoleWithoutExtraSetup() {

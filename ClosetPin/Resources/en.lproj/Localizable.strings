@@ -335,6 +335,7 @@
 "settings.ai_status.ranking.detail" = "Explains the recommended outfit using your occasion, closet, season, formality, and your past feedback from real wears and saves.";
 "settings.ai_status.weather.title" = "Weather help";
 "settings.ai_status.weather.status.optional" = "Optional";
+"settings.ai_status.weather.status.needs_city" = "Needs city";
 "settings.ai_status.weather.status.on" = "Enabled";
 "settings.ai_status.weather.detail" = "Only adjusts tomorrow outfits after you turn on city-based forecast help.";
 "settings.weather.section" = "Tomorrow Weather";
