@@ -20,31 +20,16 @@ struct ClosetItemDetailView: View {
                 }
 
                 LuxurySurfaceCard {
-                    HStack(spacing: DesignSystem.Spacing.sm) {
-                        Button {
-                            isEditing = true
-                        } label: {
-                            Label(L10n.text("closet.detail.edit"), systemImage: "slider.horizontal.3")
-                                .font(.subheadline.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(DesignSystem.accent)
-                        .accessibilityIdentifier("editItemButton")
-
-                        if WardrobePhoto.localImage(at: item.originalPhotoLocalPath) != nil {
-                            Button {
-                                isShowingOriginal = true
-                            } label: {
-                                Label(L10n.text("closet.photo.view_original"), systemImage: "rectangle.expand.vertical")
-                                    .font(.subheadline.weight(.semibold))
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(DesignSystem.secondaryInk)
-                            .accessibilityIdentifier("viewOriginalPhotoButton")
-                        }
+                    Button {
+                        isEditing = true
+                    } label: {
+                        Label(L10n.text("closet.detail.edit"), systemImage: "slider.horizontal.3")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.accent)
+                    .accessibilityIdentifier("editItemButton")
                 }
 
                 LuxurySurfaceCard {
@@ -117,8 +102,11 @@ struct ClosetItemDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(DesignSystem.background)
+        .tint(DesignSystem.accent)
         .navigationTitle(item.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(DesignSystem.paper, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .sheet(isPresented: $isEditing) {
             AddEditItemView(item: item)
         }
