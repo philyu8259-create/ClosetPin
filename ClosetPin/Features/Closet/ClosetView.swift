@@ -83,7 +83,10 @@ struct ClosetView: View {
                 }
                 closetHealthCard
                 filterBar
+                    .zIndex(2)
                 archiveMasthead
+                    .allowsHitTesting(false)
+                    .zIndex(0)
                 todayReadinessCard
 
                 if filteredItems.isEmpty {
@@ -299,11 +302,15 @@ struct ClosetView: View {
                 searchFieldIsFocused = true
             }
 
-            ClosetFilterFlowLayout(spacing: DesignSystem.Spacing.sm) {
-                ForEach(filterOptions, id: \.self) { option in
-                    ContextChip(title: title(for: option), value: option, selection: $activeFilter)
-                        .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(filterOptions, id: \.self) { option in
+                        ContextChip(title: title(for: option), value: option, selection: $activeFilter)
+                            .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
+                    }
                 }
+                .padding(.vertical, 2)
+                .contentShape(Rectangle())
             }
             .accessibilityIdentifier("closetFilterChips")
         }
@@ -565,73 +572,4 @@ private enum ClosetFilter: Hashable {
     case type(ClothingType)
     case needsWash
     case needsRepair
-}
-
-private struct ClosetFilterFlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? 0
-        let rows = arrangedRows(maxWidth: maxWidth, subviews: subviews)
-        let height = rows.enumerated().reduce(CGFloat.zero) { total, pair in
-            total + pair.element.height + (pair.offset == 0 ? 0 : spacing)
-        }
-        return CGSize(width: maxWidth, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var y = bounds.minY
-        for row in arrangedRows(maxWidth: bounds.width, subviews: subviews) {
-            var x = bounds.minX
-            for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(
-                    at: CGPoint(x: x, y: y),
-                    anchor: .topLeading,
-                    proposal: ProposedViewSize(size)
-                )
-                x += size.width + spacing
-            }
-            y += row.height + spacing
-        }
-    }
-
-    private func arrangedRows(maxWidth: CGFloat, subviews: Subviews) -> [ClosetFilterFlowRow] {
-        guard maxWidth > 0 else {
-            let height = subviews.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            return [ClosetFilterFlowRow(indices: Array(subviews.indices), height: height)]
-        }
-
-        var rows: [ClosetFilterFlowRow] = []
-        var currentIndices: [Subviews.Index] = []
-        var currentWidth: CGFloat = 0
-        var currentHeight: CGFloat = 0
-
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
-            let proposedWidth = currentIndices.isEmpty ? size.width : currentWidth + spacing + size.width
-
-            if proposedWidth > maxWidth, currentIndices.isEmpty == false {
-                rows.append(ClosetFilterFlowRow(indices: currentIndices, height: currentHeight))
-                currentIndices = [index]
-                currentWidth = size.width
-                currentHeight = size.height
-            } else {
-                currentIndices.append(index)
-                currentWidth = proposedWidth
-                currentHeight = max(currentHeight, size.height)
-            }
-        }
-
-        if currentIndices.isEmpty == false {
-            rows.append(ClosetFilterFlowRow(indices: currentIndices, height: currentHeight))
-        }
-
-        return rows
-    }
-}
-
-private struct ClosetFilterFlowRow {
-    let indices: [Int]
-    let height: CGFloat
 }

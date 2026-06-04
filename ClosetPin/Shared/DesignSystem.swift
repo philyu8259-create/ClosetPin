@@ -145,6 +145,7 @@ struct EditorialImageSurface<Content: View>: View {
             .frame(maxWidth: .infinity)
             .frame(height: height)
             .clipped()
+            .allowsHitTesting(false)
 
             LinearGradient(
                 colors: [
@@ -155,10 +156,14 @@ struct EditorialImageSurface<Content: View>: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            .frame(height: height)
+            .allowsHitTesting(false)
 
             content
                 .padding(DesignSystem.Spacing.xl)
         }
+        .frame(height: height)
+        .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.editorialHero, style: .continuous))
         .shadow(color: DesignSystem.editorialShadow, radius: 28, x: 0, y: 18)
     }

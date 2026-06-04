@@ -185,6 +185,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["appTab_closet"].tap()
         let searchField = app.textFields["closetSearchField"]
         XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+        XCTAssertTrue(searchField.isHittable)
         searchField.tap()
         searchField.typeText("Charcoal")
 
@@ -195,6 +196,35 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(charcoalTop.waitForExistence(timeout: 3))
         XCTAssertTrue(charcoalBlazer.waitForExistence(timeout: 3))
         XCTAssertFalse(nonMatchingBlueTop.exists)
+    }
+
+    func testClosetSearchAndTypeFilterAreDirectlyTappable() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        let searchField = app.textFields["closetSearchField"]
+        XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+        XCTAssertTrue(searchField.isHittable)
+        searchField.tap()
+        searchField.typeText("Blue")
+
+        let clearButton = app.buttons["closetSearchClearButton"]
+        XCTAssertTrue(clearButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(clearButton.isHittable)
+        clearButton.tap()
+
+        let topChip = app.buttons["closetFilter_type_top"]
+        XCTAssertTrue(topChip.waitForExistence(timeout: 3))
+        XCTAssertTrue(topChip.isHittable)
+        topChip.tap()
+
+        XCTAssertTrue(app.buttons["closetItemCard_22222222-2222-2222-2222-222222222222"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["closetItemCard_55555555-5555-5555-5555-555555555555"].exists)
     }
 
     func testStartAddingFromOnboardingOpensAddItemFlow() {

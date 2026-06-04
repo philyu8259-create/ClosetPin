@@ -23,12 +23,28 @@ struct GarmentGridCard: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
-                Text(metadataText)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.xs) {
+                    Text(metadataText)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .lineLimit(1)
 
-                statusBadge
+                    Spacer(minLength: DesignSystem.Spacing.xs)
+
+                    if hasStorageLocation {
+                        Text(item.displayStorageLocation)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DesignSystem.accent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+
+                HStack {
+                    statusBadge
+                    Spacer(minLength: 0)
+                }
             }
             .padding(.horizontal, DesignSystem.Spacing.sm)
             .padding(.bottom, DesignSystem.Spacing.sm)
@@ -46,6 +62,10 @@ struct GarmentGridCard: View {
 
     private var metadataText: String {
         item.type.displayName
+    }
+
+    private var hasStorageLocation: Bool {
+        item.displayStorageLocation.isEmpty == false
     }
 
     @ViewBuilder
