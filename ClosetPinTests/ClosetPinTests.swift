@@ -537,6 +537,17 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(originalImage.cgImage?.height, sourceImage.cgImage?.height)
     }
 
+    func testPhotoPersistenceCropsCenteredGarmentWithoutEdgeClutter() throws {
+        let sourceImage = makeImageWithCenteredSubjectAndEdgeClutter()
+        let sourceData = try XCTUnwrap(sourceImage.pngData())
+
+        let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
+        let displayImage = try XCTUnwrap(UIImage(data: result.displayJPEGData))
+
+        XCTAssertLessThan(displayImage.size.width, 78)
+        XCTAssertLessThan(displayImage.size.height, 82)
+    }
+
     func testPhotoPersistenceRejectsNonImageLibraryData() {
         let data = ClosetItemPhotoPersistence.processedPhotoData(from: Data("not an image".utf8))
 
@@ -767,11 +778,28 @@ final class ClosetPinTests: XCTestCase {
     }
 
     private func makeImageWithCenteredSubject() -> UIImage {
-        UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100)).image { context in
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100), format: format).image { context in
             UIColor.white.setFill()
             context.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
             UIColor.systemRed.setFill()
             context.fill(CGRect(x: 35, y: 30, width: 30, height: 40))
+        }
+    }
+
+    private func makeImageWithCenteredSubjectAndEdgeClutter() -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 120, height: 120), format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 120, height: 120))
+            UIColor.systemGreen.setFill()
+            context.fill(CGRect(x: 40, y: 28, width: 42, height: 62))
+            UIColor.black.setFill()
+            context.fill(CGRect(x: 4, y: 75, width: 12, height: 36))
+            UIColor.darkGray.setFill()
+            context.fill(CGRect(x: 104, y: 8, width: 10, height: 28))
         }
     }
 

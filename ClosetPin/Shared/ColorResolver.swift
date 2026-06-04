@@ -34,7 +34,11 @@ enum ColorResolver {
         }
 
         if lowercasedColor.unicodeScalars.allSatisfy(\.isASCII) {
-            guard words.allSatisfy({ allowedEnglishColorTokens.contains($0) || allowedEnglishModifiers.contains($0) }),
+            guard words.allSatisfy({
+                allowedEnglishColorTokens.contains($0)
+                    || allowedEnglishModifiers.contains($0)
+                    || allowedEnglishPatternTokens.contains($0)
+            }),
                   words.contains(where: { allowedEnglishColorTokens.contains($0) })
             else {
                 return nil
@@ -79,7 +83,27 @@ enum ColorResolver {
     }
 
     static func swatchKind(for rawColor: String) -> SwatchKind {
-        switch normalizedSwatchAlias(rawColor) {
+        let words = normalizedWords(rawColor)
+        if words.contains("green") || rawColor.contains("绿色") || rawColor.contains("绿") {
+            return .green
+        }
+        if words.contains("navy") || rawColor.contains("藏青") || rawColor.contains("海军蓝") {
+            return .navy
+        }
+        if words.contains("blue") || rawColor.contains("蓝") {
+            return .blue
+        }
+        if words.contains("black") || rawColor.contains("黑") {
+            return .black
+        }
+        if words.contains("brown") || words.contains("tan") || words.contains("camel") || rawColor.contains("棕") || rawColor.contains("驼") {
+            return .brown
+        }
+        if words.contains("red") || words.contains("burgundy") || words.contains("maroon") || words.contains("pink") || rawColor.contains("红") || rawColor.contains("粉") {
+            return .red
+        }
+
+        return switch normalizedSwatchAlias(rawColor) {
         case "black", "charcoal", "黑色", "炭灰色", "深灰色":
             .black
         case "white", "ivory", "cream", "beige", "白色", "象牙白", "米白色", "米色":
@@ -131,8 +155,30 @@ enum ColorResolver {
             .filter { $0 != " " && $0 != "-" }
     }
 
+    private static func normalizedWords(_ rawColor: String) -> [String] {
+        rawColor
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .split { $0 == " " || $0 == "-" || $0 == "/" || $0 == "," }
+            .map(String.init)
+    }
+
     private static func chineseDisplayAlias(for rawColor: String) -> String? {
-        switch normalizedSwatchAlias(rawColor) {
+        let words = normalizedWords(rawColor)
+        if let pattern = words.first(where: { allowedEnglishPatternTokens.contains($0) }) {
+            let colorWords = words.filter { allowedEnglishColorTokens.contains($0) }
+            if colorWords.isEmpty == false {
+                let colors = colorWords
+                    .prefix(2)
+                    .compactMap(chineseColorTokenAlias)
+                    .joined()
+                if colors.isEmpty == false {
+                    return "\(colors)\(chinesePatternTokenAlias(pattern))"
+                }
+            }
+        }
+
+        return switch normalizedSwatchAlias(rawColor) {
         case "black":
             "黑色"
         case "white":
@@ -190,6 +236,56 @@ enum ColorResolver {
         }
     }
 
+    private static func chineseColorTokenAlias(_ token: String) -> String? {
+        switch token {
+        case "black":
+            "黑"
+        case "white":
+            "白"
+        case "ivory", "cream":
+            "米白"
+        case "beige", "tan", "khaki":
+            "卡其"
+        case "gray", "grey", "charcoal", "silver":
+            "灰"
+        case "navy":
+            "藏青"
+        case "blue", "teal", "turquoise", "denim":
+            "蓝"
+        case "green", "olive":
+            "绿"
+        case "brown", "camel":
+            "棕"
+        case "red", "burgundy", "maroon":
+            "红"
+        case "pink":
+            "粉"
+        case "purple":
+            "紫"
+        case "yellow", "gold":
+            "黄"
+        case "orange":
+            "橙"
+        default:
+            nil
+        }
+    }
+
+    private static func chinesePatternTokenAlias(_ token: String) -> String {
+        switch token {
+        case "plaid", "check", "checked", "checkered", "tartan", "gingham":
+            "格纹"
+        case "striped", "stripe", "stripes":
+            "条纹"
+        case "floral":
+            "花纹"
+        case "solid", "plain":
+            "纯色"
+        default:
+            "图案"
+        }
+    }
+
     private static func containsRejectedClothingNoun(in color: String) -> Bool {
         let words = color
             .split { $0 == " " || $0 == "-" }
@@ -206,11 +302,16 @@ enum ColorResolver {
         "black", "white", "gray", "grey", "navy", "blue", "red", "burgundy",
         "pink", "purple", "green", "olive", "yellow", "cream", "beige", "tan",
         "brown", "camel", "orange", "ivory", "charcoal", "silver", "gold",
-        "denim", "khaki", "teal", "turquoise", "maroon"
+            "denim", "khaki", "teal", "turquoise", "maroon"
     ]
 
     private static let allowedEnglishModifiers: Set<String> = [
         "light", "dark", "pale", "deep", "soft", "bright", "muted"
+    ]
+
+    private static let allowedEnglishPatternTokens: Set<String> = [
+        "solid", "plain", "plaid", "check", "checked", "checkered", "tartan", "gingham",
+        "striped", "stripe", "stripes", "floral"
     ]
 
     private static let allowedChineseColors: Set<String> = [

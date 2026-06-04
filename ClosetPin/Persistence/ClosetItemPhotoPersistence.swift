@@ -92,7 +92,9 @@ struct ProcessedClosetPhotoData {
 
 struct ClothingPhotoProcessor {
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
-        guard let cropRect = saliencyCropRect(in: image) ?? foregroundCropRect(in: image) else { return image }
+        guard let cropRect = centeredGarmentCropRect(in: image)
+                ?? saliencyCropRect(in: image)
+                ?? foregroundCropRect(in: image) else { return image }
         return croppedImage(from: image, cropRect: cropRect)
     }
 
@@ -141,7 +143,123 @@ struct ClothingPhotoProcessor {
             width: unionBox.width * width,
             height: unionBox.height * height
         )
-        return paddedValidCropRect(convertedRect, sourceSize: image.size, paddingRatio: 0.16)
+        return paddedValidCropRect(convertedRect, sourceSize: image.size, paddingRatio: 0.08)
+    }
+
+    private static func centeredGarmentCropRect(in image: UIImage) -> CGRect? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        let maxSampleDimension = 220
+        let sourceWidth = cgImage.width
+        let sourceHeight = cgImage.height
+        guard sourceWidth > 2, sourceHeight > 2 else { return nil }
+
+        let scale = min(1, CGFloat(maxSampleDimension) / CGFloat(max(sourceWidth, sourceHeight)))
+        let width = max(2, Int(CGFloat(sourceWidth) * scale))
+        let height = max(2, Int(CGFloat(sourceHeight) * scale))
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+
+        context.interpolationQuality = .medium
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        let background = averageCornerColor(in: pixels, width: width, height: height, bytesPerRow: bytesPerRow)
+        var mask = [Bool](repeating: false, count: width * height)
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * bytesPerPixel
+                let alpha = pixels[offset + 3]
+                guard alpha > 20 else { continue }
+
+                let red = Int(pixels[offset])
+                let green = Int(pixels[offset + 1])
+                let blue = Int(pixels[offset + 2])
+                let difference = abs(red - background.red)
+                    + abs(green - background.green)
+                    + abs(blue - background.blue)
+                let brightness = max(red, green, blue)
+                let saturation = brightness == 0 ? 0 : Double(brightness - min(red, green, blue)) / Double(brightness)
+                let isLikelyGarment = difference > 58 && !(brightness > 236 && saturation < 0.16)
+                mask[y * width + x] = isLikelyGarment
+            }
+        }
+
+        var visited = [Bool](repeating: false, count: width * height)
+        var bestComponent: (score: Double, count: Int, minX: Int, minY: Int, maxX: Int, maxY: Int)?
+        let minimumComponentPixels = max(24, (width * height) / 900)
+
+        for index in mask.indices where mask[index] && !visited[index] {
+            var stack = [index]
+            visited[index] = true
+            var count = 0
+            var sumX = 0
+            var sumY = 0
+            var minX = width
+            var minY = height
+            var maxX = 0
+            var maxY = 0
+
+            while let current = stack.popLast() {
+                let x = current % width
+                let y = current / width
+                count += 1
+                sumX += x
+                sumY += y
+                minX = min(minX, x)
+                minY = min(minY, y)
+                maxX = max(maxX, x)
+                maxY = max(maxY, y)
+
+                let neighbors = [
+                    x > 0 ? current - 1 : nil,
+                    x < width - 1 ? current + 1 : nil,
+                    y > 0 ? current - width : nil,
+                    y < height - 1 ? current + width : nil
+                ].compactMap { $0 }
+
+                for neighbor in neighbors where mask[neighbor] && !visited[neighbor] {
+                    visited[neighbor] = true
+                    stack.append(neighbor)
+                }
+            }
+
+            guard count >= minimumComponentPixels else { continue }
+            let centroidX = Double(sumX) / Double(count) / Double(width)
+            let centroidY = Double(sumY) / Double(count) / Double(height)
+            let centerDistance = hypot(centroidX - 0.5, centroidY - 0.48)
+            let widthRatio = Double(maxX - minX + 1) / Double(width)
+            let heightRatio = Double(maxY - minY + 1) / Double(height)
+            guard widthRatio > 0.12, heightRatio > 0.16 else { continue }
+
+            let score = Double(count) * max(0.25, 1.25 - centerDistance)
+            if bestComponent == nil || score > bestComponent!.score {
+                bestComponent = (score, count, minX, minY, maxX, maxY)
+            }
+        }
+
+        guard let bestComponent else { return nil }
+        let scaleX = image.size.width / CGFloat(width)
+        let scaleY = image.size.height / CGFloat(height)
+        let detectedRect = CGRect(
+            x: CGFloat(bestComponent.minX) * scaleX,
+            y: CGFloat(bestComponent.minY) * scaleY,
+            width: CGFloat(bestComponent.maxX - bestComponent.minX + 1) * scaleX,
+            height: CGFloat(bestComponent.maxY - bestComponent.minY + 1) * scaleY
+        )
+        return paddedValidCropRect(detectedRect, sourceSize: image.size, paddingRatio: 0.10)
     }
 
     private static func foregroundCropRect(in image: UIImage) -> CGRect? {

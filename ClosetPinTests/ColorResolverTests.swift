@@ -19,6 +19,8 @@ final class ColorResolverTests: XCTestCase {
             ("米色", .white),
             ("olive", .green),
             ("橄榄绿", .green),
+            ("black green plaid", .green),
+            ("green plaid", .green),
             ("burgundy", .red),
             ("酒红色", .red)
         ]
@@ -65,6 +67,9 @@ final class ColorResolverTests: XCTestCase {
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Navy", locale: chineseLocale), "海军蓝")
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "black", locale: chineseLocale), "黑色")
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "white", locale: chineseLocale), "白色")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "black green plaid", locale: chineseLocale), "黑绿格纹")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "green plaid", locale: chineseLocale), "绿格纹")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "navy striped", locale: chineseLocale), "藏青条纹")
     }
 
     func testLocalizedDisplayColorKeepsEnglishForNonChineseLocale() {
