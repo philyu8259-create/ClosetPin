@@ -629,6 +629,30 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertFalse(app.buttons["formalityIncreaseButton"].exists)
     }
 
+    func testClosetNeedsWashFilterShowsOnlyNeedsWashItems() {
+        let app = makeApp()
+        app.launchEnvironment["CLOSETPIN_UI_TEST_SAMPLE_NEEDS_WASH"] = "1"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 5))
+
+        app.buttons["appTab_closet"].tap()
+        let needsWashCard = app.buttons["closetItemCard_77777777-7777-7777-7777-777777777777"]
+        let unrelatedCard = app.buttons["closetItemCard_55555555-5555-5555-5555-555555555555"]
+        XCTAssertTrue(needsWashCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(unrelatedCard.exists)
+
+        let needsWashChip = app.buttons["closetFilter_needsWash"]
+        XCTAssertTrue(needsWashChip.waitForExistence(timeout: 5))
+        XCTAssertTrue(needsWashChip.isHittable)
+        needsWashChip.tap()
+
+        XCTAssertTrue(needsWashCard.waitForExistence(timeout: 5))
+        XCTAssertFalse(unrelatedCard.exists)
+    }
+
     private func makeApp(
         language: String = "en",
         locale: String = "en_US"
@@ -697,4 +721,5 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTFail("Failed to tap \(element.identifier): not hittable after scrolling")
     }
+
 }

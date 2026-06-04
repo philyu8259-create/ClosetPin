@@ -240,14 +240,13 @@ struct ClosetView: View {
                 searchFieldIsFocused = true
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(filterOptions, id: \.self) { option in
-                        ContextChip(title: title(for: option), value: option, selection: $activeFilter)
-                    }
+            LazyVGrid(columns: filterChipColumns, alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                ForEach(filterOptions, id: \.self) { option in
+                    ContextChip(title: title(for: option), value: option, selection: $activeFilter)
+                        .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
                 }
-                .padding(.vertical, 1)
             }
+            .accessibilityIdentifier("closetFilterChips")
         }
     }
 
@@ -310,6 +309,10 @@ struct ClosetView: View {
             return true
         case .type(let type):
             return matchesTypeFilter(item, type)
+        case .needsWash:
+            return item.status == .needsWash
+        case .needsRepair:
+            return item.status == .needsRepair
         }
     }
 
@@ -347,19 +350,37 @@ struct ClosetView: View {
     }
 
     private var filterOptions: [ClosetFilter] {
-        [
-            .all,
+        var options: [ClosetFilter] = [.all]
+
+        if needsWashItemCount > 0 {
+            options.append(.needsWash)
+        }
+        if needsRepairItemCount > 0 {
+            options.append(.needsRepair)
+        }
+
+        options.append(contentsOf: [
             .type(.top),
             .type(.bottom),
             .type(.shoes),
             .type(.outerwear)
-        ]
+        ])
+
+        return options
+    }
+
+    private var filterChipColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 128), spacing: DesignSystem.Spacing.sm)]
     }
 
     private func title(for filter: ClosetFilter) -> String {
         switch filter {
         case .all:
             L10n.text("closet.filter.all")
+        case .needsWash:
+            ClothingStatus.needsWash.displayName
+        case .needsRepair:
+            ClothingStatus.needsRepair.displayName
         case .type(let type):
             switch type {
             case .outerwear:
@@ -367,6 +388,19 @@ struct ClosetView: View {
             default:
                 type.displayName
             }
+        }
+    }
+
+    private func filterChipAccessibilityIdentifier(for filter: ClosetFilter) -> String {
+        switch filter {
+        case .all:
+            return "closetFilter_all"
+        case .needsWash:
+            return "closetFilter_needsWash"
+        case .needsRepair:
+            return "closetFilter_needsRepair"
+        case .type(let type):
+            return "closetFilter_type_\(type.rawValue)"
         }
     }
 
@@ -448,4 +482,6 @@ private enum ClosetSheet: Identifiable {
 private enum ClosetFilter: Hashable {
     case all
     case type(ClothingType)
+    case needsWash
+    case needsRepair
 }

@@ -4,8 +4,9 @@ import SwiftData
 enum SeedData {
     static func workCapsuleItems(bundle: Bundle = .main) -> [ClothingItem] {
         let timestamp = Date(timeIntervalSince1970: 1_767_225_600)
+        let sampleNeedsWashEnabled = ProcessInfo.processInfo.environment["CLOSETPIN_UI_TEST_SAMPLE_NEEDS_WASH"] == "1"
 
-        return [
+        let items = [
             workItem(
                 id: "11111111-1111-1111-1111-111111111111",
                 photoLocalPath: "generated/editorial-white-shirt.png",
@@ -80,6 +81,7 @@ enum SeedData {
                 styleTags: ["shoes", "office"],
                 formalityLevel: 4,
                 warmthLevel: 1,
+                status: sampleNeedsWashEnabled ? .needsWash : .available,
                 notesKey: "seed.work_capsule.black_shoes.notes",
                 bundle: bundle
             ),
@@ -105,11 +107,14 @@ enum SeedData {
                 notesKey: "seed.work_capsule.work_bag.notes",
                 bundle: bundle
             )
-        ].map { item in
+        ]
+        let preparedItems = items.map { item in
             item.createdAt = timestamp
             item.updatedAt = timestamp
             return item
         }
+
+        return preparedItems
     }
 
     private static func workItem(
@@ -120,6 +125,7 @@ enum SeedData {
         styleTags: [String],
         formalityLevel: Int,
         warmthLevel: Int,
+        status: ClothingStatus = .available,
         notesKey: String,
         bundle: Bundle
     ) -> ClothingItem {
@@ -133,7 +139,7 @@ enum SeedData {
             formalityLevel: formalityLevel,
             warmthLevel: warmthLevel,
             storageLocation: L10n.text("seed.work_capsule.storage_location", bundle: bundle),
-            status: .available,
+            status: status,
             notes: L10n.text(notesKey, bundle: bundle)
         )
     }
