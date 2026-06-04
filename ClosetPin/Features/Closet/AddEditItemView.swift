@@ -1070,7 +1070,11 @@ struct AddEditItemView: View {
                     }
 
                     if canApplyOnlyColor || canApplyOnlySeasons {
-                        HStack(spacing: DesignSystem.Spacing.sm) {
+                        LazyVGrid(
+                            columns: [GridItem(.adaptive(minimum: 150), spacing: DesignSystem.Spacing.sm)],
+                            alignment: .leading,
+                            spacing: DesignSystem.Spacing.sm
+                        ) {
                             if canApplyOnlyColor {
                                 Button(L10n.text("closet.photo.ai_suggestion.apply_color")) {
                                     applyPendingPhotoSuggestion(fields: [.color])
