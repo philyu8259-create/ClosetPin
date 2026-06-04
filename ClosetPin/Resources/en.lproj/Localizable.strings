@@ -281,7 +281,7 @@
 "looks.title" = "Looks";
 "looks.empty.kicker" = "Style Archive";
 "looks.empty.title" = "Your Lookbook Starts Here";
-"looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works across your real occasions.";
+"looks.empty.description" = "From Today, tap Save for outfit ideas or Wear This for real outfits. They will build a simple lookbook for your occasions.";
 "looks.empty.open_today" = "Go to Today";
 "looks.kind.saved" = "Saved";
 "looks.kind.worn" = "Worn";

@@ -177,13 +177,6 @@ private struct LooksHistoryCard: View {
                 }
             }
 
-            LooksContextCallout(kind: entry.kind)
-
-            Text(entry.itemSummary)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(DesignSystem.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
             if !entry.visualItems.isEmpty {
                 OutfitVisualBoard(visualItems: entry.visualItems)
                     .accessibilityIdentifier("looksOutfitVisualBoard")
@@ -193,6 +186,13 @@ private struct LooksHistoryCard: View {
                 CapsuleTag(text: entry.scenario.displayName, tint: DesignSystem.accent)
                 CapsuleTag(text: L10n.string("looks.item_count.format", arguments: entry.itemCount), tint: DesignSystem.secondaryInk)
             }
+
+            Text(entry.itemSummary)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(DesignSystem.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            LooksContextCallout(kind: entry.kind)
 
             Text(entry.explanation)
                 .font(.footnote)

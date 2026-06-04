@@ -281,7 +281,7 @@
 "looks.title" = "穿搭";
 "looks.empty.kicker" = "穿搭档案";
 "looks.empty.title" = "从这里开始积累你的穿搭档案";
-"looks.empty.description" = "在「今日」里保存穿搭或标记已穿，逐步形成一份真正适合你不同场合的穿搭记录。";
+"looks.empty.description" = "在「今日」点“保存”可留下灵感，点“今天就穿”可记录真实穿过的搭配。这里会慢慢变成你的场合穿搭相册。";
 "looks.empty.open_today" = "去今日保存穿搭";
 "looks.kind.saved" = "已保存";
 "looks.kind.worn" = "已穿";
