@@ -189,35 +189,14 @@ private struct OutfitVisualTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .bottomTrailing) {
-                WardrobePhotoThumbnail(
-                    image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
-                    fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
-                    cornerRadius: 10,
-                    contentMode: .fit
-                )
-                .frame(maxWidth: .infinity)
-                .frame(height: 132)
-
-                if visualItem.hasStorageLocation {
-                    Text(visualItem.displayStorageLocation)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(DesignSystem.ink.opacity(0.9))
-                        .lineLimit(1)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(DesignSystem.paper.opacity(0.9))
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .stroke(DesignSystem.border.opacity(0.45), lineWidth: 1)
-                        )
-                        .padding(8)
-                        .accessibilityIdentifier("outfitVisualStorageLocationBadge")
-                }
-            }
+            WardrobePhotoThumbnail(
+                image: WardrobePhoto.localImage(at: visualItem.photoLocalPath),
+                fallbackColor: ColorResolver.swatchColor(for: visualItem.color).opacity(0.24),
+                cornerRadius: 10,
+                contentMode: .fit
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 132)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(visualItem.type.displayName)
@@ -225,10 +204,24 @@ private struct OutfitVisualTile: View {
                     .foregroundStyle(DesignSystem.ink)
                     .lineLimit(1)
 
-                Text(visualItem.displayColor)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(visualItem.displayColor)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 4)
+
+                    if visualItem.hasStorageLocation {
+                        Text(visualItem.displayStorageLocation)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(DesignSystem.accent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .multilineTextAlignment(.trailing)
+                            .accessibilityIdentifier("outfitVisualStorageLocationBadge")
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

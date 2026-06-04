@@ -7,7 +7,11 @@ struct ClosetItemPhotoPersistence {
     }
 
     static func normalizedJPEGData(from data: Data) -> Data? {
-        processedPhotoData(from: data)?.displayJPEGData
+        normalizedDisplayImageData(from: data)
+    }
+
+    static func normalizedDisplayImageData(from data: Data) -> Data? {
+        processedPhotoData(from: data)?.displayImageData
     }
 
     static func processedPhotoData(from data: Data) -> ProcessedClosetPhotoData? {
@@ -20,10 +24,10 @@ struct ClosetItemPhotoPersistence {
         guard let originalJPEGData = originalImage.jpegData(compressionQuality: 0.9) else { return nil }
 
         let displayImage = ClothingPhotoProcessor.autoCroppedDisplayImage(from: originalImage)
-        guard let displayJPEGData = displayImage.jpegData(compressionQuality: 0.86) else { return nil }
+        guard let displayImageData = displayImage.pngData() else { return nil }
 
         return ProcessedClosetPhotoData(
-            displayJPEGData: displayJPEGData,
+            displayImageData: displayImageData,
             originalJPEGData: originalJPEGData
         )
     }
@@ -37,7 +41,11 @@ struct ClosetItemPhotoPersistence {
     }
 
     static func stagePhotoData(_ data: ProcessedClosetPhotoData, id: UUID, imageStore: ImageStore) throws -> StagedPhotoDataWrite {
-        let displayWrite = try stageJPEGData(data.displayJPEGData, id: id, imageStore: imageStore)
+        let displayWrite = try stageImageData(
+            data.displayImageData,
+            stagingDirectory: imageStore.baseDirectory,
+            finalURL: imageStore.baseDirectory.appendingPathComponent("\(id.uuidString).png")
+        )
         do {
             let originalsDirectory = imageStore.baseDirectory.appendingPathComponent("Originals", isDirectory: true)
             let originalWrite = try stageJPEGData(
@@ -58,13 +66,18 @@ struct ClosetItemPhotoPersistence {
     }
 
     private static func stageJPEGData(_ data: Data, stagingDirectory: URL, finalURL: URL) throws -> StagedPhotoWrite {
+        try stageImageData(data, stagingDirectory: stagingDirectory, finalURL: finalURL)
+    }
+
+    private static func stageImageData(_ data: Data, stagingDirectory: URL, finalURL: URL) throws -> StagedPhotoWrite {
         try FileManager.default.createDirectory(
             at: stagingDirectory,
             withIntermediateDirectories: true
         )
 
+        let pathExtension = finalURL.pathExtension.isEmpty ? "img" : finalURL.pathExtension
         let stagingURL = stagingDirectory
-            .appendingPathComponent("\(finalURL.deletingPathExtension().lastPathComponent)-\(UUID().uuidString).staged.jpg")
+            .appendingPathComponent("\(finalURL.deletingPathExtension().lastPathComponent)-\(UUID().uuidString).staged.\(pathExtension)")
         try data.write(to: stagingURL, options: [.atomic])
 
         return StagedPhotoWrite(stagingURL: stagingURL, finalURL: finalURL)
@@ -73,6 +86,7 @@ struct ClosetItemPhotoPersistence {
     private static func normalizedImage(from image: UIImage) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
+        format.opaque = false
         return UIGraphicsImageRenderer(size: image.size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: image.size))
         }
@@ -85,8 +99,22 @@ struct ClosetItemPhotoPersistence {
 }
 
 struct ProcessedClosetPhotoData {
-    let displayJPEGData: Data
+    let displayImageData: Data
     let originalJPEGData: Data
+
+    init(displayImageData: Data, originalJPEGData: Data) {
+        self.displayImageData = displayImageData
+        self.originalJPEGData = originalJPEGData
+    }
+
+    init(displayJPEGData: Data, originalJPEGData: Data) {
+        self.displayImageData = displayJPEGData
+        self.originalJPEGData = originalJPEGData
+    }
+
+    var displayJPEGData: Data {
+        displayImageData
+    }
 }
 
 struct ClothingPhotoProcessor {
@@ -110,6 +138,7 @@ struct ClothingPhotoProcessor {
     private static func croppedImage(from image: UIImage, cropRect: CGRect) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
+        format.opaque = false
         return UIGraphicsImageRenderer(size: cropRect.size, format: format).image { _ in
             image.draw(
                 in: CGRect(
@@ -153,18 +182,7 @@ struct ClothingPhotoProcessor {
         guard foregroundMaskLooksUsable(cleanedImage, sourceSize: image.size) else {
             return nil
         }
-        return compositedForegroundImage(cleanedImage)
-    }
-
-    private static func compositedForegroundImage(_ image: UIImage) -> UIImage {
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = true
-        return UIGraphicsImageRenderer(size: image.size, format: format).image { context in
-            UIColor(red: 0.98, green: 0.96, blue: 0.92, alpha: 1).setFill()
-            context.fill(CGRect(origin: .zero, size: image.size))
-            image.draw(in: CGRect(origin: .zero, size: image.size))
-        }
+        return cleanedImage
     }
 
     private static func cleanedMaskedForegroundImage(_ image: UIImage) -> UIImage? {
@@ -735,8 +753,9 @@ struct StagedPhotoWrite {
         let fileManager = FileManager.default
 
         if fileManager.fileExists(atPath: finalURL.path) {
+            let pathExtension = finalURL.pathExtension.isEmpty ? "bak" : finalURL.pathExtension
             let backupURL = finalURL.deletingLastPathComponent()
-                .appendingPathComponent("\(finalURL.deletingPathExtension().lastPathComponent)-backup-\(UUID().uuidString).jpg")
+                .appendingPathComponent("\(finalURL.deletingPathExtension().lastPathComponent)-backup-\(UUID().uuidString).\(pathExtension)")
             try fileManager.moveItem(at: finalURL, to: backupURL)
             do {
                 try fileManager.moveItem(at: stagingURL, to: finalURL)

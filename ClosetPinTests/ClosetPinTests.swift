@@ -514,23 +514,25 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertNotNil(UIImage(data: data))
     }
 
-    func testPhotoPersistenceNormalizesLibraryDataToJPEGData() throws {
+    func testPhotoPersistenceNormalizesLibraryDataToDisplayPNGData() throws {
         let pngData = try XCTUnwrap(makeTestImage().pngData())
 
-        let data = try XCTUnwrap(ClosetItemPhotoPersistence.normalizedJPEGData(from: pngData))
+        let data = try XCTUnwrap(ClosetItemPhotoPersistence.normalizedDisplayImageData(from: pngData))
 
-        XCTAssertEqual(data.prefix(2), Data([0xFF, 0xD8]))
+        XCTAssertEqual(data.prefix(8), Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
         XCTAssertNotNil(UIImage(data: data))
     }
 
-    func testPhotoPersistenceAutoCropsClothingSubjectBeforeSavingDisplayJPEG() throws {
+    func testPhotoPersistenceAutoCropsClothingSubjectBeforeSavingDisplayPNG() throws {
         let sourceImage = makeImageWithCenteredSubject()
         let sourceData = try XCTUnwrap(sourceImage.pngData())
 
         let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
-        let displayImage = try XCTUnwrap(UIImage(data: result.displayJPEGData))
+        let displayImage = try XCTUnwrap(UIImage(data: result.displayImageData))
         let originalImage = try XCTUnwrap(UIImage(data: result.originalJPEGData))
 
+        XCTAssertEqual(result.displayImageData.prefix(8), Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+        XCTAssertEqual(result.originalJPEGData.prefix(2), Data([0xFF, 0xD8]))
         XCTAssertLessThan(displayImage.size.width, originalImage.size.width)
         XCTAssertLessThan(displayImage.size.height, originalImage.size.height)
         XCTAssertEqual(originalImage.cgImage?.width, sourceImage.cgImage?.width)
@@ -542,7 +544,7 @@ final class ClosetPinTests: XCTestCase {
         let sourceData = try XCTUnwrap(sourceImage.pngData())
 
         let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
-        let displayImage = try XCTUnwrap(UIImage(data: result.displayJPEGData))
+        let displayImage = try XCTUnwrap(UIImage(data: result.displayImageData))
 
         XCTAssertLessThan(displayImage.size.width, 78)
         XCTAssertLessThan(displayImage.size.height, 82)
@@ -560,7 +562,7 @@ final class ClosetPinTests: XCTestCase {
         let imageStore = ImageStore(baseDirectory: directory)
         let itemID = UUID()
         let photoData = ProcessedClosetPhotoData(
-            displayJPEGData: Data("display image".utf8),
+            displayImageData: Data("display image".utf8),
             originalJPEGData: Data("original image".utf8)
         )
 
@@ -572,9 +574,9 @@ final class ClosetPinTests: XCTestCase {
 
         try stagedWrite.commit()
 
-        XCTAssertEqual(try Data(contentsOf: stagedWrite.display.finalURL), photoData.displayJPEGData)
+        XCTAssertEqual(try Data(contentsOf: stagedWrite.display.finalURL), photoData.displayImageData)
         XCTAssertEqual(try Data(contentsOf: stagedWrite.original.finalURL), photoData.originalJPEGData)
-        XCTAssertTrue(stagedWrite.display.finalURL.lastPathComponent.hasSuffix(".jpg"))
+        XCTAssertTrue(stagedWrite.display.finalURL.lastPathComponent.hasSuffix(".png"))
         XCTAssertTrue(stagedWrite.original.finalURL.path.contains("/Originals/"))
 
         try? FileManager.default.removeItem(at: directory)

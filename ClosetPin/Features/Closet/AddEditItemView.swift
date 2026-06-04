@@ -803,9 +803,16 @@ struct AddEditItemView: View {
             var finalizedDraft = draft
             if let pendingPhotoJPEGData = draft.pendingPhotoJPEGData {
                 let pendingOriginalPhotoJPEGData = draft.pendingOriginalPhotoJPEGData ?? pendingPhotoJPEGData
-                let displayJPEGData = photoPreviewMode == .original ? pendingOriginalPhotoJPEGData : pendingPhotoJPEGData
+                let displayImageData: Data
+                if photoPreviewMode == .original,
+                   let originalImage = UIImage(data: pendingOriginalPhotoJPEGData),
+                   let originalPNGData = originalImage.pngData() {
+                    displayImageData = originalPNGData
+                } else {
+                    displayImageData = pendingPhotoJPEGData
+                }
                 let photoData = ProcessedClosetPhotoData(
-                    displayJPEGData: displayJPEGData,
+                    displayImageData: displayImageData,
                     originalJPEGData: pendingOriginalPhotoJPEGData
                 )
                 let write = try ClosetItemPhotoPersistence.stagePhotoData(
