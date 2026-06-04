@@ -92,7 +92,8 @@ struct ProcessedClosetPhotoData {
 
 struct ClothingPhotoProcessor {
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
-        guard let cropRect = centeredGarmentCropRect(in: image)
+        guard let cropRect = visionForegroundCropRect(in: image)
+                ?? centeredGarmentCropRect(in: image)
                 ?? saliencyCropRect(in: image)
                 ?? foregroundCropRect(in: image) else { return image }
         return croppedImage(from: image, cropRect: cropRect)
@@ -110,6 +111,114 @@ struct ClothingPhotoProcessor {
                     height: image.size.height
                 )
             )
+        }
+    }
+
+    private static func visionForegroundCropRect(in image: UIImage) -> CGRect? {
+        guard #available(iOS 17.0, *),
+              let cgImage = image.cgImage else { return nil }
+
+        let request = VNGenerateForegroundInstanceMaskRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return nil
+        }
+
+        guard let observation = request.results?.first else { return nil }
+        var bestRect: CGRect?
+        var bestScore = 0.0
+
+        observation.allInstances.forEach { instance in
+            let selectedInstances = IndexSet(integer: instance)
+            guard let maskBuffer = try? observation.generateScaledMaskForImage(
+                forInstances: selectedInstances,
+                from: handler
+            ),
+                let rect = maskBoundingRect(maskBuffer, sourceSize: image.size) else {
+                return
+            }
+
+            let center = CGPoint(x: rect.midX / image.size.width, y: rect.midY / image.size.height)
+            let centerDistance = hypot(center.x - 0.5, center.y - 0.48)
+            let areaRatio = (rect.width * rect.height) / (image.size.width * image.size.height)
+            guard areaRatio > 0.04, areaRatio < 0.92 else { return }
+
+            let score = Double(areaRatio) * max(0.35, 1.35 - centerDistance)
+            if score > bestScore {
+                bestScore = score
+                bestRect = rect
+            }
+        }
+
+        guard let bestRect else { return nil }
+        return paddedValidCropRect(bestRect, sourceSize: image.size, paddingRatio: 0.06)
+    }
+
+    private static func maskBoundingRect(_ pixelBuffer: CVPixelBuffer, sourceSize: CGSize) -> CGRect? {
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer) else { return nil }
+
+        let width = CVPixelBufferGetWidth(pixelBuffer)
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+        let pixelFormat = CVPixelBufferGetPixelFormatType(pixelBuffer)
+        var minX = width
+        var minY = height
+        var maxX = 0
+        var maxY = 0
+        var count = 0
+
+        for y in 0..<height {
+            for x in 0..<width {
+                if maskPixelIsForeground(
+                    baseAddress: baseAddress,
+                    pixelFormat: pixelFormat,
+                    bytesPerRow: bytesPerRow,
+                    x: x,
+                    y: y
+                ) {
+                    minX = min(minX, x)
+                    minY = min(minY, y)
+                    maxX = max(maxX, x)
+                    maxY = max(maxY, y)
+                    count += 1
+                }
+            }
+        }
+
+        guard count > max(24, (width * height) / 600),
+              minX <= maxX,
+              minY <= maxY else { return nil }
+
+        let scaleX = sourceSize.width / CGFloat(width)
+        let scaleY = sourceSize.height / CGFloat(height)
+        return CGRect(
+            x: CGFloat(minX) * scaleX,
+            y: CGFloat(minY) * scaleY,
+            width: CGFloat(maxX - minX + 1) * scaleX,
+            height: CGFloat(maxY - minY + 1) * scaleY
+        )
+    }
+
+    private static func maskPixelIsForeground(
+        baseAddress: UnsafeMutableRawPointer,
+        pixelFormat: OSType,
+        bytesPerRow: Int,
+        x: Int,
+        y: Int
+    ) -> Bool {
+        let row = baseAddress.advanced(by: y * bytesPerRow)
+        switch pixelFormat {
+        case kCVPixelFormatType_OneComponent8:
+            return row.load(fromByteOffset: x, as: UInt8.self) > 12
+        case kCVPixelFormatType_OneComponent32Float:
+            return row.load(fromByteOffset: x * MemoryLayout<Float>.stride, as: Float.self) > 0.04
+        default:
+            return row.load(fromByteOffset: x, as: UInt8.self) > 12
         }
     }
 

@@ -106,7 +106,7 @@
 "closet.photo.ai_suggestion.auto_applied.format" = "AI 已应用建议：%@";
 "closet.photo.ai_suggestion.local.format" = "本地快速识别：%@";
 "closet.photo.ai_suggestion.cloud.format" = "云端识别：%@";
-"closet.photo.ai_suggestion.cloud_fallback.format" = "云端连接失败，已临时使用本地快速识别：%@";
+"closet.photo.ai_suggestion.cloud_fallback.format" = "云端暂未返回，已先用本机快速识别：%@";
 "closet.photo.processing.prepare" = "正在准备照片……";
 "closet.photo.processing.analyze" = "AI 正在整理单品信息……";
 "closet.photo.save_failed" = "照片未能保存。请再试一次。";

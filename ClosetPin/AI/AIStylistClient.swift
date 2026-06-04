@@ -279,7 +279,8 @@ struct PhotoTaggingPipeline: Sendable {
 struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Sendable {
     let endpoint: URL
     let session: URLSession
-    static let requestTimeoutInterval: TimeInterval = 8
+    static let requestTimeoutInterval: TimeInterval = 25
+    static let maximumUploadDimension: CGFloat = 1280
 
     init(endpoint: URL, session: URLSession = .shared) {
         self.endpoint = endpoint
@@ -316,7 +317,7 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
     }
 
     static func makeRequestBody(for image: UIImage, localeIdentifier: String) throws -> Data {
-        guard let jpegData = image.jpegData(compressionQuality: 0.72) else {
+        guard let jpegData = uploadJPEGData(from: image) else {
             throw CloudPhotoTaggingClientError.imageEncodingFailed
         }
 
@@ -325,6 +326,27 @@ struct CloudPhotoTaggingClient: AsyncClothingPhotoTaggingClient, @unchecked Send
             localeIdentifier: localeIdentifier
         )
         return try JSONEncoder().encode(request)
+    }
+
+    static func uploadJPEGData(from image: UIImage) -> Data? {
+        let normalizedImage = normalizedUploadImage(from: image)
+        return normalizedImage.jpegData(compressionQuality: 0.68)
+    }
+
+    private static func normalizedUploadImage(from image: UIImage) -> UIImage {
+        let longestSide = max(image.size.width, image.size.height)
+        guard longestSide > maximumUploadDimension else { return image }
+
+        let scale = maximumUploadDimension / longestSide
+        let targetSize = CGSize(
+            width: max(1, floor(image.size.width * scale)),
+            height: max(1, floor(image.size.height * scale))
+        )
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
     }
 
     static func decodeSuggestion(from data: Data) throws -> ClothingPhotoTagSuggestion? {

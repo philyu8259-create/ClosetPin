@@ -117,6 +117,15 @@ final class AIStylistClientTests: XCTestCase {
         XCTAssertNotNil(request.httpBody)
     }
 
+    func testCloudPhotoTaggingUploadDownscalesLargeCameraImages() throws {
+        let image = makeSolidImage(color: .systemGreen, size: CGSize(width: 3024, height: 4032))
+
+        let uploadData = try XCTUnwrap(CloudPhotoTaggingClient.uploadJPEGData(from: image))
+        let uploadImage = try XCTUnwrap(UIImage(data: uploadData))
+
+        XCTAssertLessThanOrEqual(max(uploadImage.size.width, uploadImage.size.height), CloudPhotoTaggingClient.maximumUploadDimension)
+    }
+
     func testCloudPhotoTaggingClientDecodesRemoteSuggestion() throws {
         let json = """
         {
@@ -651,10 +660,12 @@ private extension AIStylistClientTests {
         "\(color) \(type.summaryName)"
     }
 
-    func makeSolidImage(color: UIColor) -> UIImage {
-        UIGraphicsImageRenderer(size: CGSize(width: 60, height: 80)).image { context in
+    func makeSolidImage(color: UIColor, size: CGSize = CGSize(width: 60, height: 80)) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
             color.setFill()
-            context.fill(CGRect(x: 0, y: 0, width: 60, height: 80))
+            context.fill(CGRect(origin: .zero, size: size))
         }
     }
 
