@@ -78,6 +78,8 @@ struct SettingsView: View {
                                 subtitle: L10n.text("settings.ai_privacy.subtitle")
                             )
 
+                            AIUsageOverviewCard()
+
                             SettingsNoteRow(
                                 systemImage: "camera.badge.ellipsis",
                                 title: L10n.text("settings.ai_privacy.photo_title"),
@@ -378,6 +380,52 @@ private struct AIAssistStatusCard: View {
             )
         }
         .accessibilityIdentifier("settingsAIStatusCard")
+    }
+}
+
+private struct AIUsageOverviewCard: View {
+    private let rows: [(icon: String, titleKey: String, bodyKey: String)] = [
+        ("camera.badge.ellipsis", "settings.ai_overview.photo.title", "settings.ai_overview.photo.body"),
+        ("sparkles", "settings.ai_overview.today.title", "settings.ai_overview.today.body"),
+        ("cloud.sun", "settings.ai_overview.weather.title", "settings.ai_overview.weather.body")
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Label(L10n.text("settings.ai_overview.title"), systemImage: "wand.and.sparkles")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(DesignSystem.ink)
+
+            ForEach(rows, id: \.titleKey) { row in
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: row.icon)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .frame(width: 22, height: 22)
+                        .background(DesignSystem.accent.opacity(0.09))
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n.text(row.titleKey))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DesignSystem.ink)
+
+                        Text(L10n.text(row.bodyKey))
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.secondaryInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(DesignSystem.Spacing.md)
+        .background(DesignSystem.surface.opacity(0.82))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.48), lineWidth: 1)
+        }
+        .accessibilityIdentifier("settingsAIUsageOverviewCard")
     }
 }
 
