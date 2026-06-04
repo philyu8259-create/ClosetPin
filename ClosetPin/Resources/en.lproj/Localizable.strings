@@ -279,6 +279,7 @@
 "today.confirmation.undone" = "Undone.";
 
 "looks.title" = "Looks";
+"looks.empty.kicker" = "Style Archive";
 "looks.empty.title" = "Your Lookbook Starts Here";
 "looks.empty.description" = "Save or mark outfits as worn from Today to build a practical history of what works across your real occasions.";
 "looks.empty.open_today" = "Go to Today";

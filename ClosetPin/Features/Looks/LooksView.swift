@@ -279,10 +279,40 @@ private struct EmptyLooksView: View {
     let onOpenToday: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(L10n.text("looks.empty.title"), systemImage: "calendar")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [DesignSystem.premiumGold.opacity(0.32), DesignSystem.premiumGold.opacity(0.02)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: "sparkles")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(DesignSystem.wine)
+                }
+                .clipShape(Circle())
+                .overlay {
+                    Circle()
+                        .stroke(DesignSystem.premiumGold.opacity(0.45), lineWidth: 1)
+                }
+
+                Text(L10n.text("looks.empty.kicker"))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(DesignSystem.premiumGold)
+                    .tracking(0.4)
+                    .textCase(.uppercase)
+            }
+
+            Text(L10n.text("looks.empty.title"))
+                .font(DesignSystem.editorialDisplayFont(size: 32))
                 .foregroundStyle(DesignSystem.ink)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(L10n.text("looks.empty.description"))
                 .font(.body)
@@ -291,24 +321,68 @@ private struct EmptyLooksView: View {
 
             if let onOpenToday {
                 Button(action: onOpenToday) {
-                    Label(L10n.text("looks.empty.open_today"), systemImage: "sparkles")
-                        .frame(maxWidth: .infinity)
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        Image(systemName: "sparkles")
+                            .font(.subheadline.weight(.bold))
+                        Text(L10n.text("looks.empty.open_today"))
+                            .font(.subheadline.weight(.semibold))
+                        Spacer(minLength: 8)
+                        Image(systemName: "arrow.right")
+                            .font(.footnote.weight(.bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+                    .frame(height: 48)
+                    .background(
+                        LinearGradient(
+                            colors: [DesignSystem.accent, DesignSystem.wine],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(Capsule(style: .continuous))
+                    .overlay {
+                        Capsule(style: .continuous)
+                            .stroke(DesignSystem.premiumGold.opacity(0.35), lineWidth: 1)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(DesignSystem.accent)
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("looksEmptyOpenTodayButton")
             }
         }
-        .padding(DesignSystem.Spacing.lg)
+        .padding(DesignSystem.Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.paper.opacity(0.96))
+        .background {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        DesignSystem.paper.opacity(0.9),
+                        DesignSystem.surface.opacity(0.98)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                Circle()
+                    .fill(DesignSystem.premiumGold.opacity(0.24))
+                    .frame(width: 180, height: 180)
+                    .blur(radius: 0.5)
+                    .offset(x: 170, y: -120)
+
+                Circle()
+                    .fill(DesignSystem.accent.opacity(0.1))
+                    .frame(width: 104, height: 104)
+                    .blur(radius: 0.5)
+                    .offset(x: -64, y: 124)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
-                .stroke(DesignSystem.border.opacity(0.32), lineWidth: 1)
+                .stroke(DesignSystem.border.opacity(0.38), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.06), radius: 18, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.08), radius: 20, x: 0, y: 12)
     }
 }
 
