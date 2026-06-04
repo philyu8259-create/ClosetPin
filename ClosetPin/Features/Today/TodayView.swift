@@ -174,16 +174,18 @@ struct TodayView: View {
                 .foregroundStyle(DesignSystem.secondaryInk)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(OutfitScenario.allCases) { scenario in
-                        ContextChip(title: scenario.displayName, value: scenario, selection: $scenario)
-                    }
+            LazyVGrid(columns: scenarioChipColumns, alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                ForEach(OutfitScenario.allCases) { scenario in
+                    ContextChip(title: scenario.displayName, value: scenario, selection: $scenario)
+                        .accessibilityIdentifier("todayScenario_\(scenario.rawValue)")
                 }
-                .padding(.vertical, 1)
             }
             .accessibilityIdentifier("todayScenarioPicker")
         }
+    }
+
+    private var scenarioChipColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 132), spacing: DesignSystem.Spacing.sm)]
     }
 
     private var decisionSupportSection: some View {
