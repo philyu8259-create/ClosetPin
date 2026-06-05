@@ -84,10 +84,13 @@ struct ClosetView: View {
                 closetHealthCard
                 filterBar
                     .zIndex(2)
-                archiveMasthead
-                    .allowsHitTesting(false)
-                    .zIndex(0)
-                todayReadinessCard
+
+                if !isFilteringClosetForCurrentReadinessContext {
+                    archiveMasthead
+                        .allowsHitTesting(false)
+                        .zIndex(0)
+                    todayReadinessCard
+                }
 
                 if filteredItems.isEmpty {
                     EmptyFilteredClosetView {
@@ -272,21 +275,30 @@ struct ClosetView: View {
                 TextField(L10n.text("closet.search.placeholder"), text: $searchText)
                     .textInputAutocapitalization(.words)
                     .disableAutocorrection(true)
-                    .frame(minHeight: 32)
+                    .frame(minHeight: 40)
+                    .frame(maxWidth: .infinity)
                     .focused($searchFieldIsFocused)
                     .accessibilityIdentifier("closetSearchField")
 
-                if !searchText.isEmpty {
-                    Button {
+                Button {
+                    guard !searchText.isEmpty else { return }
+                    withTransaction(Transaction(animation: nil)) {
                         searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(DesignSystem.secondaryInk)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(L10n.text("closet.search.clear"))
-                    .accessibilityIdentifier("closetSearchClearButton")
+                    searchFieldIsFocused = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .frame(width: 20, height: 20)
+                        .opacity(searchText.isEmpty ? 0 : 1)
                 }
+                .frame(minWidth: 32, minHeight: 32)
+                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .disabled(searchText.isEmpty)
+                .accessibilityHidden(searchText.isEmpty)
+                .accessibilityLabel(L10n.text("closet.search.clear"))
+                .accessibilityIdentifier("closetSearchClearButton")
             }
             .font(.subheadline)
             .padding(.horizontal, 12)
@@ -298,15 +310,13 @@ struct ClosetView: View {
                     .stroke(DesignSystem.border.opacity(0.58), lineWidth: 1)
             }
             .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
-            .onTapGesture {
-                searchFieldIsFocused = true
-            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(filterOptions, id: \.self) { option in
                         ContextChip(title: title(for: option), value: option, selection: $activeFilter)
                             .accessibilityIdentifier(filterChipAccessibilityIdentifier(for: option))
+                            .contentShape(Capsule())
                     }
                 }
                 .padding(.vertical, 2)

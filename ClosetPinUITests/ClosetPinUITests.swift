@@ -501,7 +501,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(saveButton.waitForExistence(timeout: 3))
         saveButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Saved to Looks."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["todayFeedbackConfirmationText"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["appTab_settings"].isHittable)
         app.buttons["appTab_settings"].tap()
 
@@ -519,8 +519,9 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
         woreButton.tap()
 
-        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Great. This look is marked for today."].waitForNonExistence(timeout: 4))
+        let confirmationText = app.staticTexts["todayFeedbackConfirmationText"]
+        XCTAssertTrue(confirmationText.waitForExistence(timeout: 3))
+        XCTAssertTrue(confirmationText.waitForNonExistence(timeout: 4))
     }
 
     func testEmptyLooksCanReturnToToday() {

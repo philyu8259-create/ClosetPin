@@ -125,6 +125,7 @@ struct ConfirmationBanner: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.82)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("todayFeedbackConfirmationText")
 
             if confirmation.showsLookbookAction, let onOpenLooks {
                 Button(action: onOpenLooks) {

@@ -8,7 +8,7 @@ struct TodayView: View {
     @Query(sort: \OutfitFeedback.createdAt, order: .reverse) private var feedback: [OutfitFeedback]
     @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
-    private static let confirmationDismissDelay: Duration = .seconds(3)
+    private static let confirmationDismissDelay: TimeInterval = 3
     private static let heroAnchorID = "today-hero-anchor"
 
     @State private var scenario: OutfitScenario = .dailyOffice
@@ -16,6 +16,7 @@ struct TodayView: View {
     @State private var pendingActionIDs: Set<String> = []
     @State private var confirmation: TodayConfirmation?
     @State private var saveError: String?
+    @State private var confirmationDismissWorkItem: DispatchWorkItem?
     @State private var lastAppliedPreferenceScenario: OutfitScenario?
     @State private var forecastLocationKey = ""
     @State private var tomorrowWeatherSnapshot: TomorrowWeatherSnapshot?
@@ -72,48 +73,61 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollViewReader { scrollProxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                        dailyDashboard(using: scrollProxy)
-                        editorialHero
-                        contextStrip
-                        tomorrowPrepSection
-                        decisionSupportSection
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                            dailyDashboard(using: scrollProxy)
+                            editorialHero
+                            contextStrip
+                            tomorrowPrepSection
+                            decisionSupportSection
 
-                        if displayedCandidates.count > 1 {
-                            alternativesSection
+                            if displayedCandidates.count > 1 {
+                                alternativesSection
+                            }
+                        }
+                        .padding(18)
+                        .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .background(DesignSystem.background)
+                    .navigationTitle(L10n.text("today.title"))
+                    .navigationBarTitleDisplayMode(.inline)
+                    .onAppear(perform: applyPreferenceDefaultsIfNeeded)
+                    .onChange(of: currentPreference?.updatedAt) { _, _ in
+                        applyPreferenceDefaultsIfNeeded()
+                    }
+                    .onChange(of: scenario) { _, _ in
+                        resetHeroRotation()
+                        withAnimation(.snappy(duration: 0.22)) {
+                            scrollProxy.scrollTo(Self.heroAnchorID, anchor: .top)
                         }
                     }
-                    .padding(18)
-                    .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .background(DesignSystem.background)
-                .navigationTitle(L10n.text("today.title"))
-                .navigationBarTitleDisplayMode(.inline)
-                .onAppear(perform: applyPreferenceDefaultsIfNeeded)
-                .onChange(of: currentPreference?.updatedAt) { _, _ in
-                    applyPreferenceDefaultsIfNeeded()
-                }
-                .onChange(of: scenario) { _, _ in
-                    resetHeroRotation()
-                    withAnimation(.snappy(duration: 0.22)) {
-                        scrollProxy.scrollTo(Self.heroAnchorID, anchor: .top)
+                    .onChange(of: season) { _, _ in
+                        resetHeroRotation()
                     }
-                }
-                .onChange(of: season) { _, _ in
-                    resetHeroRotation()
-                }
-                .task(id: recommendationRequestKey) {
-                    refreshRecommendations()
-                }
-                .task(id: tomorrowWeatherRequestKey) {
-                    await refreshTomorrowWeatherIfNeeded()
-                }
-                .task(id: stylistExplanationRequestKey) {
-                    await refreshStylistExplanationsIfNeeded()
-                }
-                .safeAreaInset(edge: .bottom) {
+                    .task(id: recommendationRequestKey) {
+                        refreshRecommendations()
+                    }
+                    .task(id: tomorrowWeatherRequestKey) {
+                        await refreshTomorrowWeatherIfNeeded()
+                    }
+                    .task(id: stylistExplanationRequestKey) {
+                        await refreshStylistExplanationsIfNeeded()
+                    }
+                    .onDisappear {
+                        confirmationDismissWorkItem?.cancel()
+                        confirmationDismissWorkItem = nil
+                    }
+                    .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
+                        get: { saveError != nil },
+                        set: { if !$0 { saveError = nil } }
+                    )) {
+                        Button(L10n.text("common.ok"), role: .cancel) {}
+                    } message: {
+                        Text(saveError ?? L10n.text("common.try_again"))
+                    }
+
                     if let confirmation {
                         ConfirmationBanner(
                             confirmation: confirmation,
@@ -123,15 +137,8 @@ struct TodayView: View {
                             .padding(.horizontal, 18)
                             .padding(.bottom, DesignSystem.Spacing.tabBarClearance + 8)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .zIndex(1)
                     }
-                }
-                .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
-                    get: { saveError != nil },
-                    set: { if !$0 { saveError = nil } }
-                )) {
-                    Button(L10n.text("common.ok"), role: .cancel) {}
-                } message: {
-                    Text(saveError ?? L10n.text("common.try_again"))
                 }
             }
         }
@@ -563,19 +570,7 @@ struct TodayView: View {
                 showsLookbookAction: action.showsLookbookAction,
                 undoAction: action.undoAction(for: result)
             )
-            withAnimation(.snappy) {
-                confirmation = nextConfirmation
-            }
-
-            Task {
-                try? await Task.sleep(for: Self.confirmationDismissDelay)
-                await MainActor.run {
-                    guard confirmation == nextConfirmation else { return }
-                    withAnimation(.snappy(duration: 0.22)) {
-                        confirmation = nil
-                    }
-                }
-            }
+            presentConfirmation(nextConfirmation)
         } catch {
             saveError = error.localizedDescription
         }
@@ -598,16 +593,33 @@ struct TodayView: View {
             }
 
             try modelContext.save()
-            withAnimation(.snappy(duration: 0.22)) {
-                confirmation = TodayConfirmation(
+            presentConfirmation(
+                TodayConfirmation(
                     message: L10n.text("today.confirmation.undone"),
                     showsLookbookAction: false,
                     undoAction: nil
                 )
-            }
+            )
         } catch {
             saveError = error.localizedDescription
         }
+    }
+
+    private func presentConfirmation(_ nextConfirmation: TodayConfirmation) {
+        confirmationDismissWorkItem?.cancel()
+        confirmationDismissWorkItem = nil
+
+        withAnimation(.snappy) {
+            confirmation = nextConfirmation
+        }
+
+        let workItem = DispatchWorkItem {
+            withAnimation(.snappy(duration: 0.22)) {
+                confirmation = nil
+            }
+        }
+        confirmationDismissWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.confirmationDismissDelay, execute: workItem)
     }
 }
 

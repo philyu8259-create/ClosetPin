@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
@@ -10,6 +11,7 @@ struct AppRootView: View {
     @State private var selectedTab: AppTab = .today
     @State private var closetAddItemRequest: AddClosetItemRequest?
     @State private var debugSheet: DebugSheet?
+    @State private var isKeyboardVisible = false
 
     var body: some View {
         Group {
@@ -87,10 +89,23 @@ struct AppRootView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
-            EditorialTabBar(selection: $selectedTab)
-                .padding(.horizontal, 18)
-                .padding(.top, 8)
-                .padding(.bottom, 10)
+            if !isKeyboardVisible {
+                EditorialTabBar(selection: $selectedTab)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            withAnimation(.snappy(duration: 0.2)) {
+                isKeyboardVisible = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation(.snappy(duration: 0.2)) {
+                isKeyboardVisible = false
+            }
         }
     }
 
