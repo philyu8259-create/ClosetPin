@@ -118,13 +118,9 @@ struct ProcessedClosetPhotoData {
 }
 
 struct ClothingPhotoProcessor {
-    private static let minimumHighConfidenceMask: Double = 0.72
-
     private struct MaskComponent {
         let count: Int
         let score: Double
-        let touchesEdge: Bool
-        let centerDistance: Double
     }
 
     static func autoCroppedDisplayImage(from image: UIImage) -> UIImage {
@@ -183,14 +179,9 @@ struct ClothingPhotoProcessor {
 
         let maskedImage = UIImage(cgImage: maskedCGImage, scale: image.scale, orientation: .up)
         let cleanedImage = cleanedMaskedForegroundImage(maskedImage) ?? maskedImage
-        guard foregroundMaskLooksUsable(
-            cleanedImage,
-            sourceSize: image.size,
-            minimumConfidence: minimumHighConfidenceMask
-        ) else {
+        guard foregroundMaskLooksUsable(cleanedImage, sourceSize: image.size) else {
             return nil
         }
-
         return cleanedImage
     }
 
@@ -233,10 +224,6 @@ struct ClothingPhotoProcessor {
             var count = 0
             var sumX = 0
             var sumY = 0
-            var minX = width
-            var minY = height
-            var maxX = 0
-            var maxY = 0
 
             while let current = stack.popLast() {
                 let x = current % width
@@ -244,10 +231,6 @@ struct ClothingPhotoProcessor {
                 count += 1
                 sumX += x
                 sumY += y
-                minX = min(minX, x)
-                minY = min(minY, y)
-                maxX = max(maxX, x)
-                maxY = max(maxY, y)
 
                 let neighbors = [
                     x > 0 ? current - 1 : nil,
@@ -266,48 +249,25 @@ struct ClothingPhotoProcessor {
             let centerX = Double(sumX) / Double(max(count, 1)) / Double(width)
             let centerY = Double(sumY) / Double(max(count, 1)) / Double(height)
             let centerDistance = hypot(centerX - 0.5, centerY - 0.5)
-            let touchesEdge = minX == 0 || minY == 0 || maxX == width - 1 || maxY == height - 1
             let score = Double(count) * max(0.35, 1.25 - centerDistance)
             components.append(MaskComponent(
                 count: count,
-                score: score,
-                touchesEdge: touchesEdge,
-                centerDistance: centerDistance
+                score: score
             ))
         }
 
         let validComponents = components.enumerated()
             .filter { $0.element.count >= minimumComponentPixels }
-        guard !validComponents.isEmpty,
+        guard validComponents.count > 1,
               let bestComponent = validComponents.max(by: { $0.element.score < $1.element.score }) else {
             return nil
         }
 
-        let keepThreshold = max(minimumComponentPixels, Int(Double(bestComponent.element.count) * 0.25))
-        let visibleCount = validComponents.reduce(0) { $0 + $1.element.count }
-        let visibleRatio = Double(visibleCount) / Double(max(totalPixels, 1))
-        guard visibleRatio > 0.035, visibleRatio < 0.94 else { return nil }
-        var keptComponentIDs = Set<Int>()
-        for component in validComponents {
-            if component.offset == bestComponent.offset || component.element.count >= keepThreshold {
-                if isLikelyBackgroundSlab(
-                    component.element,
-                    comparedTo: bestComponent.element,
-                    totalPixels: totalPixels
-                ) {
-                    continue
-                }
-                keptComponentIDs.insert(component.offset)
-            }
-        }
-        guard !keptComponentIDs.isEmpty else { return nil }
-
-        var keptVisibleCount = 0
-        for index in 0..<totalPixels where keptComponentIDs.contains(componentIDs[index]) {
-            keptVisibleCount += 1
-        }
-        let keptVisibleRatio = Double(keptVisibleCount) / Double(max(totalPixels, 1))
-        guard keptVisibleRatio > 0.01, keptVisibleRatio < 0.94 else { return nil }
+        let keepThreshold = max(minimumComponentPixels, Int(Double(bestComponent.element.count) * 0.28))
+        let keptComponentIDs = Set(validComponents.compactMap { id, component in
+            component.count >= keepThreshold || id == bestComponent.offset ? id : nil
+        })
+        guard keptComponentIDs.count < components.count else { return nil }
 
         for index in 0..<totalPixels where !keptComponentIDs.contains(componentIDs[index]) {
             let offset = index * bytesPerPixel
@@ -321,37 +281,16 @@ struct ClothingPhotoProcessor {
         return UIImage(cgImage: cleanedCGImage, scale: image.scale, orientation: .up)
     }
 
-    private static func isLikelyBackgroundSlab(
-        _ component: MaskComponent,
-        comparedTo bestComponent: MaskComponent,
-        totalPixels: Int
-    ) -> Bool {
-        let isLarge = component.count > max(
-            totalPixels / 5,
-            Int(Double(bestComponent.count) * 0.7)
-        )
-        let isPeripheral = component.centerDistance > 0.18
-        return component.touchesEdge && isLarge && isPeripheral
-    }
-
     private static func alphaIsVisible(in pixels: [UInt8], index: Int, bytesPerPixel: Int) -> Bool {
         pixels[index * bytesPerPixel + 3] > 12
     }
 
-    private static func foregroundMaskLooksUsable(
-        _ image: UIImage,
-        sourceSize: CGSize,
-        minimumConfidence: Double = 0.65
-    ) -> Bool {
-        foregroundMaskConfidence(image, sourceSize: sourceSize) >= minimumConfidence
-    }
-
-    private static func foregroundMaskConfidence(_ image: UIImage, sourceSize: CGSize) -> Double {
-        guard let cgImage = image.cgImage else { return 0 }
+    private static func foregroundMaskLooksUsable(_ image: UIImage, sourceSize: CGSize) -> Bool {
+        guard let cgImage = image.cgImage else { return false }
 
         let width = cgImage.width
         let height = cgImage.height
-        guard width > 16, height > 16 else { return 0 }
+        guard width > 16, height > 16 else { return false }
 
         let bytesPerPixel = 4
         let bytesPerRow = width * bytesPerPixel
@@ -366,7 +305,7 @@ struct ClothingPhotoProcessor {
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else {
-            return 0
+            return false
         }
 
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
@@ -376,41 +315,6 @@ struct ClothingPhotoProcessor {
         var minY = height
         var maxX = 0
         var maxY = 0
-        var largestComponent = 0
-        var largestEdgeComponent = 0
-        let totalPixels = width * height
-
-        var visited = [Bool](repeating: false, count: totalPixels)
-        for index in 0..<totalPixels where !visited[index] && alphaIsVisible(in: pixels, index: index, bytesPerPixel: bytesPerPixel) {
-            var stack = [index]
-            visited[index] = true
-            var componentCount = 0
-            var touchesEdge = false
-
-            while let current = stack.popLast() {
-                let x = current % width
-                let y = current / width
-                componentCount += 1
-                touchesEdge = touchesEdge || x == 0 || y == 0 || x == width - 1 || y == height - 1
-
-                let neighbors = [
-                    x > 0 ? current - 1 : nil,
-                    x < width - 1 ? current + 1 : nil,
-                    y > 0 ? current - width : nil,
-                    y < height - 1 ? current + width : nil
-                ].compactMap { $0 }
-
-                for neighbor in neighbors where !visited[neighbor] && alphaIsVisible(in: pixels, index: neighbor, bytesPerPixel: bytesPerPixel) {
-                    visited[neighbor] = true
-                    stack.append(neighbor)
-                }
-            }
-
-            largestComponent = max(largestComponent, componentCount)
-            if touchesEdge {
-                largestEdgeComponent = max(largestEdgeComponent, componentCount)
-            }
-        }
 
         for y in 0..<height {
             for x in 0..<width {
@@ -425,38 +329,25 @@ struct ClothingPhotoProcessor {
             }
         }
 
+        let totalPixels = width * height
         let visibleRatio = Double(visibleCount) / Double(max(totalPixels, 1))
-        let edgeDominanceRatio = Double(largestEdgeComponent) / Double(max(totalPixels, 1))
-        let dominantRatio = Double(largestComponent) / Double(max(totalPixels, 1))
-        guard visibleRatio > 0.045,
-              visibleRatio < 0.995,
-              edgeDominanceRatio < 0.45,
-              dominantRatio < 0.97,
-              minX <= maxX,
-              minY <= maxY else {
-            return 0
+        guard visibleRatio > 0.045, visibleRatio < 0.995, minX <= maxX, minY <= maxY else {
+            return false
         }
 
         let boundsWidthRatio = Double(maxX - minX + 1) / Double(width)
         let boundsHeightRatio = Double(maxY - minY + 1) / Double(height)
         guard boundsWidthRatio > 0.18, boundsHeightRatio > 0.18 else {
-            return 0
+            return false
         }
 
         let outputArea = image.size.width * image.size.height
         let sourceArea = sourceSize.width * sourceSize.height
         guard sourceArea <= 0 || (outputArea / sourceArea) > 0.035 else {
-            return 0
+            return false
         }
 
-        let visibleQuality = min(1.0, max(0.0, (visibleRatio - 0.045) / 0.32))
-        let edgeQuality = max(0.0, min(1.0, (0.45 - edgeDominanceRatio) / 0.45))
-        let dominantQuality = max(0.0, min(1.0, (0.95 - dominantRatio) / 0.30))
-        let boundsQuality = max(0.0, min(1.0, boundsWidthRatio * boundsHeightRatio / 0.22))
-        let outputRatio = sourceArea <= 0 ? 1 : outputArea / sourceArea
-        let areaQuality = min(1.0, max(0.0, (outputRatio - 0.035) / 0.72))
-
-        return (visibleQuality * 0.35) + (edgeQuality * 0.3) + (dominantQuality * 0.2) + (boundsQuality * 0.1) + (areaQuality * 0.05)
+        return true
     }
 
     private static func visionForegroundCropRect(in image: UIImage) -> CGRect? {
@@ -716,9 +607,6 @@ struct ClothingPhotoProcessor {
             let centerDistance = hypot(centroidX - 0.5, centroidY - 0.48)
             let widthRatio = Double(maxX - minX + 1) / Double(width)
             let heightRatio = Double(maxY - minY + 1) / Double(height)
-            let touchesEdge = minX == 0 || minY == 0 || maxX == width - 1 || maxY == height - 1
-            let componentAreaRatio = Double(count) / Double(max(1, width * height))
-            guard !(touchesEdge && componentAreaRatio > 0.18) else { continue }
             guard widthRatio > 0.12, heightRatio > 0.16 else { continue }
 
             let score = Double(count) * max(0.25, 1.25 - centerDistance)
@@ -823,7 +711,7 @@ struct ClothingPhotoProcessor {
 
         let sourceArea = sourceSize.width * sourceSize.height
         let cropArea = paddedRect.width * paddedRect.height
-        guard cropArea < sourceArea * 0.82, cropArea > sourceArea * 0.06 else { return nil }
+        guard cropArea < sourceArea * 0.94, cropArea > sourceArea * 0.04 else { return nil }
 
         return paddedRect
     }

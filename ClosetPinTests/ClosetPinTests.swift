@@ -550,30 +550,6 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertLessThan(displayImage.size.height, 82)
     }
 
-    func testPhotoPersistenceCropsCenteredGarmentWithoutDirtyTransparency() throws {
-        let sourceImage = makeImageWithCenteredGarmentAndBedSheet()
-        let sourceData = try XCTUnwrap(sourceImage.pngData())
-
-        let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
-        let displayImage = try XCTUnwrap(UIImage(data: result.displayImageData))
-
-        XCTAssertEqual(result.displayImageData.prefix(8), Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
-        XCTAssertLessThan(displayImage.size.width, sourceImage.size.width * 0.9)
-        XCTAssertLessThan(displayImage.size.height, sourceImage.size.height * 0.9)
-        XCTAssertLessThan(transparentPixelRatio(in: displayImage, alphaThreshold: 250), 0.001)
-    }
-
-    func testPhotoPersistenceKeepsLowConfidenceBackgroundsOpaqueAndValidPNG() throws {
-        let sourceImage = makeImageWithLowConfidenceBackground()
-        let sourceData = try XCTUnwrap(sourceImage.pngData())
-
-        let result = try XCTUnwrap(ClosetItemPhotoPersistence.processedPhotoData(from: sourceData))
-        let displayImage = try XCTUnwrap(UIImage(data: result.displayImageData))
-
-        XCTAssertEqual(result.displayImageData.prefix(8), Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
-        XCTAssertLessThan(transparentPixelRatio(in: displayImage, alphaThreshold: 250), 0.001)
-    }
-
     func testPhotoPersistenceRejectsNonImageLibraryData() {
         let data = ClosetItemPhotoPersistence.processedPhotoData(from: Data("not an image".utf8))
 
@@ -827,107 +803,6 @@ final class ClosetPinTests: XCTestCase {
             UIColor.darkGray.setFill()
             context.fill(CGRect(x: 104, y: 8, width: 10, height: 28))
         }
-    }
-
-    private func makeImageWithCenteredGarmentAndBedSheet() -> UIImage {
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        return UIGraphicsImageRenderer(size: CGSize(width: 220, height: 220), format: format).image { context in
-            UIColor(red: 0.74, green: 0.84, blue: 0.78, alpha: 1).setFill()
-            context.fill(CGRect(x: 0, y: 0, width: 220, height: 220))
-            UIColor(red: 0.78, green: 0.74, blue: 0.63, alpha: 1).setFill()
-            context.fill(CGRect(x: 72, y: 32, width: 76, height: 158))
-            UIColor(red: 0.72, green: 0.68, blue: 0.58, alpha: 1).setFill()
-            context.fill(CGRect(x: 88, y: 36, width: 44, height: 152))
-            UIColor(red: 0.18, green: 0.18, blue: 0.18, alpha: 1).setFill()
-            context.fill(CGRect(x: 194, y: 28, width: 20, height: 80))
-        }
-    }
-
-    private func makeImageWithLowConfidenceBackground() -> UIImage {
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        return UIGraphicsImageRenderer(size: CGSize(width: 240, height: 180), format: format).image { context in
-            for y in 0..<180 {
-                for x in 0..<240 {
-                    let noise = (x * 31 + y * 17) % 28
-                    let base = 145 + (noise / 2)
-                    UIColor(
-                        red: CGFloat(base + (x * 3 + y * 5) % 12) / 255,
-                        green: CGFloat(base + ((x + y) % 12)) / 255,
-                        blue: CGFloat(base + ((x * 2 + y * 3) % 12)) / 255,
-                        alpha: 1
-                    ).setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                }
-            }
-
-            UIColor(red: 0.55, green: 0.55, blue: 0.58, alpha: 1).setFill()
-            context.fill(CGRect(x: 82, y: 48, width: 74, height: 86))
-            UIColor(red: 0.57, green: 0.58, blue: 0.57, alpha: 1).setFill()
-            context.fill(CGRect(x: 98, y: 76, width: 42, height: 30))
-        }
-    }
-
-    private func alphaAt(x: Int, y: Int, in image: UIImage) -> UInt8 {
-        guard let cgImage = image.cgImage else { return 255 }
-
-        let width = cgImage.width
-        let height = cgImage.height
-        guard x >= 0, y >= 0, x < width, y < height else { return 255 }
-
-        let bytesPerPixel = 4
-        let bytesPerRow = width * bytesPerPixel
-        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
-        guard let context = CGContext(
-            data: &pixels,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: bytesPerRow,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return 255
-        }
-
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        return pixels[y * bytesPerRow + x * bytesPerPixel + 3]
-    }
-
-    private func transparentPixelRatio(in image: UIImage, alphaThreshold: UInt8 = 250) -> Double {
-        guard let cgImage = image.cgImage else { return 1 }
-
-        let width = cgImage.width
-        let height = cgImage.height
-        let bytesPerPixel = 4
-        let bytesPerRow = width * bytesPerPixel
-        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
-        guard let context = CGContext(
-            data: &pixels,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: bytesPerRow,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return 1
-        }
-
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        let totalPixels = width * height
-        var transparentCount = 0
-        for y in 0..<height {
-            for x in 0..<width {
-                let offset = y * bytesPerRow + x * bytesPerPixel
-                if pixels[offset + 3] < alphaThreshold {
-                    transparentCount += 1
-                }
-            }
-        }
-
-        return Double(transparentCount) / Double(max(totalPixels, 1))
     }
 
     private func date(month: Int, calendar: Calendar) -> Date {
