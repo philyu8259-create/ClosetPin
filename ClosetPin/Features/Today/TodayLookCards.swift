@@ -5,7 +5,6 @@ struct TodayEditorialHero: View {
     let title: String
     let explanation: String
     let pendingActionIDs: Set<String>
-    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     var body: some View {
@@ -34,7 +33,6 @@ struct TodayEditorialHero: View {
                         candidate: candidate,
                         index: 0,
                         pendingActionIDs: pendingActionIDs,
-                        onTryAnother: onTryAnother,
                         onAction: onAction
                     )
                     .padding(.top, DesignSystem.Spacing.sm)
@@ -78,7 +76,6 @@ struct OutfitCompactCard: View {
     let candidate: OutfitCandidate
     let explanation: String
     let pendingActionIDs: Set<String>
-    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     var body: some View {
@@ -107,7 +104,6 @@ struct OutfitCompactCard: View {
                     candidate: candidate,
                     index: index,
                     pendingActionIDs: pendingActionIDs,
-                    onTryAnother: onTryAnother,
                     onAction: onAction
                 )
             }

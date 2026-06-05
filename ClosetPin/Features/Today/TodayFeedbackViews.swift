@@ -4,7 +4,6 @@ struct TodayActionPanel: View {
     let candidate: OutfitCandidate
     let index: Int
     let pendingActionIDs: Set<String>
-    let onTryAnother: () -> Void
     let onAction: (TodayFeedbackAction) -> Void
 
     private let negativeFeedbackActions: [TodayFeedbackAction] = [.dislike]
@@ -38,7 +37,6 @@ struct TodayActionPanel: View {
 
                 Button {
                     onAction(.swap)
-                    onTryAnother()
                 } label: {
                     Label(TodayFeedbackAction.swap.title, systemImage: TodayFeedbackAction.swap.systemImage)
                         .frame(maxWidth: .infinity)

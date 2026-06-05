@@ -151,18 +151,24 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["今天就穿"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["保存"].exists)
-        XCTAssertTrue(app.staticTexts["微调这条建议"].exists)
+        XCTAssertTrue(app.staticTexts["想换个方向？"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
         XCTAssertTrue(app.staticTexts["搭配依据"].exists)
-        XCTAssertTrue(app.buttons["宴会"].exists)
+        if !app.buttons["todayScenario_banquet"].exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(app.buttons["todayScenario_banquet"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.staticTexts["穿搭预览"].exists)
 
         app.buttons["appTab_closet"].tap()
         XCTAssertTrue(app.staticTexts["你的衣橱"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_looks"].tap()
-        XCTAssertTrue(app.staticTexts["从这里开始积累你的穿搭档案"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["looksEmptyOpenTodayButton"].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_today"].tap()
+        XCTAssertTrue(app.staticTexts["今天就穿"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_settings"].tap()
         XCTAssertTrue(app.staticTexts["穿搭简报"].waitForExistence(timeout: 3))
@@ -463,7 +469,7 @@ final class ClosetPinUITests: XCTestCase {
         avoidStyleButton.tap()
 
         XCTAssertTrue(app.staticTexts["Got it. We will show fewer looks like this."].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["todayFeedbackUndoButton"].exists)
+        XCTAssertTrue(app.buttons["todayFeedback_saved_0"].waitForExistence(timeout: 3))
     }
 
     func testSavedOutfitCanOpenLooksFromConfirmation() {

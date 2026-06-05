@@ -339,10 +339,33 @@ final class RecommendationEngineTests: XCTestCase {
         )
 
         XCTAssertEqual(candidates.count, 4)
-        let bottomIDs = Set(candidates.compactMap { itemID(of: .bottom, in: $0) })
-        let shoeIDs = Set(candidates.compactMap { itemID(of: .shoes, in: $0) })
+        let topWindow = candidates.prefix(4)
+        let bottomIDs = Set(topWindow.compactMap { itemID(of: .bottom, in: $0) })
+        let shoeIDs = Set(topWindow.compactMap { itemID(of: .shoes, in: $0) })
+        let topIDs = Set(topWindow.compactMap { itemID(of: .top, in: $0) })
         XCTAssertGreaterThan(bottomIDs.count, 1)
         XCTAssertGreaterThan(shoeIDs.count, 1)
+        XCTAssertGreaterThan(topIDs.count, 1)
+    }
+
+    func testRecommendationsUseMultipleBagsAcrossTopCandidates() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001011")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001012")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001013")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001021")!, type: .bag, color: "brown", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001022")!, type: .bag, color: "olive", formalityLevel: 4)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 4),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertGreaterThanOrEqual(candidates.count, 2)
+        let bagIDs = Set(candidates.compactMap { itemID(of: .bag, in: $0) })
+        XCTAssertGreaterThan(bagIDs.count, 1)
     }
 
     func testSwappedFeedbackMovesSameCoreOutfitAwayFromFirstRecommendation() throws {

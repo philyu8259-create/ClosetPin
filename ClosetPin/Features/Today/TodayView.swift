@@ -27,6 +27,7 @@ struct TodayView: View {
     @State private var stylistRefreshCounter = 0
     @State private var heroRotationIndex = 0
     @State private var cachedCandidates: [OutfitCandidate] = []
+    @State private var preferredReplacementCandidateID: String?
 
     let onOpenLooks: (() -> Void)?
     let onOpenCloset: (() -> Void)?
@@ -152,7 +153,6 @@ struct TodayView: View {
                     title: recommendationName,
                     explanation: explanation(for: heroCandidate),
                     pendingActionIDs: pendingActionIDs,
-                    onTryAnother: regenerateTodayLook,
                     onAction: { action in
                         record(action, for: heroCandidate)
                     }
@@ -219,7 +219,6 @@ struct TodayView: View {
                             candidate: candidate,
                             explanation: explanation(for: candidate),
                             pendingActionIDs: pendingActionIDs,
-                            onTryAnother: regenerateTodayLook,
                             onAction: { action in
                                 record(action, for: candidate)
                             }
@@ -388,6 +387,14 @@ struct TodayView: View {
     }
 
     private func refreshRecommendations() {
+        refreshRecommendations(avoiding: nil, withAdditionalFeedback: nil)
+    }
+
+    private func refreshRecommendations(
+        avoiding avoidedCandidate: OutfitCandidate?,
+        withAdditionalFeedback additionalFeedback: OutfitFeedback?
+    ) {
+        let feedbackSignals = recommendationFeedback(including: additionalFeedback)
         let updatedCandidates = engine.recommend(
             input: RecommendationInput(
                 scenario: scenario,
@@ -397,17 +404,27 @@ struct TodayView: View {
                 preferredFormality: currentPreference?.preferredFormality
             ),
             items: clothingItems,
-            feedback: feedback
+            feedback: feedbackSignals
         )
 
         let previousCandidateIDs = cachedCandidates.map(\.id)
         let updatedCandidateIDs = updatedCandidates.map(\.id)
         cachedCandidates = updatedCandidates
+        let validIDs = Set(updatedCandidateIDs)
+        aiExplanations = aiExplanations.filter { validIDs.contains($0.key) }
 
-        if previousCandidateIDs != updatedCandidateIDs {
-            heroRotationIndex = 0
-            let validIDs = Set(updatedCandidateIDs)
-            aiExplanations = aiExplanations.filter { validIDs.contains($0.key) }
+        if let avoidedCandidate, !updatedCandidates.isEmpty {
+            let replacementIndex = preferredReplacementIndex(in: updatedCandidates, avoiding: avoidedCandidate)
+            preferredReplacementCandidateID = updatedCandidates[replacementIndex].id
+            heroRotationIndex = replacementIndex
+        } else if previousCandidateIDs != updatedCandidateIDs {
+            if let preferredReplacementCandidateID,
+               let preferredIndex = updatedCandidateIDs.firstIndex(of: preferredReplacementCandidateID) {
+                heroRotationIndex = preferredIndex
+                self.preferredReplacementCandidateID = nil
+            } else {
+                heroRotationIndex = 0
+            }
         }
     }
 
@@ -565,6 +582,10 @@ struct TodayView: View {
                 in: modelContext
             )
 
+            if action == .swap {
+                refreshRecommendations(avoiding: candidate, withAdditionalFeedback: result.feedback)
+            }
+
             let nextConfirmation = TodayConfirmation(
                 message: action.confirmation(for: action.feedbackType, outcome: result.outcome),
                 showsLookbookAction: action.showsLookbookAction,
@@ -603,6 +624,48 @@ struct TodayView: View {
         } catch {
             saveError = error.localizedDescription
         }
+    }
+
+    private func recommendationFeedback(including additionalFeedback: OutfitFeedback?) -> [OutfitFeedback] {
+        guard let additionalFeedback,
+              feedback.contains(where: { $0.id == additionalFeedback.id }) == false else {
+            return feedback
+        }
+
+        return [additionalFeedback] + feedback
+    }
+
+    private func preferredReplacementIndex(
+        in candidates: [OutfitCandidate],
+        avoiding avoidedCandidate: OutfitCandidate
+    ) -> Int {
+        let eligibleCandidates = candidates.enumerated().filter { _, candidate in
+            candidate.id != avoidedCandidate.id
+        }
+
+        if let strongerChange = eligibleCandidates.first(where: { _, candidate in
+            coreDifferenceCount(between: candidate, and: avoidedCandidate) >= 2
+        }) {
+            return strongerChange.offset
+        }
+
+        if let anyCoreChange = eligibleCandidates.first(where: { _, candidate in
+            coreDifferenceCount(between: candidate, and: avoidedCandidate) >= 1
+        }) {
+            return anyCoreChange.offset
+        }
+
+        return min(heroRotationIndex + 1, max(candidates.count - 1, 0))
+    }
+
+    private func coreDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
+        [.top, .bottom, .shoes].reduce(0) { count, type in
+            itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
+        }
+    }
+
+    private func itemID(of type: ClothingType, in candidate: OutfitCandidate) -> UUID? {
+        candidate.items.first { ($0.resolvedType ?? .accessory) == type }?.id
     }
 
     private func presentConfirmation(_ nextConfirmation: TodayConfirmation) {

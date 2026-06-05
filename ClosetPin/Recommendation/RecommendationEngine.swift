@@ -2,6 +2,7 @@ import Foundation
 
 private let maximumItemsPerCategory = 12
 private let diversifiedCandidatePoolLimit = 48
+private let optionalItemVariantLimit = 2
 
 struct RecommendationEngine {
     func recommend(
@@ -225,20 +226,23 @@ private extension RecommendationEngine {
         let rhsByType = itemsByResolvedType(rhs)
         var penalty = 0
 
+        if lhsByType[.top]?.id == rhsByType[.top]?.id {
+            penalty += 12
+        }
         if lhsByType[.bottom]?.id == rhsByType[.bottom]?.id {
-            penalty += 28
+            penalty += 36
         }
         if lhsByType[.shoes]?.id == rhsByType[.shoes]?.id {
-            penalty += 24
-        }
-        if lhsByType[.top]?.id == rhsByType[.top]?.id {
-            penalty += 16
+            penalty += 32
         }
         if lhsByType[.outerwear]?.id == rhsByType[.outerwear]?.id || lhsByType[.blazer]?.id == rhsByType[.blazer]?.id {
-            penalty += 8
+            penalty += 10
         }
         if lhsByType[.bag]?.id == rhsByType[.bag]?.id {
-            penalty += 4
+            penalty += 6
+        }
+        if lhsByType[.accessory]?.id == rhsByType[.accessory]?.id {
+            penalty += 6
         }
 
         return penalty
@@ -389,46 +393,51 @@ private extension RecommendationEngine {
                     for baseItems in candidateBases {
                         if requiresBlazer {
                             for blazer in blazers {
-                                candidates.append(makeCandidate(
-                                    scenario: scenario,
-                                    items: enrichedItems(
-                                        baseItems + [blazer],
-                                        bags: bags,
-                                        accessories: accessories,
-                                        targetFormality: targetFormality,
-                                        weatherContext: weatherContext
-                                    ),
-                                    targetFormality: targetFormality,
-                                    weatherContext: weatherContext
-                                ))
-                            }
-                        } else {
-                            candidates.append(makeCandidate(
-                                scenario: scenario,
-                                items: enrichedItems(
-                                    baseItems,
+                                for variant in enrichedItems(
+                                    baseItems + [blazer],
                                     bags: bags,
                                     accessories: accessories,
                                     targetFormality: targetFormality,
                                     weatherContext: weatherContext
-                                ),
-                                targetFormality: targetFormality,
-                                weatherContext: weatherContext
-                            ))
-
-                            for blazer in blazers {
-                                candidates.append(makeCandidate(
-                                    scenario: scenario,
-                                    items: enrichedItems(
-                                        baseItems + [blazer],
-                                        bags: bags,
-                                        accessories: accessories,
+                                ) {
+                                    candidates.append(makeCandidate(
+                                        scenario: scenario,
+                                        items: variant,
                                         targetFormality: targetFormality,
                                         weatherContext: weatherContext
-                                    ),
+                                    ))
+                                }
+                            }
+                        } else {
+                            for variant in enrichedItems(
+                                baseItems,
+                                bags: bags,
+                                accessories: accessories,
+                                targetFormality: targetFormality,
+                                weatherContext: weatherContext
+                            ) {
+                                candidates.append(makeCandidate(
+                                    scenario: scenario,
+                                    items: variant,
                                     targetFormality: targetFormality,
                                     weatherContext: weatherContext
                                 ))
+                            }
+                            for blazer in blazers {
+                                for variant in enrichedItems(
+                                    baseItems + [blazer],
+                                    bags: bags,
+                                    accessories: accessories,
+                                    targetFormality: targetFormality,
+                                    weatherContext: weatherContext
+                                ) {
+                                    candidates.append(makeCandidate(
+                                        scenario: scenario,
+                                        items: variant,
+                                        targetFormality: targetFormality,
+                                        weatherContext: weatherContext
+                                    ))
+                                }
                             }
                         }
                     }
@@ -445,18 +454,61 @@ private extension RecommendationEngine {
         accessories: [ClothingItem],
         targetFormality: Int,
         weatherContext: TomorrowWeatherContext?
+    ) -> [[ClothingItem]] {
+        let topBags = topOptionalItems(
+            from: bags,
+            excluding: baseItems,
+            targetFormality: targetFormality,
+            weatherContext: weatherContext
+        )
+        let topAccessories = topOptionalItems(
+            from: accessories,
+            excluding: baseItems,
+            targetFormality: targetFormality,
+            weatherContext: weatherContext
+        )
+        var enriched: [[ClothingItem]] = []
+
+        let bagChoices: [ClothingItem?] = [nil] + topBags.map { Optional($0) }
+        let accessoryChoices: [ClothingItem?] = [nil] + topAccessories.map { Optional($0) }
+
+        for bag in bagChoices {
+            for accessory in accessoryChoices {
+                var variant = baseItems
+                if let bag {
+                    variant.append(bag)
+                }
+                if let accessory {
+                    variant.append(accessory)
+                }
+                enriched.append(variant)
+            }
+        }
+
+        return enriched
+    }
+
+    func topOptionalItems(
+        from options: [ClothingItem],
+        excluding selectedItems: [ClothingItem],
+        targetFormality: Int,
+        weatherContext: TomorrowWeatherContext?,
+        maximum: Int = optionalItemVariantLimit
     ) -> [ClothingItem] {
-        var items = baseItems
+        let selectedIDs = Set(selectedItems.map(\.id))
 
-        if let bag = bestOptionalItem(from: bags, excluding: items, targetFormality: targetFormality, weatherContext: weatherContext) {
-            items.append(bag)
-        }
-
-        if let accessory = bestOptionalItem(from: accessories, excluding: items, targetFormality: targetFormality, weatherContext: weatherContext) {
-            items.append(accessory)
-        }
-
-        return items
+        return options
+            .filter { !selectedIDs.contains($0.id) }
+            .sorted { lhs, rhs in
+                let lhsScore = optionalItemScore(lhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
+                let rhsScore = optionalItemScore(rhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
+                if lhsScore != rhsScore {
+                    return lhsScore > rhsScore
+                }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            .prefix(maximum)
+            .map { $0 }
     }
 
     func bestOptionalItem(
@@ -465,18 +517,13 @@ private extension RecommendationEngine {
         targetFormality: Int,
         weatherContext: TomorrowWeatherContext?
     ) -> ClothingItem? {
-        let selectedIDs = Set(selectedItems.map(\.id))
-
-        return options
-            .filter { !selectedIDs.contains($0.id) }
-            .max { lhs, rhs in
-                let lhsScore = optionalItemScore(lhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
-                let rhsScore = optionalItemScore(rhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
-                if lhsScore != rhsScore {
-                    return lhsScore < rhsScore
-                }
-                return lhs.id.uuidString > rhs.id.uuidString
-            }
+        return topOptionalItems(
+            from: options,
+            excluding: selectedItems,
+            targetFormality: targetFormality,
+            weatherContext: weatherContext,
+            maximum: 1
+        ).first
     }
 
     func optionalItemScore(
