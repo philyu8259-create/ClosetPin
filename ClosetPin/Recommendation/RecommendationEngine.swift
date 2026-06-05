@@ -3,6 +3,7 @@ import Foundation
 private let maximumItemsPerCategory = 12
 private let diversifiedCandidatePoolLimit = 48
 private let optionalItemVariantLimit = 2
+private let optionalItemHarmonyDropTolerance = 5
 
 struct RecommendationEngine {
     func recommend(
@@ -496,9 +497,15 @@ private extension RecommendationEngine {
         maximum: Int = optionalItemVariantLimit
     ) -> [ClothingItem] {
         let selectedIDs = Set(selectedItems.map(\.id))
+        let baseColorHarmony = colorHarmonyScore(for: selectedItems)
 
         return options
             .filter { !selectedIDs.contains($0.id) }
+            .filter { optionalItemHarmonyPenalty(
+                for: $0,
+                selectedItems: selectedItems,
+                baseColorHarmony: baseColorHarmony
+            ) <= optionalItemHarmonyDropTolerance }
             .sorted { lhs, rhs in
                 let lhsScore = optionalItemScore(lhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
                 let rhsScore = optionalItemScore(rhs, selectedItems: selectedItems, targetFormality: targetFormality, weatherContext: weatherContext)
@@ -537,8 +544,28 @@ private extension RecommendationEngine {
         let weatherFit = weatherSuitabilityScore(for: item, type: type, in: weatherContext)
         let repeatedColorBonus = selectedItems.contains { $0.displayColor == item.displayColor } ? 4 : 0
         let neutralBonus = ColorResolver.localizedDisplayColor(from: item.color) != nil ? 2 : 0
+        let harmonyDelta = optionalItemHarmonyDelta(for: item, selectedItems: selectedItems)
+        let harmonyBonus = max(-20, min(20, harmonyDelta))
 
-        return formalityFit + weatherFit + repeatedColorBonus + neutralBonus
+        return formalityFit + weatherFit + repeatedColorBonus + neutralBonus + harmonyBonus
+    }
+
+    func optionalItemHarmonyDelta(for item: ClothingItem, selectedItems: [ClothingItem]) -> Int {
+        let baseHarmony = colorHarmonyScore(for: selectedItems)
+        let harmonyWithItem = colorHarmonyScore(for: selectedItems + [item])
+
+        return harmonyWithItem - baseHarmony
+    }
+
+    func optionalItemHarmonyPenalty(
+        for item: ClothingItem,
+        selectedItems: [ClothingItem],
+        baseColorHarmony: Int
+    ) -> Int {
+        let harmonyWithItem = colorHarmonyScore(for: selectedItems + [item])
+        let harmonyDrop = baseColorHarmony - harmonyWithItem
+
+        return max(0, harmonyDrop)
     }
 
     func makeCandidate(

@@ -353,8 +353,8 @@ final class RecommendationEngineTests: XCTestCase {
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001011")!, type: .top, color: "white", formalityLevel: 4),
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001012")!, type: .bottom, color: "navy", formalityLevel: 4),
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001013")!, type: .shoes, color: "black", formalityLevel: 4),
-            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001021")!, type: .bag, color: "brown", formalityLevel: 4),
-            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001022")!, type: .bag, color: "olive", formalityLevel: 4)
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001021")!, type: .bag, color: "charcoal", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000001022")!, type: .bag, color: "black", formalityLevel: 4)
         ]
 
         let candidates = RecommendationEngine().recommend(
@@ -366,6 +366,29 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(candidates.count, 2)
         let bagIDs = Set(candidates.compactMap { itemID(of: .bag, in: $0) })
         XCTAssertGreaterThan(bagIDs.count, 1)
+    }
+
+    func testHarmoniousBagIsPreferredOverConflictingBagForOptionalSelection() {
+        let coordinatedBagID = UUID(uuidString: "00000000-0000-0000-0000-000000001051")!
+        let conflictingBagID = UUID(uuidString: "00000000-0000-0000-0000-000000001052")!
+
+        let items = [
+            clothingItem(type: .top, color: "black", formalityLevel: 4),
+            clothingItem(type: .bottom, color: "green", formalityLevel: 4),
+            clothingItem(type: .shoes, color: "white", formalityLevel: 4),
+            clothingItem(id: coordinatedBagID, type: .bag, color: "black", formalityLevel: 4),
+            clothingItem(id: conflictingBagID, type: .bag, color: "red", formalityLevel: 4)
+        ]
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 4),
+            items: items,
+            feedback: []
+        )
+
+        XCTAssertEqual(candidates.count, 2)
+        XCTAssertFalse(candidates.contains { $0.items.contains { $0.id == conflictingBagID } })
+        XCTAssertTrue(candidates.contains { $0.items.contains { $0.id == coordinatedBagID } })
     }
 
     func testSwappedFeedbackMovesSameCoreOutfitAwayFromFirstRecommendation() throws {
