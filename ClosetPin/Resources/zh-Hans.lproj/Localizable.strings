@@ -301,8 +301,10 @@
 "looks.items.unavailable" = "单品不可用";
 "looks.context.saved.title" = "从今日保存";
 "looks.context.saved.body" = "用于之后复穿、规划，或和后续推荐做对比。";
+"looks.context.saved.hint" = "用于参考";
 "looks.context.worn.title" = "真实穿过";
 "looks.context.worn.body" = "会作为真实反馈，帮助 ClosetPin 学习哪些搭配更适合你的不同场合。";
+"looks.context.worn.hint" = "真实穿搭反馈";
 "looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配更适合你的不同场合。";
 "closet.archive.kicker" = "衣橱档案";
 "closet.archive.title" = "你的衣橱";

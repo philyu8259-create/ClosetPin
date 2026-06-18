@@ -217,29 +217,35 @@ private struct LooksContextCallout: View {
     let kind: LooksHistoryEntry.Kind
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(spacing: 10) {
             Image(systemName: kind.systemImage)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(kind.foregroundColor)
-                .frame(width: 24, height: 24)
-                .background(kind.tintColor.opacity(0.14))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 20, height: 20)
+                .background(kind.foregroundColor)
                 .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(kind.contextTitle)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DesignSystem.ink)
+            Text(kind.contextTitle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(DesignSystem.ink)
+                .lineLimit(1)
 
-                Text(kind.contextBody)
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Spacer(minLength: 8)
+
+            Text(kind.contextHint)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .lineLimit(1)
         }
-        .padding(DesignSystem.Spacing.sm)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(kind.tintColor.opacity(0.08))
+        .background(kind.tintColor.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
+                .stroke(kind.tintColor.opacity(0.22), lineWidth: 1)
+        }
         .accessibilityIdentifier("looksContextCallout_\(kind.rawValue)")
     }
 }
@@ -432,12 +438,12 @@ private extension LooksHistoryEntry.Kind {
         }
     }
 
-    var contextBody: String {
+    var contextHint: String {
         switch self {
         case .saved:
-            L10n.text("looks.context.saved.body")
+            L10n.text("looks.context.saved.hint")
         case .worn:
-            L10n.text("looks.context.worn.body")
+            L10n.text("looks.context.worn.hint")
         }
     }
 }

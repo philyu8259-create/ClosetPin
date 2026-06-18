@@ -301,8 +301,10 @@
 "looks.items.unavailable" = "Items unavailable";
 "looks.context.saved.title" = "Saved from Today";
 "looks.context.saved.body" = "Kept for planning, repeating, or comparing against future recommendations.";
+"looks.context.saved.hint" = "Saved for ideas";
 "looks.context.worn.title" = "Actually worn";
 "looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works across your real occasions.";
+"looks.context.worn.hint" = "Real-world feedback";
 "looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what works across your real occasions.";
 "closet.archive.kicker" = "Archive";
 "closet.archive.title" = "Your Closet";
