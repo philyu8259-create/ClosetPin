@@ -22,6 +22,7 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         items: [ClothingItem]
     ) -> [LooksHistoryEntry] {
         let itemsByID = deduplicatedItemsByID(from: items)
+        let outfitsByID = deduplicatedOutfitsByID(from: outfits)
 
         let savedEntries = outfits
             .filter { $0.savedAt != nil }
@@ -42,16 +43,18 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         let wornEntries = feedback
             .filter { $0.feedbackType == .wore }
             .map { feedback in
-                LooksHistoryEntry(
+                let outfit = feedback.outfitId.flatMap { outfitsByID[$0] }
+                let itemIds = outfit?.itemIds ?? feedback.itemIds
+                return LooksHistoryEntry(
                     id: "worn-\(feedback.id.uuidString)",
                     kind: .worn,
                     date: feedback.createdAt,
                     scenario: feedback.scenario,
-                    itemCount: feedback.itemIds.count,
-                    itemSummary: itemSummary(for: feedback.itemIds, itemsByID: itemsByID),
-                    visualItems: visualItems(for: feedback.itemIds, itemsByID: itemsByID),
-                    explanation: L10n.text("looks.worn.explanation"),
-                    score: nil
+                    itemCount: itemIds.count,
+                    itemSummary: itemSummary(for: itemIds, itemsByID: itemsByID),
+                    visualItems: visualItems(for: itemIds, itemsByID: itemsByID),
+                    explanation: outfit.map { explanation(for: $0, itemsByID: itemsByID) } ?? L10n.text("looks.worn.explanation"),
+                    score: outfit?.score
                 )
             }
 
@@ -110,5 +113,15 @@ struct LooksHistoryEntry: Identifiable, Equatable {
         }
 
         return itemsByID
+    }
+
+    private static func deduplicatedOutfitsByID(from outfits: [Outfit]) -> [UUID: Outfit] {
+        var outfitsByID: [UUID: Outfit] = [:]
+
+        for outfit in outfits {
+            outfitsByID[outfit.id] = outfit
+        }
+
+        return outfitsByID
     }
 }

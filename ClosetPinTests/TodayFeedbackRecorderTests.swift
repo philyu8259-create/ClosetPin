@@ -27,17 +27,27 @@ final class TodayFeedbackRecorderTests: XCTestCase {
         )
 
         XCTAssertEqual(result.outcome, .recorded)
-        XCTAssertNil(result.outfit)
+        let outfit = try XCTUnwrap(result.outfit)
+        XCTAssertEqual(outfit.itemIds, items.map(\.id))
+        XCTAssertEqual(outfit.scenario, .dailyOffice)
+        XCTAssertEqual(outfit.weatherNote, SeasonTag.spring.displayName)
+        XCTAssertEqual(outfit.score, 72)
+        XCTAssertEqual(outfit.explanation, "A practical office option.")
+        XCTAssertNil(outfit.savedAt)
+        XCTAssertEqual(outfit.wornAt, wornAt)
         XCTAssertEqual(result.feedback.feedbackType, .wore)
         XCTAssertEqual(result.feedback.scenario, .dailyOffice)
         XCTAssertEqual(result.feedback.itemIds, items.map(\.id))
-        XCTAssertNil(result.feedback.outfitId)
+        XCTAssertEqual(result.feedback.outfitId, outfit.id)
         XCTAssertEqual(items.map(\.wearCount), [1, 1, 1])
         XCTAssertEqual(items.map(\.lastWornAt), [wornAt, wornAt, wornAt])
 
+        let fetchedOutfits = try context.fetch(FetchDescriptor<Outfit>())
         let fetchedFeedback = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        XCTAssertEqual(fetchedOutfits.count, 1)
         XCTAssertEqual(fetchedFeedback.count, 1)
         XCTAssertEqual(fetchedFeedback.first?.feedbackType, .wore)
+        XCTAssertEqual(fetchedFeedback.first?.outfitId, fetchedOutfits.first?.id)
     }
 
     func testSavePersistsOutfitAndSavedFeedback() throws {
@@ -118,11 +128,16 @@ final class TodayFeedbackRecorderTests: XCTestCase {
         XCTAssertEqual(firstResult.outcome, .recorded)
         XCTAssertEqual(secondResult.outcome, .alreadyRecorded)
         XCTAssertEqual(secondResult.feedback.id, firstResult.feedback.id)
+        XCTAssertEqual(secondResult.outfit?.id, firstResult.outfit?.id)
         XCTAssertEqual(items.map(\.wearCount), [1, 1, 1])
         XCTAssertEqual(items.map(\.lastWornAt), [firstTap, firstTap, firstTap])
 
+        let fetchedOutfits = try context.fetch(FetchDescriptor<Outfit>())
         let fetchedFeedback = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        XCTAssertEqual(fetchedOutfits.count, 1)
         XCTAssertEqual(fetchedFeedback.count, 1)
+        XCTAssertEqual(fetchedOutfits.first?.wornAt, firstTap)
+        XCTAssertEqual(fetchedFeedback.first?.outfitId, fetchedOutfits.first?.id)
     }
 
     func testDuplicateSaveSameCandidateScenarioAndDayDoesNotCreateMultipleRecords() throws {

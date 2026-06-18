@@ -233,6 +233,68 @@ final class ClosetPinTests: XCTestCase {
         )
     }
 
+    func testLooksHistoryEntriesUseLinkedWornOutfitDetailsWhenAvailable() {
+        let top = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/worn-top.jpg",
+            type: .top,
+            color: "Navy",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Rack"
+        )
+        let bottom = ClothingItem(
+            id: UUID(),
+            photoLocalPath: "/tmp/worn-bottom.jpg",
+            type: .bottom,
+            color: "Khaki",
+            seasons: [.spring],
+            formalityLevel: 3,
+            storageLocation: "Drawer"
+        )
+        let outfitID = UUID()
+        let wornDate = Date(timeIntervalSince1970: 300)
+        let outfit = Outfit(
+            id: outfitID,
+            itemIds: [top.id, bottom.id],
+            scenario: .dailyOffice,
+            dateContext: wornDate,
+            weatherNote: "Spring",
+            score: 86,
+            explanation: "Balanced office look.",
+            wornAt: wornDate
+        )
+        let feedback = OutfitFeedback(
+            outfitId: outfitID,
+            feedbackType: .wore,
+            itemIds: [top.id],
+            scenario: .dailyOffice
+        )
+        feedback.createdAt = wornDate
+
+        let entries = LooksHistoryEntry.makeEntries(
+            outfits: [outfit],
+            feedback: [feedback],
+            items: [top, bottom]
+        )
+
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries.first?.kind, .worn)
+        XCTAssertEqual(entries.first?.itemCount, 2)
+        XCTAssertEqual(entries.first?.visualItems.map(\.id), [top.id, bottom.id])
+        XCTAssertEqual(entries.first?.score, 86)
+        XCTAssertEqual(
+            entries.first?.explanation,
+            TodayRecommendationExplanation.text(
+                for: [
+                    TodayOutfitItemSnapshot(type: .top, color: "Navy"),
+                    TodayOutfitItemSnapshot(type: .bottom, color: "Khaki")
+                ],
+                scenario: .dailyOffice
+            )
+        )
+    }
+
     func testLooksHistoryEntriesKeepDeterministicItemSelectionWithDuplicateItemIDs() {
         let itemID = UUID()
         let earlierDuplicate = ClothingItem(

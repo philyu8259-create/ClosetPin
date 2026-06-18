@@ -82,7 +82,7 @@ struct TodayFeedbackRecorder {
         explanation: String,
         now: Date
     ) -> Outfit? {
-        guard feedbackType == .saved else { return nil }
+        guard feedbackType == .saved || feedbackType == .wore else { return nil }
 
         return Outfit(
             itemIds: itemIds,
@@ -91,7 +91,8 @@ struct TodayFeedbackRecorder {
             weatherNote: season.displayName,
             score: candidate.score,
             explanation: explanation,
-            savedAt: now
+            savedAt: feedbackType == .saved ? now : nil,
+            wornAt: feedbackType == .wore ? now : nil
         )
     }
 
