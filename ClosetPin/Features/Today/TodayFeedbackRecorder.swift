@@ -73,6 +73,29 @@ struct TodayFeedbackRecorder {
         return RecordResult(feedback: feedback, outfit: outfit, outcome: .recorded)
     }
 
+    func undoFeedback(
+        feedbackID: UUID,
+        outfitID: UUID?,
+        in modelContext: ModelContext
+    ) throws {
+        let feedbacks = try modelContext.fetch(FetchDescriptor<OutfitFeedback>())
+        guard let feedback = feedbacks.first(where: { $0.id == feedbackID }) else { return }
+
+        if feedback.feedbackType == .wore {
+            try rollbackWoreUpdates(from: feedback, withRemaining: feedbacks, in: modelContext)
+        }
+
+        modelContext.delete(feedback)
+
+        let linkedOutfitID = outfitID ?? feedback.outfitId
+        if let linkedOutfitID,
+           let outfit = try modelContext.fetch(FetchDescriptor<Outfit>()).first(where: { $0.id == linkedOutfitID }) {
+            modelContext.delete(outfit)
+        }
+
+        try modelContext.save()
+    }
+
     private func makeOutfitIfNeeded(
         feedbackType: FeedbackType,
         itemIds: [UUID],
@@ -128,6 +151,32 @@ struct TodayFeedbackRecorder {
             item.lastWornAt = date
             item.wearCount += 1
             item.updatedAt = date
+        }
+    }
+
+    private func rollbackWoreUpdates(
+        from feedbackToUndo: OutfitFeedback,
+        withRemaining feedbacks: [OutfitFeedback],
+        in modelContext: ModelContext
+    ) throws {
+        let remainingWoreFeedbacks = feedbacks.filter {
+            $0.id != feedbackToUndo.id && $0.feedbackType == .wore
+        }
+
+        let clothingItems = try modelContext.fetch(FetchDescriptor<ClothingItem>())
+        let itemLookup = Dictionary(uniqueKeysWithValues: clothingItems.map { ($0.id, $0) })
+
+        for itemID in Set(feedbackToUndo.itemIds) {
+            guard let item = itemLookup[itemID] else { continue }
+            item.wearCount = max(0, item.wearCount - 1)
+
+            let latestWornAt = remainingWoreFeedbacks
+                .filter { $0.itemIds.contains(itemID) }
+                .sorted { $0.createdAt > $1.createdAt }
+                .first?
+                .createdAt
+            item.lastWornAt = latestWornAt
+            item.updatedAt = Date()
         }
     }
 }

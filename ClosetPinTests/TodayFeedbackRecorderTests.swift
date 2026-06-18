@@ -185,6 +185,123 @@ final class TodayFeedbackRecorderTests: XCTestCase {
         XCTAssertEqual(fetchedFeedback.first?.createdAt, firstTap)
     }
 
+    func testUndoWoreFeedbackRollsBackWearCountsAndLastWornAt() throws {
+        let context = try makeInMemoryModelContext()
+        let recorder = TodayFeedbackRecorder()
+        let items = [
+            clothingItem(id: UUID(uuidString: "50000000-0000-0000-0000-000000000001")!, type: .top),
+            clothingItem(id: UUID(uuidString: "50000000-0000-0000-0000-000000000002")!, type: .bottom),
+            clothingItem(id: UUID(uuidString: "50000000-0000-0000-0000-000000000003")!, type: .shoes),
+            clothingItem(id: UUID(uuidString: "50000000-0000-0000-0000-000000000004")!, type: .blazer)
+        ]
+        items.forEach(context.insert)
+        try context.save()
+
+        let firstTimestamp = Date(timeIntervalSince1970: 1_000)
+        let secondTimestamp = Date(timeIntervalSince1970: 2_000)
+
+        let firstResult = try recorder.record(
+            .wore,
+            candidate: OutfitCandidate(id: "dailyOffice:wore-undo", items: Array(items[0...1]), score: 74, explanationSeed: "seed"),
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "First record",
+            in: context,
+            now: firstTimestamp
+        )
+        let secondResult = try recorder.record(
+            .wore,
+            candidate: OutfitCandidate(id: "dailyOffice:wore-undo-2", items: [items[0], items[2]], score: 68, explanationSeed: "seed"),
+            scenario: .dailyOffice,
+            season: .spring,
+            explanation: "Second record",
+            in: context,
+            now: secondTimestamp
+        )
+
+        try recorder.undoFeedback(
+            feedbackID: firstResult.feedback.id,
+            outfitID: firstResult.outfit?.id,
+            in: context
+        )
+
+        let fetchedItems = try context.fetch(FetchDescriptor<ClothingItem>())
+            .reduce(into: [UUID: ClothingItem]()) { $0[$1.id] = $1 }
+        XCTAssertEqual(fetchedItems[items[0].id]?.wearCount, 1)
+        XCTAssertEqual(fetchedItems[items[0].id]?.lastWornAt, secondTimestamp)
+        XCTAssertEqual(fetchedItems[items[1].id]?.wearCount, 0)
+        XCTAssertNil(fetchedItems[items[1].id]?.lastWornAt)
+        XCTAssertEqual(fetchedItems[items[2].id]?.wearCount, 1)
+        XCTAssertEqual(fetchedItems[items[2].id]?.lastWornAt, secondTimestamp)
+        XCTAssertEqual(fetchedItems[items[3].id]?.wearCount, 0)
+        XCTAssertNil(fetchedItems[items[3].id]?.lastWornAt)
+
+        let outfits = try context.fetch(FetchDescriptor<Outfit>())
+        let feedbacks = try context.fetch(FetchDescriptor<OutfitFeedback>())
+        XCTAssertEqual(feedbacks.count, 1)
+        XCTAssertEqual(outfits.count, 1)
+        XCTAssertEqual(feedbacks.first?.id, secondResult.feedback.id)
+        XCTAssertEqual(outfits.first?.id, secondResult.outfit?.id)
+    }
+
+    func testUndoNonWoreFeedbackDoesNotModifyWearStatistics() throws {
+        let context = try makeInMemoryModelContext()
+        let recorder = TodayFeedbackRecorder()
+        let targetDate = Date(timeIntervalSince1970: 3_000)
+        let savedDate = Date(timeIntervalSince1970: 4_000)
+
+        let item = clothingItem(id: UUID(uuidString: "60000000-0000-0000-0000-000000000001")!, type: .top)
+        item.wearCount = 3
+        item.lastWornAt = targetDate
+        context.insert(item)
+        try context.save()
+
+        let result = try recorder.record(
+            .saved,
+            candidate: OutfitCandidate(id: "dailyOffice:saved-undo", items: [item], score: 77, explanationSeed: "seed"),
+            scenario: .dailyOffice,
+            season: .summer,
+            explanation: "Saved outfit",
+            in: context,
+            now: savedDate
+        )
+
+        try recorder.undoFeedback(
+            feedbackID: result.feedback.id,
+            outfitID: result.outfit?.id,
+            in: context
+        )
+
+        let fetchedItems = try context.fetch(FetchDescriptor<ClothingItem>())
+        XCTAssertEqual(fetchedItems.map(\.wearCount), [3])
+        XCTAssertEqual(fetchedItems.first?.lastWornAt, targetDate)
+        XCTAssertTrue(try context.fetch(FetchDescriptor<OutfitFeedback>()).isEmpty)
+        XCTAssertTrue(try context.fetch(FetchDescriptor<Outfit>()).isEmpty)
+    }
+
+    func testWoreActionGeneratesUndoActionWhenRecorded() throws {
+        let context = try makeInMemoryModelContext()
+        let recorder = TodayFeedbackRecorder()
+        let item = clothingItem(id: UUID(uuidString: "70000000-0000-0000-0000-000000000001")!, type: .top)
+        context.insert(item)
+        try context.save()
+
+        let result = try recorder.record(
+            .wore,
+            candidate: OutfitCandidate(id: "dailyOffice:wore-undo-action", items: [item], score: 70, explanationSeed: "seed"),
+            scenario: .dailyOffice,
+            season: .winter,
+            explanation: "Record for undo action",
+            in: context,
+            now: Date(timeIntervalSince1970: 5_000)
+        )
+
+        let undoAction = TodayFeedbackAction.wore.undoAction(for: result)
+        XCTAssertNotNil(undoAction)
+        XCTAssertEqual(undoAction?.feedbackID, result.feedback.id)
+        XCTAssertEqual(undoAction?.outfitID, result.outfit?.id)
+    }
+
     private func makeInMemoryModelContext() throws -> ModelContext {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(

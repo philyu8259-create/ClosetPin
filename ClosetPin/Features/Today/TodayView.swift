@@ -599,21 +599,11 @@ struct TodayView: View {
 
     private func undoFeedback(_ undoAction: TodayUndoAction) {
         do {
-            let storedFeedback = try modelContext.fetch(FetchDescriptor<OutfitFeedback>())
-                .first { $0.id == undoAction.feedbackID }
-            if let storedFeedback {
-                modelContext.delete(storedFeedback)
-            }
-
-            if let outfitID = undoAction.outfitID {
-                let storedOutfit = try modelContext.fetch(FetchDescriptor<Outfit>())
-                    .first { $0.id == outfitID }
-                if let storedOutfit {
-                    modelContext.delete(storedOutfit)
-                }
-            }
-
-            try modelContext.save()
+            try feedbackRecorder.undoFeedback(
+                feedbackID: undoAction.feedbackID,
+                outfitID: undoAction.outfitID,
+                in: modelContext
+            )
             presentConfirmation(
                 TodayConfirmation(
                     message: L10n.text("today.confirmation.undone"),

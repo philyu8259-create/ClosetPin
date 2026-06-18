@@ -267,7 +267,6 @@ enum TodayFeedbackAction: CaseIterable, Identifiable {
 
     func undoAction(for result: TodayFeedbackRecorder.RecordResult) -> TodayUndoAction? {
         guard result.outcome == .recorded else { return nil }
-        guard self != .wore else { return nil }
         return TodayUndoAction(feedbackID: result.feedback.id, outfitID: result.outfit?.id)
     }
 }
