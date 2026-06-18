@@ -46,6 +46,17 @@ struct ClosetItemDetailView: View {
 
                 LuxurySurfaceCard {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                        DetailSectionHeader(title: L10n.text("closet.wear.section"), systemImage: "clock")
+                        detailRow(title: L10n.text("closet.wear.count.label"), value: wearCountText)
+                            .accessibilityIdentifier("closetItemWearCount")
+                        detailRow(title: L10n.text("closet.wear.last_worn.label"), value: lastWornText)
+                            .accessibilityIdentifier("closetItemLastWorn")
+                    }
+                    .accessibilityIdentifier("closetItemWearSection")
+                }
+
+                LuxurySurfaceCard {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                         DetailSectionHeader(title: L10n.text("closet.seasons.section"), systemImage: "calendar")
                         FlowLayout(spacing: 8) {
                             ForEach(item.seasons) { season in
@@ -146,6 +157,26 @@ struct ClosetItemDetailView: View {
                 .foregroundStyle(DesignSystem.ink)
                 .multilineTextAlignment(.trailing)
         }
+    }
+
+    private var wearCountText: String {
+        guard item.wearCount > 0 else {
+            return L10n.text("closet.wear_count.zero")
+        }
+
+        return item.wearCount == 1
+            ? L10n.text("closet.wear_count.one")
+            : L10n.string("closet.wear_count.many.format", arguments: item.wearCount)
+    }
+
+    private var lastWornText: String {
+        guard let lastWornAt = item.lastWornAt else {
+            return L10n.text("closet.last_worn.none")
+        }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return L10n.string("closet.last_worn.format", arguments: formatter.localizedString(for: lastWornAt, relativeTo: Date()))
     }
 
     private func deleteItem() {

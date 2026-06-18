@@ -182,6 +182,14 @@
 "closet.post_save.continue" = "Continue adding";
 "closet.post_save.generate_today" = "Open Today’s Look";
 "closet.post_save.view_closet" = "View in closet";
+"closet.wear.section" = "Wear History";
+"closet.wear.count.label" = "Times worn";
+"closet.wear.last_worn.label" = "Most recently worn";
+"closet.wear_count.zero" = "Not worn yet";
+"closet.wear_count.one" = "Worn once";
+"closet.wear_count.many.format" = "Worn %d times";
+"closet.last_worn.format" = "Recently %@";
+"closet.last_worn.none" = "Not worn yet";
 "closet.level_indicator.format" = "Level %d of 5";
 "closet.notes.section" = "Notes";
 "closet.notes.placeholder" = "Optional notes";

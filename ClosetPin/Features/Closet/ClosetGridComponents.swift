@@ -43,6 +43,15 @@ struct GarmentGridCard: View {
 
                 HStack {
                     statusBadge
+
+                    if let wearSummaryText = wearSummaryText {
+                        Text(wearSummaryText)
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(DesignSystem.secondaryInk.opacity(0.94))
+                            .lineLimit(1)
+                            .accessibilityIdentifier("closetItemWearSummary_\(item.id.uuidString)")
+                    }
+
                     Spacer(minLength: 0)
                 }
             }
@@ -66,6 +75,14 @@ struct GarmentGridCard: View {
 
     private var hasStorageLocation: Bool {
         item.displayStorageLocation.isEmpty == false
+    }
+
+    private var wearSummaryText: String? {
+        guard item.wearCount > 0 else { return nil }
+
+        return item.wearCount == 1
+            ? L10n.text("closet.wear_count.one")
+            : L10n.string("closet.wear_count.many.format", arguments: item.wearCount)
     }
 
     @ViewBuilder

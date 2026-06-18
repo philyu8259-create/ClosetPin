@@ -182,6 +182,14 @@
 "closet.post_save.continue" = "继续添加";
 "closet.post_save.generate_today" = "去看今日穿搭";
 "closet.post_save.view_closet" = "查看衣橱";
+"closet.wear.section" = "穿搭记录";
+"closet.wear.count.label" = "穿过次数";
+"closet.wear.last_worn.label" = "最近穿过";
+"closet.wear_count.zero" = "尚未穿过";
+"closet.wear_count.one" = "穿过 1 次";
+"closet.wear_count.many.format" = "穿过 %d 次";
+"closet.last_worn.format" = "%@";
+"closet.last_worn.none" = "尚未穿过";
 "closet.level_indicator.format" = "第 %d 档，共 5 档";
 "closet.notes.section" = "备注";
 "closet.notes.placeholder" = "可选备注";

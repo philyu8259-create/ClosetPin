@@ -451,6 +451,22 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Marked as worn today."].waitForExistence(timeout: 3))
     }
 
+    func testWornItemsShowWearHistoryInCloset() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let woreButton = app.buttons["todayFeedback_wore_0"]
+        XCTAssertTrue(woreButton.waitForExistence(timeout: 3))
+        woreButton.tap()
+        XCTAssertTrue(app.staticTexts["Marked as worn today."].waitForExistence(timeout: 3))
+
+        app.buttons["appTab_closet"].tap()
+        XCTAssertTrue(app.staticTexts["Worn once"].waitForExistence(timeout: 3))
+    }
+
     func testTodayRecommendationCanRecordPreferenceFeedback() {
         let app = makeApp()
         app.launch()
