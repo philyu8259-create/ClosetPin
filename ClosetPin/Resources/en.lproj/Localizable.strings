@@ -277,12 +277,12 @@
 "today.feedback.try_different" = "Try different";
 "today.confirmation.already_worn" = "Already recorded as worn today.";
 "today.confirmation.already_saved" = "Outfit already saved today.";
-"today.confirmation.wore" = "Marked as worn today. You can find it in Looks.";
+"today.confirmation.wore" = "Marked as worn today.";
 "today.confirmation.like" = "Saved. We will suggest more looks like this.";
 "today.confirmation.dislike" = "Got it. We will show fewer looks like this.";
 "today.confirmation.skip" = "Trying another option.";
 "today.confirmation.swap" = "Here is a fresh option.";
-"today.confirmation.save" = "Saved. You can find it in Looks.";
+"today.confirmation.save" = "Outfit saved.";
 "today.confirmation.view_looks" = "View Looks";
 "today.confirmation.undo" = "Undo";
 "today.confirmation.undone" = "Undone.";

@@ -112,47 +112,61 @@ struct ConfirmationBanner: View {
     let onUndo: (TodayUndoAction) -> Void
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.sm) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
 
-            Text(confirmation.message)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .minimumScaleFactor(0.82)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier("todayFeedbackConfirmationText")
-
-            if confirmation.showsLookbookAction, let onOpenLooks {
-                Button(action: onOpenLooks) {
-                    Text(L10n.text("today.confirmation.view_looks"))
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(DesignSystem.accent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(.white)
-                        .clipShape(Capsule(style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("todayFeedbackViewLooksButton")
+                Text(confirmation.message)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("todayFeedbackConfirmationText")
             }
 
-            if let undoAction = confirmation.undoAction {
-                Button {
-                    onUndo(undoAction)
-                } label: {
-                    Text(L10n.text("today.confirmation.undo"))
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(DesignSystem.accent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(.white)
-                        .clipShape(Capsule(style: .continuous))
+            if hasActionRow {
+                HStack(spacing: DesignSystem.Spacing.xs) {
+                    if confirmation.showsLookbookAction, let onOpenLooks {
+                        Button(action: onOpenLooks) {
+                            Text(L10n.text("today.confirmation.view_looks"))
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(.white.opacity(0.2))
+                                .clipShape(Capsule(style: .continuous))
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .stroke(.white.opacity(0.52), lineWidth: 0.7)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("todayFeedbackViewLooksButton")
+                    }
+
+                    if let undoAction = confirmation.undoAction {
+                        Button {
+                            onUndo(undoAction)
+                        } label: {
+                            Text(L10n.text("today.confirmation.undo"))
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(.white.opacity(0.2))
+                                .clipShape(Capsule(style: .continuous))
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .stroke(.white.opacity(0.52), lineWidth: 0.7)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("todayFeedbackUndoButton")
+                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("todayFeedbackUndoButton")
             }
         }
         .padding(.horizontal, 14)
@@ -162,6 +176,10 @@ struct ConfirmationBanner: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("todayFeedbackConfirmationBanner")
+    }
+
+    private var hasActionRow: Bool {
+        (confirmation.showsLookbookAction && onOpenLooks != nil) || confirmation.undoAction != nil
     }
 }
 

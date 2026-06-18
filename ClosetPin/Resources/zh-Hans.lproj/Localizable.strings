@@ -277,12 +277,12 @@
 "today.feedback.try_different" = "换个方向";
 "today.confirmation.already_worn" = "今天已经记录为已穿。";
 "today.confirmation.already_saved" = "今天已经保存过这套穿搭。";
-"today.confirmation.wore" = "已记录为今天穿，可在穿搭里查看。";
+"today.confirmation.wore" = "已记录为今天穿。";
 "today.confirmation.like" = "已记录，之后会多推荐类似搭配。";
 "today.confirmation.dislike" = "知道了，之后会减少类似搭配。";
 "today.confirmation.skip" = "正在换一套。";
 "today.confirmation.swap" = "已为你换一套。";
-"today.confirmation.save" = "已保存，可在穿搭里查看。";
+"today.confirmation.save" = "已保存这套穿搭。";
 "today.confirmation.view_looks" = "去穿搭";
 "today.confirmation.undo" = "撤销";
 "today.confirmation.undone" = "已撤销。";
