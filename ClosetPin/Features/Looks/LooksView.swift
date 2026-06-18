@@ -182,17 +182,12 @@ private struct LooksHistoryCard: View {
                     .accessibilityIdentifier("looksOutfitVisualBoard")
             }
 
-            HStack(spacing: DesignSystem.Spacing.sm) {
-                CapsuleTag(text: entry.scenario.displayName, tint: DesignSystem.accent)
-                CapsuleTag(text: L10n.string("looks.item_count.format", arguments: entry.itemCount), tint: DesignSystem.secondaryInk)
-            }
-
             Text(entry.itemSummary)
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(DesignSystem.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
-            LooksContextCallout(kind: entry.kind)
+            LooksMetaRow(entry: entry)
 
             Text(entry.explanation)
                 .font(.footnote)
@@ -213,40 +208,18 @@ private struct LooksHistoryCard: View {
     }
 }
 
-private struct LooksContextCallout: View {
-    let kind: LooksHistoryEntry.Kind
+private struct LooksMetaRow: View {
+    let entry: LooksHistoryEntry
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: kind.systemImage)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(kind.foregroundColor)
-                .clipShape(Circle())
-
-            Text(kind.contextTitle)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(DesignSystem.ink)
-                .lineLimit(1)
-
-            Spacer(minLength: 8)
-
-            Text(kind.contextHint)
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .lineLimit(1)
+        HStack(spacing: DesignSystem.Spacing.sm) {
+            CapsuleTag(text: entry.scenario.displayName, tint: DesignSystem.accent)
+            CapsuleTag(
+                text: L10n.string("looks.item_count.format", arguments: entry.itemCount),
+                tint: DesignSystem.secondaryInk
+            )
+            CapsuleTag(text: entry.kind.contextTitle, tint: entry.kind.tintColor)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(kind.tintColor.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
-                .stroke(kind.tintColor.opacity(0.22), lineWidth: 1)
-        }
-        .accessibilityIdentifier("looksContextCallout_\(kind.rawValue)")
     }
 }
 
@@ -435,15 +408,6 @@ private extension LooksHistoryEntry.Kind {
             L10n.text("looks.context.saved.title")
         case .worn:
             L10n.text("looks.context.worn.title")
-        }
-    }
-
-    var contextHint: String {
-        switch self {
-        case .saved:
-            L10n.text("looks.context.saved.hint")
-        case .worn:
-            L10n.text("looks.context.worn.hint")
         }
     }
 }
