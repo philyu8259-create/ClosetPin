@@ -306,6 +306,7 @@
 "looks.context.worn.body" = "Counts as real-world feedback so ClosetPin can learn what works across your real occasions.";
 "looks.context.worn.hint" = "Real-world feedback";
 "looks.worn.explanation" = "You marked this outfit as worn, so ClosetPin can learn what works across your real occasions.";
+"looks.rewear_today" = "Rewear Today";
 "closet.archive.kicker" = "Archive";
 "closet.archive.title" = "Your Closet";
 "closet.archive.count.format" = "%d pieces ready to style";

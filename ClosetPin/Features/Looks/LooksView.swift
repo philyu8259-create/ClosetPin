@@ -39,7 +39,13 @@ struct LooksView: View {
                         )
 
                         ForEach(entries) { entry in
-                            LooksHistoryCard(entry: entry)
+                            NavigationLink {
+                                LooksHistoryDetailView(entry: entry)
+                            } label: {
+                                LooksHistoryCard(entry: entry)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("looksHistoryCardButton")
                         }
                     }
                     .padding(18)
@@ -205,6 +211,209 @@ private struct LooksHistoryCard: View {
         }
         .shadow(color: .black.opacity(0.06), radius: 18, x: 0, y: 10)
         .accessibilityIdentifier("looksHistoryCard")
+    }
+}
+
+private struct LooksHistoryDetailView: View {
+    let entry: LooksHistoryEntry
+
+    @Environment(\.modelContext) private var modelContext
+    @State private var confirmationText: String?
+    @State private var saveError: String?
+    @State private var clearConfirmationWorkItem: DispatchWorkItem?
+
+    private var availableItems: [ClothingItem] {
+        entry.visualItems.compactMap(\.item)
+    }
+
+    private var hasUnavailableItems: Bool {
+        availableItems.count < entry.itemCount
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                LooksDetailSummary(entry: entry)
+
+                Text(L10n.text("today.items.title"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
+                    .accessibilityIdentifier("looksDetailIncludedItemsTitle")
+
+                if entry.visualItems.isEmpty {
+                    Text(L10n.text("looks.items.unavailable"))
+                        .font(.body)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    OutfitVisualBoard(
+                        visualItems: entry.visualItems,
+                        allowsDetailNavigation: true
+                    )
+                    .accessibilityIdentifier("looksHistoryDetailItemsBoard")
+
+                    Text(L10n.string("today.preview.count.format", arguments: availableItems.count))
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                }
+
+                if hasUnavailableItems {
+                    Text(L10n.text("looks.items.unavailable"))
+                        .font(.footnote)
+                        .foregroundStyle(DesignSystem.wine)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("looksDetailUnavailableItemsText")
+                }
+
+                Button {
+                    rewear()
+                } label: {
+                    Label(L10n.text("looks.rewear_today"), systemImage: "clock.arrow.circlepath")
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(DesignSystem.accent)
+                .disabled(entry.visualItems.isEmpty || hasUnavailableItems)
+                .accessibilityIdentifier("looksHistoryRewearButton")
+
+                if let confirmationText {
+                    Text(confirmationText)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(DesignSystem.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("looksRewearConfirmationText")
+                }
+            }
+            .padding(18)
+        }
+        .safeAreaPadding(.bottom, DesignSystem.Spacing.tabBarClearance)
+        .background(DesignSystem.background)
+        .navigationTitle(L10n.text("looks.title"))
+        .navigationBarTitleDisplayMode(.inline)
+        .alert(L10n.text("today.feedback_error_title"), isPresented: Binding(
+            get: { saveError != nil },
+            set: { if !$0 { saveError = nil } }
+        )) {
+            Button(L10n.text("common.ok"), role: .cancel) {}
+        } message: {
+            Text(saveError ?? L10n.text("common.try_again"))
+        }
+        .onDisappear {
+            clearConfirmationWorkItem?.cancel()
+            clearConfirmationWorkItem = nil
+        }
+    }
+
+    private func rewear() {
+        clearConfirmationWorkItem?.cancel()
+
+        guard !hasUnavailableItems, !availableItems.isEmpty else {
+            saveError = L10n.text("looks.items.unavailable")
+            return
+        }
+
+        do {
+            let outcome = try recordRewear(at: Date())
+            confirmationText = switch outcome {
+            case .recorded:
+                L10n.text("today.confirmation.wore")
+            case .alreadyRecorded:
+                L10n.text("today.confirmation.already_worn")
+            }
+            let workItem = DispatchWorkItem {
+                confirmationText = nil
+            }
+            clearConfirmationWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.6, execute: workItem)
+        } catch {
+            saveError = error.localizedDescription
+        }
+    }
+
+    private func recordRewear(at now: Date) throws -> RewearOutcome {
+        let itemIds = availableItems.map(\.id)
+        let itemSet = Set(itemIds)
+        let calendar = Calendar.current
+        let feedbacks = try modelContext.fetch(FetchDescriptor<OutfitFeedback>())
+
+        if feedbacks.contains(where: { feedback in
+            feedback.feedbackType == .wore
+                && feedback.scenario == entry.scenario
+                && Set(feedback.itemIds) == itemSet
+                && calendar.isDate(feedback.createdAt, inSameDayAs: now)
+        }) {
+            return .alreadyRecorded
+        }
+
+        let feedback = OutfitFeedback(
+            feedbackType: .wore,
+            itemIds: itemIds,
+            scenario: entry.scenario
+        )
+        feedback.createdAt = now
+        modelContext.insert(feedback)
+
+        for item in availableItems {
+            item.lastWornAt = now
+            item.wearCount += 1
+            item.updatedAt = now
+        }
+
+        try modelContext.save()
+        return .recorded
+    }
+}
+
+private enum RewearOutcome {
+    case recorded
+    case alreadyRecorded
+}
+
+private struct LooksDetailSummary: View {
+    let entry: LooksHistoryEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                KindBadge(kind: entry.kind)
+
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(entry.date, format: .dateTime.month(.abbreviated).day())
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(entry.date, format: .dateTime.hour().minute())
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                }
+            }
+
+            Text(entry.itemSummary)
+                .font(DesignSystem.editorialSectionFont(size: 26))
+                .foregroundStyle(DesignSystem.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            LooksMetaRow(entry: entry)
+
+            Text(entry.explanation)
+                .font(.footnote)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DesignSystem.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.paper.opacity(0.96))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg, style: .continuous)
+                .stroke(DesignSystem.border.opacity(0.32), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.05), radius: 14, x: 0, y: 8)
     }
 }
 

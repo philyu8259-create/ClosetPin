@@ -496,6 +496,32 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 3))
     }
 
+    func testSavedOutfitCanOpenLooksDetailAndRecordRewear() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let saveButton = app.buttons["todayFeedback_saved_0"]
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 3))
+        saveButton.tap()
+
+        let viewLooksButton = app.buttons["todayFeedbackViewLooksButton"]
+        XCTAssertTrue(viewLooksButton.waitForExistence(timeout: 3))
+        viewLooksButton.tap()
+
+        let historyCard = app.buttons["looksHistoryCardButton"]
+        XCTAssertTrue(historyCard.waitForExistence(timeout: 3))
+        historyCard.tap()
+
+        let rewearButton = app.buttons["looksHistoryRewearButton"]
+        XCTAssertTrue(rewearButton.waitForExistence(timeout: 3))
+        rewearButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Marked as worn today."].waitForExistence(timeout: 3))
+    }
+
     func testTodayFeedbackConfirmationDoesNotBlockTabNavigation() {
         let app = makeApp()
         app.launch()

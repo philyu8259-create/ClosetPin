@@ -306,6 +306,7 @@
 "looks.context.worn.body" = "会作为真实反馈，帮助 ClosetPin 学习哪些搭配更适合你的不同场合。";
 "looks.context.worn.hint" = "真实穿搭反馈";
 "looks.worn.explanation" = "你已将这套穿搭标记为已穿，ClosetPin 会据此学习哪些搭配更适合你的不同场合。";
+"looks.rewear_today" = "今天复穿这套";
 "closet.archive.kicker" = "衣橱档案";
 "closet.archive.title" = "你的衣橱";
 "closet.archive.count.format" = "%d 件单品可搭配";
