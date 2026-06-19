@@ -19,6 +19,7 @@ struct RecommendationEngine {
         let itemsByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let avoidedCoreSignatures = avoidedCoreSignatures(from: feedback, itemsByID: itemsByID, scenario: input.scenario)
         let avoidedItemIDSets = avoidedItemIDSets(from: feedback, scenario: input.scenario)
+        let avoidedCoreItemIDSets = avoidedCoreItemIDSets(from: feedback, itemsByID: itemsByID, scenario: input.scenario)
         let weatherContext = input.tomorrow.weatherContext
 
         let threshold = requiredFormality(for: input.scenario)
@@ -128,12 +129,14 @@ struct RecommendationEngine {
                 let lhsScore = adjustedScore(
                     for: lhs,
                     avoidedCoreSignatures: avoidedCoreSignatures,
-                    avoidedItemIDSets: avoidedItemIDSets
+                    avoidedItemIDSets: avoidedItemIDSets,
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
                 )
                 let rhsScore = adjustedScore(
                     for: rhs,
                     avoidedCoreSignatures: avoidedCoreSignatures,
-                    avoidedItemIDSets: avoidedItemIDSets
+                    avoidedItemIDSets: avoidedItemIDSets,
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
                 )
                 if lhsScore != rhsScore {
                     return lhsScore > rhsScore
@@ -145,7 +148,8 @@ struct RecommendationEngine {
             from: Array(rankedCandidates.prefix(max(diversifiedCandidatePoolLimit, input.maximumResults))),
             maximumResults: input.maximumResults,
             avoidedCoreSignatures: avoidedCoreSignatures,
-            avoidedItemIDSets: avoidedItemIDSets
+            avoidedItemIDSets: avoidedItemIDSets,
+            avoidedCoreItemIDSets: avoidedCoreItemIDSets
         )
     }
 }
@@ -154,21 +158,39 @@ private extension RecommendationEngine {
     func adjustedScore(
         for candidate: OutfitCandidate,
         avoidedCoreSignatures: Set<String>,
-        avoidedItemIDSets: [Set<UUID>]
+        avoidedItemIDSets: [Set<UUID>],
+        avoidedCoreItemIDSets: [Set<UUID>]
     ) -> Int {
         let candidateItemIDs = Set(candidate.items.map(\.id))
         let isRecentlyRejectedOutfit = avoidedItemIDSets.contains { avoidedIDs in
             avoidedIDs.isSubset(of: candidateItemIDs)
         }
         let recentlyRejectedPenalty = avoidedCoreSignatures.contains(coreSignature(for: candidate.items)) || isRecentlyRejectedOutfit ? 96 : 0
-        return candidate.score - recentlyRejectedPenalty
+        let coreReusePenalty = avoidedCoreItemIDSets
+            .map { avoidedCoreIDs in
+                let reusedCoreCount = candidateItemIDs.intersection(avoidedCoreIDs).count
+                return switch reusedCoreCount {
+                case 3...:
+                    96
+                case 2:
+                    64
+                case 1:
+                    10
+                default:
+                    0
+                }
+            }
+            .max() ?? 0
+
+        return candidate.score - recentlyRejectedPenalty - coreReusePenalty
     }
 
     func diversifiedCandidates(
         from candidates: [OutfitCandidate],
         maximumResults: Int,
         avoidedCoreSignatures: Set<String>,
-        avoidedItemIDSets: [Set<UUID>]
+        avoidedItemIDSets: [Set<UUID>],
+        avoidedCoreItemIDSets: [Set<UUID>]
     ) -> [OutfitCandidate] {
         guard maximumResults > 0 else { return [] }
         var selected: [OutfitCandidate] = []
@@ -182,13 +204,15 @@ private extension RecommendationEngine {
                     for: lhs,
                     selectedCandidates: selected,
                     avoidedCoreSignatures: avoidedCoreSignatures,
-                    avoidedItemIDSets: avoidedItemIDSets
+                    avoidedItemIDSets: avoidedItemIDSets,
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
                 )
                 let rhsScore = diversifiedSelectionScore(
                     for: rhs,
                     selectedCandidates: selected,
                     avoidedCoreSignatures: avoidedCoreSignatures,
-                    avoidedItemIDSets: avoidedItemIDSets
+                    avoidedItemIDSets: avoidedItemIDSets,
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
                 )
                 if lhsScore != rhsScore {
                     return lhsScore < rhsScore
@@ -207,12 +231,14 @@ private extension RecommendationEngine {
         for candidate: OutfitCandidate,
         selectedCandidates: [OutfitCandidate],
         avoidedCoreSignatures: Set<String>,
-        avoidedItemIDSets: [Set<UUID>]
+        avoidedItemIDSets: [Set<UUID>],
+        avoidedCoreItemIDSets: [Set<UUID>]
     ) -> Int {
         let feedbackAdjustedScore = adjustedScore(
             for: candidate,
             avoidedCoreSignatures: avoidedCoreSignatures,
-            avoidedItemIDSets: avoidedItemIDSets
+            avoidedItemIDSets: avoidedItemIDSets,
+            avoidedCoreItemIDSets: avoidedCoreItemIDSets
         )
         guard selectedCandidates.isEmpty == false else { return feedbackAdjustedScore }
 
@@ -278,6 +304,27 @@ private extension RecommendationEngine {
             .sorted { $0.createdAt > $1.createdAt }
             .prefix(12)
             .map { Set($0.itemIds) }
+    }
+
+    func avoidedCoreItemIDSets(
+        from feedback: [OutfitFeedback],
+        itemsByID: [UUID: ClothingItem],
+        scenario: OutfitScenario
+    ) -> [Set<UUID>] {
+        let avoidTypes: Set<FeedbackType> = [.disliked, .skipped, .swapped]
+        let coreTypes: Set<ClothingType> = [.top, .bottom, .shoes]
+
+        return feedback
+            .filter { $0.scenario == scenario && avoidTypes.contains($0.feedbackType) }
+            .sorted { $0.createdAt > $1.createdAt }
+            .prefix(12)
+            .map { feedback in
+                Set(feedback.itemIds.filter { itemID in
+                    guard let type = itemsByID[itemID]?.resolvedType else { return false }
+                    return coreTypes.contains(type)
+                })
+            }
+            .filter { !$0.isEmpty }
     }
 
     func coreSignature(for items: [ClothingItem]) -> String {

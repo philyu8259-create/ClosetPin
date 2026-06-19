@@ -410,7 +410,7 @@ final class RecommendationEngineTests: XCTestCase {
 
         let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: [swapFeedback]).first)
 
-        XCTAssertNotEqual(coreSignature(for: firstCandidate), coreSignature(for: nextCandidate))
+        XCTAssertGreaterThanOrEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 2)
     }
 
     func testPreferredFormalityChangesDailyOfficeRanking() throws {
@@ -544,5 +544,11 @@ private extension RecommendationEngineTests {
             itemID(of: .bottom, in: candidate)?.uuidString ?? "no-bottom",
             itemID(of: .shoes, in: candidate)?.uuidString ?? "no-shoes"
         ].joined(separator: "|")
+    }
+
+    func coreDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
+        [.top, .bottom, .shoes].reduce(0) { count, type in
+            itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
+        }
     }
 }
