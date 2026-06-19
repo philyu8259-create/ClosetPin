@@ -94,7 +94,7 @@
 "closet.photo.ai_suggestion.seasons" = "季节";
 "closet.photo.ai_suggestion.formality" = "正式度";
 "closet.photo.ai_suggestion.warmth" = "保暖度";
-"closet.photo.ai_suggestion.footer" = "现在还未改动任何内容。选择应用，或继续手动编辑。";
+"closet.photo.ai_suggestion.footer" = "AI 仅给出建议，确认后才会应用。";
 "closet.photo.ai_suggestion.looks_good" = "看起来没问题";
 "closet.photo.ai_suggestion.edit" = "编辑细节";
 "closet.photo.ai_suggestion.use" = "应用建议";

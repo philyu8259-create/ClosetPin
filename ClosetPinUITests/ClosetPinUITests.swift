@@ -379,15 +379,16 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(manualSectionAvailable)
     }
 
-    func testAddItemAiSuggestionCanApplyOnlyColor() {
+    func testAddItemAiSuggestionUsesSimpleApplyFlow() {
         let app = makeApp()
         openAddItemFromSampleCloset(app)
         app.buttons["useTestPhotoButton"].tap()
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForExistence(timeout: 3))
-        let useColorButton = app.buttons["photoSuggestionUseColorButton"]
+        XCTAssertFalse(app.buttons["photoSuggestionUseColorButton"].exists)
+        XCTAssertFalse(app.buttons["photoSuggestionUseSeasonButton"].exists)
 
-        tapWhenReady(useColorButton, in: app, timeout: 8, maxScrolls: 12)
+        tapWhenReady(app.buttons["photoSuggestionUseButton"], in: app, timeout: 8, maxScrolls: 12)
 
         XCTAssertTrue(app.staticTexts["photoSuggestionReviewTitle"].waitForNonExistence(timeout: 8))
         let colorField = app.textFields["itemColorField"]
@@ -396,15 +397,7 @@ final class ClosetPinUITests: XCTestCase {
         let appliedTag = app.staticTexts["photoAutoAppliedTag"]
         XCTAssertTrue(appliedTag.waitForExistence(timeout: 8))
         XCTAssertTrue(appliedTag.label.contains("Color"))
-        XCTAssertFalse(appliedTag.label.contains("Seasons"))
-
-        app.swipeUp()
-        let systemSeasonSummary = app.staticTexts
-            .matching(NSPredicate(format: "label CONTAINS %@", "from system date"))
-            .firstMatch
-        XCTAssertTrue(systemSeasonSummary.waitForExistence(timeout: 3))
-        XCTAssertTrue(systemSeasonSummary.label.contains("from system date"))
-        XCTAssertFalse(systemSeasonSummary.label.contains("suggested from photo"))
+        XCTAssertTrue(appliedTag.label.contains("Seasons"))
     }
 
     func testTodayMissingRecommendationOpensAddItemDirectly() {
@@ -795,8 +788,14 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["useSampleCapsuleButton"].tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 10))
         app.buttons["appTab_closet"].tap()
-        XCTAssertTrue(app.buttons["addItemButton"].waitForExistence(timeout: 10))
-        app.buttons["addItemButton"].tap()
+        let sampleAddMineButton = app.buttons["sampleClosetAddMineButton"]
+        if sampleAddMineButton.waitForExistence(timeout: 3) {
+            tapWhenReady(sampleAddMineButton, in: app, timeout: 8, maxScrolls: 2)
+        } else {
+            let addItemButton = app.buttons["addItemButton"]
+            XCTAssertTrue(addItemButton.waitForExistence(timeout: 10))
+            tapWhenReady(addItemButton, in: app, timeout: 8, maxScrolls: 2)
+        }
         XCTAssertTrue(app.buttons["saveItemButton"].waitForExistence(timeout: 10))
     }
 

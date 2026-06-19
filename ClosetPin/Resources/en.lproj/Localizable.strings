@@ -94,7 +94,7 @@
 "closet.photo.ai_suggestion.seasons" = "Seasons";
 "closet.photo.ai_suggestion.formality" = "Formality";
 "closet.photo.ai_suggestion.warmth" = "Warmth";
-"closet.photo.ai_suggestion.footer" = "Nothing changes yet. Choose what to apply, or continue editing yourself.";
+"closet.photo.ai_suggestion.footer" = "AI only suggests changes. They apply only after you confirm.";
 "closet.photo.ai_suggestion.looks_good" = "Looks good";
 "closet.photo.ai_suggestion.edit" = "Edit details";
 "closet.photo.ai_suggestion.use" = "Apply suggestions";

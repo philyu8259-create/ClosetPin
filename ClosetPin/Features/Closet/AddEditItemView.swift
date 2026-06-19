@@ -1111,8 +1111,6 @@ struct AddEditItemView: View {
 
     private func photoSuggestionReviewCard(for outcome: PhotoTaggingOutcome) -> some View {
         let changes = suggestedChanges(for: outcome.suggestion)
-        let canApplyOnlyColor = changes.contains { $0.field == .color }
-        let canApplyOnlySeasons = changes.contains { $0.field == .seasons }
 
         return LuxurySurfaceCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -1172,32 +1170,6 @@ struct AddEditItemView: View {
                         }
                         .buttonStyle(.borderless)
                         .accessibilityIdentifier("photoSuggestionEditManualButton")
-                    }
-
-                    if canApplyOnlyColor || canApplyOnlySeasons {
-                        LazyVGrid(
-                            columns: [GridItem(.adaptive(minimum: 150), spacing: DesignSystem.Spacing.sm)],
-                            alignment: .leading,
-                            spacing: DesignSystem.Spacing.sm
-                        ) {
-                            if canApplyOnlyColor {
-                                Button(L10n.text("closet.photo.ai_suggestion.apply_color")) {
-                                    applyPendingPhotoSuggestion(fields: [.color])
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .accessibilityIdentifier("photoSuggestionUseColorButton")
-                            }
-
-                            if canApplyOnlySeasons {
-                                Button(L10n.text("closet.photo.ai_suggestion.apply_seasons")) {
-                                    applyPendingPhotoSuggestion(fields: [.seasons])
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .accessibilityIdentifier("photoSuggestionUseSeasonButton")
-                            }
-                        }
                     }
                 }
             }
