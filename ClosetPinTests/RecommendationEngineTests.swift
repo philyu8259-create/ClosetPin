@@ -413,6 +413,76 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 2)
     }
 
+    func testSkippedFeedbackPrioritizesChangingMoreThanOneCoreItemWhenPossible() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002011")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002012")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002013")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002014")!, type: .bottom, color: "charcoal", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002015")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002016")!, type: .shoes, color: "brown", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
+        let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
+        let skipFeedback = OutfitFeedback(
+            feedbackType: .skipped,
+            itemIds: firstCandidate.items.map(\.id),
+            scenario: .dailyOffice
+        )
+
+        let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: input,
+            items: items,
+            feedback: [skipFeedback]
+        ).first)
+
+        XCTAssertGreaterThanOrEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 2)
+    }
+
+    func testSwapFeedbackCanStillVaryBagAndAccessoryPiecesWhenCorePiecesCannotChange() throws {
+        let bagA = UUID(uuidString: "00000000-0000-0000-0000-000000002021")!
+        let bagB = UUID(uuidString: "00000000-0000-0000-0000-000000002022")!
+        let accessoryA = UUID(uuidString: "00000000-0000-0000-0000-000000002031")!
+        let accessoryB = UUID(uuidString: "00000000-0000-0000-0000-000000002032")!
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002011")!, type: .top, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002012")!, type: .bottom, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002013")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: bagA, type: .bag, color: "black", formalityLevel: 4),
+            clothingItem(id: bagB, type: .bag, color: "black", formalityLevel: 4),
+            clothingItem(id: accessoryA, type: .accessory, color: "black", formalityLevel: 4),
+            clothingItem(id: accessoryB, type: .accessory, color: "black", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
+        let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
+        let swapFeedback = OutfitFeedback(
+            feedbackType: .swapped,
+            itemIds: firstCandidate.items.map(\.id),
+            scenario: .dailyOffice
+        )
+
+        let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: input,
+            items: items,
+            feedback: [swapFeedback]
+        ).first)
+
+        let firstBag = firstCandidate.items.first { $0.resolvedType == .bag }?.id
+        let nextBag = nextCandidate.items.first { $0.resolvedType == .bag }?.id
+        let firstAccessory = firstCandidate.items.first { $0.resolvedType == .accessory }?.id
+        let nextAccessory = nextCandidate.items.first { $0.resolvedType == .accessory }?.id
+
+        XCTAssertEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 0)
+        XCTAssertTrue(firstCandidate.items.count > 3)
+        XCTAssertTrue(nextCandidate.items.count > 3)
+        XCTAssertTrue(firstCandidate.items.contains { $0.resolvedType == .bag } || firstCandidate.items.contains { $0.resolvedType == .accessory })
+        XCTAssertTrue(nextCandidate.items.contains { $0.resolvedType == .bag } || nextCandidate.items.contains { $0.resolvedType == .accessory })
+        XCTAssertTrue(
+            [firstBag, firstAccessory] != [nextBag, nextAccessory],
+            "Expected swap to vary optional pieces when core cannot change. firstBag=\(String(describing: firstBag)), firstAccessory=\(String(describing: firstAccessory)), nextBag=\(String(describing: nextBag)), nextAccessory=\(String(describing: nextAccessory)), firstItems=\(firstCandidate.items.map(\.id)), nextItems=\(nextCandidate.items.map(\.id))"
+        )
+    }
+
     func testPreferredFormalityChangesDailyOfficeRanking() throws {
         let relaxedTop = clothingItem(type: .top, color: "soft blue", formalityLevel: 2)
         let relaxedBottom = clothingItem(type: .bottom, color: "khaki", formalityLevel: 2)

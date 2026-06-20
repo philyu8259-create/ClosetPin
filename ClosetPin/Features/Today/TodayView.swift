@@ -633,23 +633,36 @@ struct TodayView: View {
             candidate.id != avoidedCandidate.id
         }
 
-        if let strongerChange = eligibleCandidates.first(where: { _, candidate in
-            coreDifferenceCount(between: candidate, and: avoidedCandidate) >= 2
-        }) {
-            return strongerChange.offset
+        guard !eligibleCandidates.isEmpty else { return min(heroRotationIndex + 1, max(candidates.count - 1, 0)) }
+
+        let bestCandidate = eligibleCandidates.max {
+            let lhsCoreDiff = coreDifferenceCount(between: $0.element, and: avoidedCandidate)
+            let rhsCoreDiff = coreDifferenceCount(between: $1.element, and: avoidedCandidate)
+
+            if lhsCoreDiff != rhsCoreDiff {
+                return lhsCoreDiff < rhsCoreDiff
+            }
+
+            let lhsOptionalDiff = optionalDifferenceCount(between: $0.element, and: avoidedCandidate)
+            let rhsOptionalDiff = optionalDifferenceCount(between: $1.element, and: avoidedCandidate)
+            if lhsOptionalDiff != rhsOptionalDiff {
+                return lhsOptionalDiff < rhsOptionalDiff
+            }
+
+            return $0.offset > $1.offset
         }
 
-        if let anyCoreChange = eligibleCandidates.first(where: { _, candidate in
-            coreDifferenceCount(between: candidate, and: avoidedCandidate) >= 1
-        }) {
-            return anyCoreChange.offset
-        }
-
-        return min(heroRotationIndex + 1, max(candidates.count - 1, 0))
+        return bestCandidate?.offset ?? min(heroRotationIndex + 1, max(candidates.count - 1, 0))
     }
 
     private func coreDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
         [.top, .bottom, .shoes].reduce(0) { count, type in
+            itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
+        }
+    }
+
+    private func optionalDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
+        return [.bag, .accessory].reduce(0) { count, type in
             itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
         }
     }

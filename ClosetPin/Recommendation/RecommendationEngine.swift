@@ -4,6 +4,10 @@ private let maximumItemsPerCategory = 12
 private let diversifiedCandidatePoolLimit = 48
 private let optionalItemVariantLimit = 2
 private let optionalItemHarmonyDropTolerance = 5
+private let skippedOrSwappedCoreReusePenaltyByCount = [0: 0, 1: 64, 2: 112, 3: 168]
+private let skippedOrSwappedOutfitReusePenaltyByCount = [3: 0, 4: 40, 5: 96]
+private let skippedOrSwappedExactOutfitPenaltyValue = 220
+private let standardCoreReusePenaltyByCount = [0: 0, 1: 10, 2: 64, 3: 96]
 
 struct RecommendationEngine {
     func recommend(
@@ -19,7 +23,28 @@ struct RecommendationEngine {
         let itemsByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let avoidedCoreSignatures = avoidedCoreSignatures(from: feedback, itemsByID: itemsByID, scenario: input.scenario)
         let avoidedItemIDSets = avoidedItemIDSets(from: feedback, scenario: input.scenario)
-        let avoidedCoreItemIDSets = avoidedCoreItemIDSets(from: feedback, itemsByID: itemsByID, scenario: input.scenario)
+        let avoidedDislikedCoreItemIDSets = avoidedCoreItemIDSetsByFeedbackTypes(
+            from: feedback,
+            itemsByID: itemsByID,
+            scenario: input.scenario,
+            feedbackTypes: Set([.disliked])
+        )
+        let avoidedSwapOrSkippedCoreItemIDSets = avoidedCoreItemIDSetsByFeedbackTypes(
+            from: feedback,
+            itemsByID: itemsByID,
+            scenario: input.scenario,
+            feedbackTypes: Set([.swapped, .skipped])
+        )
+        let avoidedSwapOrSkippedItemIDSets = avoidedItemIDSetsByFeedbackTypes(
+            from: feedback,
+            scenario: input.scenario,
+            feedbackTypes: Set([.swapped, .skipped])
+        )
+        let avoidedAllCoreItemIDSets = avoidedCoreItemIDSetsByFeedbackTypes(
+            from: feedback,
+            itemsByID: itemsByID,
+            scenario: input.scenario
+        )
         let weatherContext = input.tomorrow.weatherContext
 
         let threshold = requiredFormality(for: input.scenario)
@@ -130,13 +155,19 @@ struct RecommendationEngine {
                     for: lhs,
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
-                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
+                    avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+                    avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+                    avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+                    avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
                 )
                 let rhsScore = adjustedScore(
                     for: rhs,
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
-                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
+                    avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+                    avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+                    avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+                    avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
                 )
                 if lhsScore != rhsScore {
                     return lhsScore > rhsScore
@@ -144,45 +175,97 @@ struct RecommendationEngine {
                 return lhs.explanationSeed < rhs.explanationSeed
             }
 
+        let replacementRankedCandidates = removingExactRejectedOutfits(
+            from: rankedCandidates,
+            avoidedItemIDSets: avoidedSwapOrSkippedItemIDSets
+        )
+
         return diversifiedCandidates(
-            from: Array(rankedCandidates.prefix(max(diversifiedCandidatePoolLimit, input.maximumResults))),
+            from: Array(replacementRankedCandidates.prefix(max(diversifiedCandidatePoolLimit, input.maximumResults))),
             maximumResults: input.maximumResults,
             avoidedCoreSignatures: avoidedCoreSignatures,
             avoidedItemIDSets: avoidedItemIDSets,
-            avoidedCoreItemIDSets: avoidedCoreItemIDSets
+            avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+            avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+            avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+            avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
         )
     }
 }
 
 private extension RecommendationEngine {
+    func removingExactRejectedOutfits(
+        from candidates: [OutfitCandidate],
+        avoidedItemIDSets: [Set<UUID>]
+    ) -> [OutfitCandidate] {
+        let filteredCandidates = candidates.filter { candidate in
+            let candidateItemIDs = Set(candidate.items.map(\.id))
+            return avoidedItemIDSets.contains(candidateItemIDs) == false
+        }
+
+        return filteredCandidates.isEmpty ? candidates : filteredCandidates
+    }
+
     func adjustedScore(
         for candidate: OutfitCandidate,
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
-        avoidedCoreItemIDSets: [Set<UUID>]
+        avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedDislikedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
     ) -> Int {
         let candidateItemIDs = Set(candidate.items.map(\.id))
         let isRecentlyRejectedOutfit = avoidedItemIDSets.contains { avoidedIDs in
             avoidedIDs.isSubset(of: candidateItemIDs)
         }
         let recentlyRejectedPenalty = avoidedCoreSignatures.contains(coreSignature(for: candidate.items)) || isRecentlyRejectedOutfit ? 96 : 0
-        let coreReusePenalty = avoidedCoreItemIDSets
+        let baseCoreReusePenalty = avoidedCoreItemIDSets
             .map { avoidedCoreIDs in
-                let reusedCoreCount = candidateItemIDs.intersection(avoidedCoreIDs).count
-                return switch reusedCoreCount {
-                case 3...:
-                    96
-                case 2:
-                    64
-                case 1:
-                    10
-                default:
-                    0
-                }
+                coreReusePenalty(
+                    for: candidateItemIDs.intersection(avoidedCoreIDs).count,
+                    using: standardCoreReusePenaltyByCount
+                )
             }
             .max() ?? 0
+        let skippedOrSwappedCoreReusePenalty = avoidedSwapOrSkippedCoreItemIDSets
+            .map { avoidedCoreIDs in
+                coreReusePenalty(
+                    for: candidateItemIDs.intersection(avoidedCoreIDs).count,
+                    using: skippedOrSwappedCoreReusePenaltyByCount
+                )
+            }
+            .max() ?? 0
+        let exactOutfitReusePenalty = avoidedSwapOrSkippedItemIDSets
+            .filter { $0.count > 3 }
+            .contains(where: { avoidedItemIDs in
+                avoidedItemIDs == candidateItemIDs
+            }) ? skippedOrSwappedExactOutfitPenaltyValue : 0
+        let skippedOrSwappedOutfitReusePenalty = avoidedSwapOrSkippedItemIDSets
+            .filter { $0.count > 3 }
+            .map { avoidedItemIDs in
+                coreReusePenalty(
+                    for: candidateItemIDs.intersection(avoidedItemIDs).count,
+                    using: skippedOrSwappedOutfitReusePenaltyByCount
+                )
+            }
+            .max() ?? 0
+        let dislikedCoreReusePenalty = avoidedDislikedCoreItemIDSets
+            .map { avoidedCoreIDs in
+                coreReusePenalty(
+                    for: candidateItemIDs.intersection(avoidedCoreIDs).count,
+                    using: standardCoreReusePenaltyByCount
+                )
+            }
+            .max() ?? 0
+        let coreReusePenaltyValue = max(
+            baseCoreReusePenalty,
+            max(skippedOrSwappedCoreReusePenalty, dislikedCoreReusePenalty),
+            skippedOrSwappedOutfitReusePenalty,
+            exactOutfitReusePenalty
+        )
 
-        return candidate.score - recentlyRejectedPenalty - coreReusePenalty
+        return candidate.score - recentlyRejectedPenalty - coreReusePenaltyValue
     }
 
     func diversifiedCandidates(
@@ -190,7 +273,10 @@ private extension RecommendationEngine {
         maximumResults: Int,
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
-        avoidedCoreItemIDSets: [Set<UUID>]
+        avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedDislikedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
     ) -> [OutfitCandidate] {
         guard maximumResults > 0 else { return [] }
         var selected: [OutfitCandidate] = []
@@ -205,14 +291,20 @@ private extension RecommendationEngine {
                     selectedCandidates: selected,
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
-                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+                    avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+                    avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+                    avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
                 )
                 let rhsScore = diversifiedSelectionScore(
                     for: rhs,
                     selectedCandidates: selected,
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
-                    avoidedCoreItemIDSets: avoidedCoreItemIDSets
+                    avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+                    avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+                    avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+                    avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
                 )
                 if lhsScore != rhsScore {
                     return lhsScore < rhsScore
@@ -232,13 +324,19 @@ private extension RecommendationEngine {
         selectedCandidates: [OutfitCandidate],
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
-        avoidedCoreItemIDSets: [Set<UUID>]
+        avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedDislikedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
+        avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
     ) -> Int {
         let feedbackAdjustedScore = adjustedScore(
             for: candidate,
             avoidedCoreSignatures: avoidedCoreSignatures,
             avoidedItemIDSets: avoidedItemIDSets,
-            avoidedCoreItemIDSets: avoidedCoreItemIDSets
+            avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+            avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
+            avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
+            avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
         )
         guard selectedCandidates.isEmpty == false else { return feedbackAdjustedScore }
 
@@ -254,22 +352,22 @@ private extension RecommendationEngine {
         var penalty = 0
 
         if lhsByType[.top]?.id == rhsByType[.top]?.id {
-            penalty += 12
+            penalty += 28
         }
         if lhsByType[.bottom]?.id == rhsByType[.bottom]?.id {
-            penalty += 36
+            penalty += 40
         }
         if lhsByType[.shoes]?.id == rhsByType[.shoes]?.id {
-            penalty += 32
+            penalty += 34
         }
         if lhsByType[.outerwear]?.id == rhsByType[.outerwear]?.id || lhsByType[.blazer]?.id == rhsByType[.blazer]?.id {
-            penalty += 10
+            penalty += 8
         }
         if lhsByType[.bag]?.id == rhsByType[.bag]?.id {
-            penalty += 6
+            penalty += 10
         }
         if lhsByType[.accessory]?.id == rhsByType[.accessory]?.id {
-            penalty += 6
+            penalty += 10
         }
 
         return penalty
@@ -297,25 +395,48 @@ private extension RecommendationEngine {
     }
 
     func avoidedItemIDSets(from feedback: [OutfitFeedback], scenario: OutfitScenario) -> [Set<UUID>] {
-        let avoidTypes: Set<FeedbackType> = [.disliked, .skipped, .swapped]
+        avoidedItemIDSetsByFeedbackTypes(
+            from: feedback,
+            scenario: scenario,
+            feedbackTypes: [.disliked, .skipped, .swapped]
+        )
+    }
 
-        return feedback
-            .filter { $0.scenario == scenario && avoidTypes.contains($0.feedbackType) }
+    func avoidedItemIDSetsByFeedbackTypes(
+        from feedback: [OutfitFeedback],
+        scenario: OutfitScenario,
+        feedbackTypes: Set<FeedbackType>
+    ) -> [Set<UUID>] {
+        feedback
+            .filter { $0.scenario == scenario && feedbackTypes.contains($0.feedbackType) }
             .sorted { $0.createdAt > $1.createdAt }
             .prefix(12)
             .map { Set($0.itemIds) }
     }
 
-    func avoidedCoreItemIDSets(
+    func avoidedCoreItemIDSetsByFeedbackTypes(
         from feedback: [OutfitFeedback],
         itemsByID: [UUID: ClothingItem],
         scenario: OutfitScenario
     ) -> [Set<UUID>] {
-        let avoidTypes: Set<FeedbackType> = [.disliked, .skipped, .swapped]
+        avoidedCoreItemIDSetsByFeedbackTypes(
+            from: feedback,
+            itemsByID: itemsByID,
+            scenario: scenario,
+            feedbackTypes: [.disliked, .skipped, .swapped]
+        )
+    }
+
+    func avoidedCoreItemIDSetsByFeedbackTypes(
+        from feedback: [OutfitFeedback],
+        itemsByID: [UUID: ClothingItem],
+        scenario: OutfitScenario,
+        feedbackTypes: Set<FeedbackType>
+    ) -> [Set<UUID>] {
         let coreTypes: Set<ClothingType> = [.top, .bottom, .shoes]
 
         return feedback
-            .filter { $0.scenario == scenario && avoidTypes.contains($0.feedbackType) }
+            .filter { $0.scenario == scenario && feedbackTypes.contains($0.feedbackType) }
             .sorted { $0.createdAt > $1.createdAt }
             .prefix(12)
             .map { feedback in
@@ -334,6 +455,13 @@ private extension RecommendationEngine {
             byType[.bottom]?.id.uuidString ?? "no-bottom",
             byType[.shoes]?.id.uuidString ?? "no-shoes"
         ].joined(separator: "|")
+    }
+
+    func coreReusePenalty(
+        for overlapCount: Int,
+        using penaltyLookup: [Int: Int]
+    ) -> Int {
+        penaltyLookup[overlapCount] ?? 0
     }
 
     func eligibleItems(from items: [ClothingItem], for season: SeasonTag) -> [ClothingItem] {
