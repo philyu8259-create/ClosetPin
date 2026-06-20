@@ -91,8 +91,18 @@ struct OutfitCompactCard: View {
                     MatchPill(title: matchTitle, icon: "sparkle.magnifyingglass")
                 }
 
-                OutfitVisualBoard(items: candidate.items)
-                    .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.sm) {
+                    Text(L10n.text("today.items.title"))
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+
+                    Spacer(minLength: DesignSystem.Spacing.sm)
+
+                    Text(L10n.string("today.preview.count.format", arguments: candidate.items.count))
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                }
+                .accessibilityIdentifier("todayOutfitItemCount_\(index)")
 
                 Text(explanation)
                     .font(.subheadline)

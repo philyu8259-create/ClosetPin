@@ -89,6 +89,17 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(outfitBoard.staticTexts.matching(identifier: "outfitVisualStorageLocationBadge").firstMatch.waitForExistence(timeout: 3))
     }
 
+    func testTodayShowsSingleOutfitContentsBoard() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        XCTAssertTrue(app.otherElements["todayOutfitVisualBoard_0"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.otherElements["todayOutfitVisualBoard_1"].exists)
+    }
+
     func testTodayPrimaryActionsAreVisibleWithoutExtraScroll() {
         let app = makeApp()
         app.launch()
