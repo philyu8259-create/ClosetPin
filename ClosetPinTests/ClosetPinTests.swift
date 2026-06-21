@@ -373,8 +373,54 @@ final class ClosetPinTests: XCTestCase {
         ])
     }
 
+    func testOutfitVisualBoardSpecUsesStableColumnsForCommonItemCounts() {
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 1), 1)
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 2), 2)
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 3), 3)
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 4), 2)
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 5), 3)
+        XCTAssertEqual(OutfitVisualBoardSpec.columnCount(for: 6), 3)
+    }
+
+    func testOutfitVisualBoardSpecReturnsSortedNaturalOutfitOrder() {
+        let items = [
+            makeVisualItem(type: .accessory),
+            makeVisualItem(type: .top),
+            makeVisualItem(type: .outerwear),
+            makeVisualItem(type: .shoes),
+            makeVisualItem(type: .bag),
+            makeVisualItem(type: .bottom),
+            makeVisualItem(type: .blazer)
+        ]
+
+        let ordered = OutfitVisualBoardSpec.orderedItems(items).map(\.type)
+
+        XCTAssertEqual(
+            ordered,
+            [.top, .bottom, .blazer, .outerwear, .shoes, .bag, .accessory]
+        )
+    }
+
+    func testOutfitVisualBoardSpecProvidesImageHeightsForDenseGrids() {
+        XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 1), 166)
+        XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 2), 130)
+        XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 3), 108)
+        XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 4), 130)
+        XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 5), 108)
+    }
+
     private func localizedColor(_ color: String) -> String {
         ColorResolver.localizedDisplayColor(from: color) ?? color
+    }
+
+    private func makeVisualItem(type: ClothingType) -> OutfitVisualItem {
+        OutfitVisualItem(
+            id: UUID(),
+            type: type,
+            color: "White",
+            photoLocalPath: "test-\(type.rawValue).png",
+            item: nil
+        )
     }
 
     func testWorkCapsuleSeedDataProvidesOfficeRecommendationBasics() {

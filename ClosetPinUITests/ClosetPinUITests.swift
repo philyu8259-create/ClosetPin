@@ -96,7 +96,8 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.otherElements["todayOutfitVisualBoard_0"].waitForExistence(timeout: 3))
+        let outfitBoard = app.otherElements["todayOutfitVisualBoard_0"]
+        XCTAssertTrue(outfitBoard.waitForExistence(timeout: 3))
         XCTAssertFalse(app.otherElements["todayOutfitVisualBoard_1"].exists)
     }
 

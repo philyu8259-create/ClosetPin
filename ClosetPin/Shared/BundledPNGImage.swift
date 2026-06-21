@@ -146,14 +146,56 @@ struct OutfitVisualItem: Identifiable, Equatable {
     }
 }
 
+enum OutfitVisualBoardSpec {
+    private static let typePriority: [ClothingType: Int] = [
+        .top: 0,
+        .bottom: 1,
+        .blazer: 2,
+        .outerwear: 3,
+        .shoes: 4,
+        .bag: 5,
+        .accessory: 6
+    ]
+
+    static func orderedItems(_ items: [OutfitVisualItem]) -> [OutfitVisualItem] {
+        items.enumerated().sorted { lhs, rhs in
+            let lhsPriority = typePriority[lhs.element.type] ?? 99
+            let rhsPriority = typePriority[rhs.element.type] ?? 99
+
+            if lhsPriority != rhsPriority {
+                return lhsPriority < rhsPriority
+            }
+            return lhs.offset < rhs.offset
+        }.map(\.element)
+    }
+
+    static func columnCount(for itemCount: Int) -> Int {
+        switch itemCount {
+        case 0: return 1
+        case 1: return 1
+        case 2: return 2
+        case 3: return 3
+        case 4: return 2
+        default: return 3
+        }
+    }
+
+    static func imageHeight(for itemCount: Int) -> CGFloat {
+        switch columnCount(for: itemCount) {
+        case 1:
+            return 166
+        case 2:
+            return 130
+        default:
+            return 108
+        }
+    }
+}
+
 struct OutfitVisualBoard: View {
     let visualItems: [OutfitVisualItem]
     let allowsDetailNavigation: Bool
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
-    ]
+    private let tileSpacing: CGFloat = 10
 
     init(items: [ClothingItem], allowsDetailNavigation: Bool = false) {
         self.visualItems = OutfitVisualItem.makeItems(from: items)
@@ -165,27 +207,47 @@ struct OutfitVisualBoard: View {
         self.allowsDetailNavigation = allowsDetailNavigation
     }
 
+    private var orderedVisualItems: [OutfitVisualItem] {
+        OutfitVisualBoardSpec.orderedItems(visualItems)
+    }
+
+    private var columns: [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(), spacing: tileSpacing),
+            count: OutfitVisualBoardSpec.columnCount(for: orderedVisualItems.count)
+        )
+    }
+
+    private var imageHeight: CGFloat {
+        OutfitVisualBoardSpec.imageHeight(for: orderedVisualItems.count)
+    }
+
     var body: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(visualItems) { visualItem in
+            ForEach(orderedVisualItems) { visualItem in
+                let tile = OutfitVisualTile(visualItem: visualItem, imageHeight: imageHeight)
+                    .accessibilityIdentifier("outfitVisualBoardItem")
+
                 if allowsDetailNavigation, let item = visualItem.item {
                     NavigationLink {
                         ClosetItemDetailView(item: item)
                     } label: {
-                        OutfitVisualTile(visualItem: visualItem)
+                        tile
                     }
                     .buttonStyle(.plain)
                 } else {
-                    OutfitVisualTile(visualItem: visualItem)
+                    tile
                 }
             }
         }
         .accessibilityElement(children: .contain)
+        .animation(.easeInOut(duration: 0.18), value: orderedVisualItems.count)
     }
 }
 
 private struct OutfitVisualTile: View {
     let visualItem: OutfitVisualItem
+    let imageHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -196,7 +258,7 @@ private struct OutfitVisualTile: View {
                 contentMode: .fit
             )
             .frame(maxWidth: .infinity)
-            .frame(height: 132)
+            .frame(height: imageHeight)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(visualItem.type.displayName)
@@ -227,13 +289,14 @@ private struct OutfitVisualTile: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity)
-        .frame(height: 178, alignment: .top)
+        .fixedSize(horizontal: false, vertical: true)
         .background(DesignSystem.surface.opacity(0.82))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous)
                 .stroke(DesignSystem.border.opacity(0.5), lineWidth: 1)
         }
+        .accessibilityElement(children: .combine)
         .accessibilityLabel(visualItem.displayName)
     }
 }
