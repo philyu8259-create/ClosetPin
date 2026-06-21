@@ -296,6 +296,7 @@ struct ClosetView: View {
                 .contentShape(Rectangle())
                 .buttonStyle(.plain)
                 .disabled(searchText.isEmpty)
+                .allowsHitTesting(!searchText.isEmpty)
                 .accessibilityHidden(searchText.isEmpty)
                 .accessibilityLabel(L10n.text("closet.search.clear"))
                 .accessibilityIdentifier("closetSearchClearButton")
