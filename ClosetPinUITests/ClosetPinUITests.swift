@@ -113,6 +113,30 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.buttons["todayFeedback_saved_0"].isHittable)
     }
 
+    func testTodaySwapRefreshesPrimaryRecommendation() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
+        app.buttons["useSampleCapsuleButton"].tap()
+
+        let board = app.otherElements["todayOutfitVisualBoard_0"]
+        XCTAssertTrue(board.waitForExistence(timeout: 3))
+
+        let initialSignature = mainRecommendationSignature(from: board)
+        XCTAssertFalse(initialSignature.isEmpty)
+
+        let swapButton = app.buttons["todayFeedback_swap_0"].exists
+            ? app.buttons["todayFeedback_swap_0"]
+            : app.buttons["todayTryAnother_0"]
+        XCTAssertTrue(swapButton.waitForExistence(timeout: 3))
+        tapWhenReady(swapButton, in: app, timeout: 8, maxScrolls: 6)
+
+        let nextSignature = waitForBoardSignatureChange(board, from: initialSignature)
+        XCTAssertNotNil(nextSignature)
+        XCTAssertNotEqual(initialSignature, nextSignature)
+    }
+
     func testTodayKeepsSeasonAutomaticUnlessUserChangesIt() {
         let app = makeApp()
         app.launch()
@@ -856,6 +880,34 @@ final class ClosetPinUITests: XCTestCase {
         }
 
         XCTFail("Failed to tap \(element.identifier): not hittable after scrolling")
+    }
+
+    private func mainRecommendationSignature(from board: XCUIElement) -> String {
+        normalizedSignature((board.value as? String) ?? "")
+    }
+
+    private func waitForBoardSignatureChange(
+        _ board: XCUIElement,
+        from previousSignature: String,
+        timeout: TimeInterval = 5
+    ) -> String? {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let current = mainRecommendationSignature(from: board)
+            if !current.isEmpty && current != previousSignature {
+                return current
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return nil
+    }
+
+    private func normalizedSignature(_ value: String) -> String {
+        value
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 
 }

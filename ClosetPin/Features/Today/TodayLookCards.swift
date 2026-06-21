@@ -65,6 +65,7 @@ struct TodayIncludedItemsSection: View {
 
             OutfitVisualBoard(items: items)
                 .accessibilityIdentifier("todayOutfitVisualBoard_\(index)")
+                .accessibilityValue(items.map(\.id.uuidString).joined(separator: "|"))
         }
         .padding(.top, DesignSystem.Spacing.sm)
     }
