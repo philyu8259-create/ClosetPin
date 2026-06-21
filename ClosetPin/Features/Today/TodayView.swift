@@ -636,17 +636,17 @@ struct TodayView: View {
         guard !eligibleCandidates.isEmpty else { return min(heroRotationIndex + 1, max(candidates.count - 1, 0)) }
 
         let bestCandidate = eligibleCandidates.max {
-            let lhsCoreDiff = coreDifferenceCount(between: $0.element, and: avoidedCandidate)
-            let rhsCoreDiff = coreDifferenceCount(between: $1.element, and: avoidedCandidate)
+            let lhsDifference = fullRecompositionDifferenceScore(
+                between: $0.element,
+                and: avoidedCandidate
+            )
+            let rhsDifference = fullRecompositionDifferenceScore(
+                between: $1.element,
+                and: avoidedCandidate
+            )
 
-            if lhsCoreDiff != rhsCoreDiff {
-                return lhsCoreDiff < rhsCoreDiff
-            }
-
-            let lhsOptionalDiff = optionalDifferenceCount(between: $0.element, and: avoidedCandidate)
-            let rhsOptionalDiff = optionalDifferenceCount(between: $1.element, and: avoidedCandidate)
-            if lhsOptionalDiff != rhsOptionalDiff {
-                return lhsOptionalDiff < rhsOptionalDiff
+            if lhsDifference != rhsDifference {
+                return lhsDifference < rhsDifference
             }
 
             return $0.offset > $1.offset
@@ -655,15 +655,21 @@ struct TodayView: View {
         return bestCandidate?.offset ?? min(heroRotationIndex + 1, max(candidates.count - 1, 0))
     }
 
-    private func coreDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
-        [.top, .bottom, .shoes].reduce(0) { count, type in
-            itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
-        }
-    }
+    private func fullRecompositionDifferenceScore(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
+        let itemWeights: [(type: ClothingType, score: Int)] = [
+            (.top, 1),
+            (.bottom, 3),
+            (.shoes, 3),
+            (.bag, 2),
+            (.accessory, 2),
+            (.outerwear, 2),
+            (.blazer, 2)
+        ]
 
-    private func optionalDifferenceCount(between lhs: OutfitCandidate, and rhs: OutfitCandidate) -> Int {
-        return [.bag, .accessory].reduce(0) { count, type in
-            itemID(of: type, in: lhs) == itemID(of: type, in: rhs) ? count : count + 1
+        return itemWeights.reduce(0) { score, entry in
+            let lhsID = itemID(of: entry.type, in: lhs)
+            let rhsID = itemID(of: entry.type, in: rhs)
+            return score + (lhsID == rhsID ? 0 : entry.score)
         }
     }
 

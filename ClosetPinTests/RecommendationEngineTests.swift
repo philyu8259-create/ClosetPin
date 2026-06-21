@@ -439,6 +439,35 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 2)
     }
 
+    func testSwapFeedbackPrefersAWholeNewCoreOutfitWhenAvailable() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002101")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002102")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002103")!, type: .top, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002104")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002105")!, type: .bottom, color: "charcoal", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002106")!, type: .bottom, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002107")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002108")!, type: .shoes, color: "brown", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002109")!, type: .shoes, color: "gray", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
+        let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
+        let swapFeedback = OutfitFeedback(
+            feedbackType: .swapped,
+            itemIds: firstCandidate.items.map(\.id),
+            scenario: .dailyOffice
+        )
+
+        let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: input,
+            items: items,
+            feedback: [swapFeedback]
+        ).first)
+
+        XCTAssertEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 3)
+    }
+
     func testSwapFeedbackCanStillVaryBagAndAccessoryPiecesWhenCorePiecesCannotChange() throws {
         let bagA = UUID(uuidString: "00000000-0000-0000-0000-000000002021")!
         let bagB = UUID(uuidString: "00000000-0000-0000-0000-000000002022")!

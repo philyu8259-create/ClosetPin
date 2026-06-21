@@ -4,9 +4,9 @@ private let maximumItemsPerCategory = 12
 private let diversifiedCandidatePoolLimit = 48
 private let optionalItemVariantLimit = 2
 private let optionalItemHarmonyDropTolerance = 5
-private let skippedOrSwappedCoreReusePenaltyByCount = [0: 0, 1: 64, 2: 112, 3: 168]
-private let skippedOrSwappedOutfitReusePenaltyByCount = [3: 0, 4: 40, 5: 96]
-private let skippedOrSwappedExactOutfitPenaltyValue = 220
+private let skippedOrSwappedCoreReusePenaltyByCount = [0: 0, 1: 96, 2: 210, 3: 320]
+private let skippedOrSwappedOutfitReusePenaltyByCount = [3: 0, 4: 72, 5: 144]
+private let skippedOrSwappedExactOutfitPenaltyValue = 420
 private let standardCoreReusePenaltyByCount = [0: 0, 1: 10, 2: 64, 3: 96]
 
 struct RecommendationEngine {
