@@ -409,6 +409,40 @@ final class ClosetPinTests: XCTestCase {
         XCTAssertEqual(OutfitVisualBoardSpec.imageHeight(for: 5), 108)
     }
 
+    func testTodayRequiredItemPolicyDropsBlazerForHotImportantMeeting() {
+        let hotWeather = TomorrowWeatherContext(
+            condition: .clear,
+            minTemperatureCelsius: 28,
+            maxTemperatureCelsius: 34,
+            precipitationProbability: 5,
+            windSpeedKph: 6
+        )
+
+        let requiredTypes = TodayRequiredItemPolicy.requiredTypes(
+            for: .importantMeeting,
+            weatherContext: hotWeather
+        )
+
+        XCTAssertEqual(requiredTypes, [.top, .bottom, .shoes])
+    }
+
+    func testTodayRequiredItemPolicyKeepsBlazerForMildImportantMeeting() {
+        let mildWeather = TomorrowWeatherContext(
+            condition: .cloudy,
+            minTemperatureCelsius: 16,
+            maxTemperatureCelsius: 22,
+            precipitationProbability: 10,
+            windSpeedKph: 8
+        )
+
+        let requiredTypes = TodayRequiredItemPolicy.requiredTypes(
+            for: .importantMeeting,
+            weatherContext: mildWeather
+        )
+
+        XCTAssertEqual(requiredTypes, [.top, .bottom, .shoes, .blazer])
+    }
+
     private func localizedColor(_ color: String) -> String {
         ColorResolver.localizedDisplayColor(from: color) ?? color
     }

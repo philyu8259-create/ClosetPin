@@ -505,12 +505,10 @@ struct TodayView: View {
     }
 
     private func requiredTypes(for scenario: OutfitScenario) -> [ClothingType] {
-        switch scenario {
-        case .importantMeeting:
-            [.top, .bottom, .shoes, .blazer]
-        case .dailyOffice, .weekendCasual, .banquet:
-            [.top, .bottom, .shoes]
-        }
+        TodayRequiredItemPolicy.requiredTypes(
+            for: scenario,
+            weatherContext: recommendationInputWeatherContext
+        )
     }
 
     private func requiredFormality(for scenario: OutfitScenario) -> Int {
@@ -692,6 +690,21 @@ struct TodayView: View {
         }
         confirmationDismissWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.confirmationDismissDelay, execute: workItem)
+    }
+}
+
+enum TodayRequiredItemPolicy {
+    static func requiredTypes(
+        for scenario: OutfitScenario,
+        weatherContext: TomorrowWeatherContext?
+    ) -> [ClothingType] {
+        switch scenario {
+        case .importantMeeting:
+            let coreTypes: [ClothingType] = [.top, .bottom, .shoes]
+            return weatherContext?.isHot == true ? coreTypes : coreTypes + [.blazer]
+        case .dailyOffice, .weekendCasual, .banquet:
+            return [.top, .bottom, .shoes]
+        }
     }
 }
 
