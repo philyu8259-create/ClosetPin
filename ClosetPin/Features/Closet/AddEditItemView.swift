@@ -277,7 +277,8 @@ struct AddEditItemView: View {
                         WardrobePhotoThumbnail(
                             image: previewImage,
                             fallbackColor: ColorResolver.swatchColor(for: draft.color),
-                            cornerRadius: DesignSystem.Radius.editorialHero
+                            cornerRadius: DesignSystem.Radius.editorialHero,
+                            contentMode: .fit
                         )
                         .frame(maxWidth: .infinity)
                         .frame(height: 212)
