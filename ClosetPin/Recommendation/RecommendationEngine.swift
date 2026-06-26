@@ -5,9 +5,39 @@ private let diversifiedCandidatePoolLimit = 48
 private let optionalItemVariantLimit = 2
 private let optionalItemHarmonyDropTolerance = 5
 private let skippedOrSwappedCoreReusePenaltyByCount = [0: 0, 1: 96, 2: 210, 3: 320]
+private let swappedCoreReusePenaltyByCount = [0: 0, 1: 150, 2: 260, 3: 380]
 private let skippedOrSwappedOutfitReusePenaltyByCount = [3: 0, 4: 72, 5: 144]
 private let skippedOrSwappedExactOutfitPenaltyValue = 420
 private let standardCoreReusePenaltyByCount = [0: 0, 1: 10, 2: 64, 3: 96]
+private let formalStyleTokens: Set<String> = [
+    "office",
+    "officewear",
+    "meeting",
+    "formal",
+    "business",
+    "work",
+    "workwear",
+    "dress",
+    "dressy"
+]
+private let casualStyleTokens: Set<String> = [
+    "casual",
+    "relaxed",
+    "weekend",
+    "everyday",
+    "chill",
+    "chic",
+    "stylish"
+]
+private let activeStyleTokens: Set<String> = [
+    "sport",
+    "sportswear",
+    "athletic",
+    "outdoor",
+    "hiking",
+    "running",
+    "workout"
+]
 
 struct RecommendationEngine {
     func recommend(
@@ -34,6 +64,12 @@ struct RecommendationEngine {
             itemsByID: itemsByID,
             scenario: input.scenario,
             feedbackTypes: Set([.swapped, .skipped])
+        )
+        let avoidedSwappedCoreItemIDSets = avoidedCoreItemIDSetsByFeedbackTypes(
+            from: feedback,
+            itemsByID: itemsByID,
+            scenario: input.scenario,
+            feedbackTypes: Set([.swapped])
         )
         let avoidedSwapOrSkippedItemIDSets = avoidedItemIDSetsByFeedbackTypes(
             from: feedback,
@@ -77,7 +113,8 @@ struct RecommendationEngine {
             weatherContext: weatherContext,
             category: .blazer
         )
-        let outerwear = weatherContext?.isCold == true ? filteredAndPreselected(
+        let includeOuterwearByWeather = weatherContext?.isCold == true || weatherContext?.isWindy == true || weatherContext?.isRainLikely == true
+        let outerwear = includeOuterwearByWeather ? filteredAndPreselected(
             groupedItems[.outerwear] ?? [],
             threshold: threshold,
             targetFormality: targetFormality,
@@ -156,6 +193,7 @@ struct RecommendationEngine {
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
                     avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+                    avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
                     avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
                     avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
                     avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -165,6 +203,7 @@ struct RecommendationEngine {
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
                     avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+                    avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
                     avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
                     avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
                     avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -186,6 +225,7 @@ struct RecommendationEngine {
             avoidedCoreSignatures: avoidedCoreSignatures,
             avoidedItemIDSets: avoidedItemIDSets,
             avoidedCoreItemIDSets: avoidedAllCoreItemIDSets,
+            avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
             avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
             avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
             avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -211,6 +251,7 @@ private extension RecommendationEngine {
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
         avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedSwappedCoreItemIDSets: [Set<UUID>],
         avoidedDislikedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
@@ -233,6 +274,14 @@ private extension RecommendationEngine {
                 coreReusePenalty(
                     for: candidateItemIDs.intersection(avoidedCoreIDs).count,
                     using: skippedOrSwappedCoreReusePenaltyByCount
+                )
+            }
+            .max() ?? 0
+        let swappedCoreReusePenalty = avoidedSwappedCoreItemIDSets
+            .map { avoidedCoreIDs in
+                coreReusePenalty(
+                    for: candidateItemIDs.intersection(avoidedCoreIDs).count,
+                    using: swappedCoreReusePenaltyByCount
                 )
             }
             .max() ?? 0
@@ -261,6 +310,7 @@ private extension RecommendationEngine {
         let coreReusePenaltyValue = max(
             baseCoreReusePenalty,
             max(skippedOrSwappedCoreReusePenalty, dislikedCoreReusePenalty),
+            swappedCoreReusePenalty,
             skippedOrSwappedOutfitReusePenalty,
             exactOutfitReusePenalty
         )
@@ -274,6 +324,7 @@ private extension RecommendationEngine {
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
         avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedSwappedCoreItemIDSets: [Set<UUID>],
         avoidedDislikedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
@@ -292,6 +343,7 @@ private extension RecommendationEngine {
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
                     avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+                    avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
                     avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
                     avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
                     avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -302,6 +354,7 @@ private extension RecommendationEngine {
                     avoidedCoreSignatures: avoidedCoreSignatures,
                     avoidedItemIDSets: avoidedItemIDSets,
                     avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+                    avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
                     avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
                     avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
                     avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -325,6 +378,7 @@ private extension RecommendationEngine {
         avoidedCoreSignatures: Set<String>,
         avoidedItemIDSets: [Set<UUID>],
         avoidedCoreItemIDSets: [Set<UUID>],
+        avoidedSwappedCoreItemIDSets: [Set<UUID>],
         avoidedDislikedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedCoreItemIDSets: [Set<UUID>],
         avoidedSwapOrSkippedItemIDSets: [Set<UUID>]
@@ -334,6 +388,7 @@ private extension RecommendationEngine {
             avoidedCoreSignatures: avoidedCoreSignatures,
             avoidedItemIDSets: avoidedItemIDSets,
             avoidedCoreItemIDSets: avoidedCoreItemIDSets,
+            avoidedSwappedCoreItemIDSets: avoidedSwappedCoreItemIDSets,
             avoidedDislikedCoreItemIDSets: avoidedDislikedCoreItemIDSets,
             avoidedSwapOrSkippedCoreItemIDSets: avoidedSwapOrSkippedCoreItemIDSets,
             avoidedSwapOrSkippedItemIDSets: avoidedSwapOrSkippedItemIDSets
@@ -794,8 +849,82 @@ private extension RecommendationEngine {
         let uniqueColorCount = Set(items.map(\.color)).count
         let colorVarietyPenalty = max(0, uniqueColorCount - 2) * 2
         let colorHarmonyScore = colorHarmonyScore(for: items)
+        let styleHarmonyScore = styleCompatibilityScore(for: items)
+        let formalityConsistencyPenalty = coreFormalityConsistencyPenalty(for: items)
 
-        return formalityScore + scenarioBonus + weatherPreferenceScore + colorHarmonyScore - colorVarietyPenalty
+        return formalityScore + scenarioBonus + weatherPreferenceScore + colorHarmonyScore + styleHarmonyScore - colorVarietyPenalty - formalityConsistencyPenalty
+    }
+
+    func coreFormalityConsistencyPenalty(for items: [ClothingItem]) -> Int {
+        let coreItems = items.filter { item in
+            item.resolvedType == .top || item.resolvedType == .bottom || item.resolvedType == .shoes
+        }
+        guard let minFormality = coreItems.map(\.formalityLevel).min(),
+              let maxFormality = coreItems.map(\.formalityLevel).max() else {
+            return 0
+        }
+
+        return (maxFormality - minFormality) * 4
+    }
+
+    func styleCompatibilityScore(for items: [ClothingItem]) -> Int {
+        let coreItems = items.filter { item in
+            item.resolvedType == .top || item.resolvedType == .bottom || item.resolvedType == .shoes
+        }
+        let coreStyle = coreItems.flatMap { styleTones(for: $0) }
+        let neutralCoreStyle = Set(coreStyle).filter { $0 != "neutral" }
+        guard neutralCoreStyle.isEmpty == false else { return 0 }
+
+        var score = 0
+        let accessoryCandidates = items.filter {
+            let type = $0.resolvedType ?? .accessory
+            return type == .bag || type == .accessory || type == .outerwear
+        }
+
+        for item in accessoryCandidates {
+            let tones = styleTones(for: item).filter { $0 != "neutral" }
+            let overlap = tones.intersection(neutralCoreStyle).count
+            if overlap > 0 {
+                score += overlap * 6
+            } else if tones.isEmpty == false {
+                score -= 8
+            }
+        }
+
+        return min(18, score)
+    }
+
+    func styleTones(for item: ClothingItem) -> Set<String> {
+        var tones: Set<String> = []
+        let tokens = normalizedStyleTokens(for: item.styleTags).filter { !$0.isEmpty }
+
+        for token in tokens {
+            if formalStyleTokens.contains(token) { tones.insert("formal") }
+            if casualStyleTokens.contains(token) { tones.insert("casual") }
+            if activeStyleTokens.contains(token) { tones.insert("active") }
+        }
+
+        if tones.isEmpty {
+            if item.formalityLevel >= 4 {
+                tones.insert("formal")
+            } else if item.formalityLevel <= 2 {
+                tones.insert("casual")
+            } else {
+                tones.insert("neutral")
+            }
+        }
+
+        return tones
+    }
+
+    func normalizedStyleTokens(for styleTags: [String]) -> Set<String> {
+        Set(styleTags.flatMap { tag in
+            tag
+                .lowercased()
+                .replacingOccurrences(of: "/", with: " ")
+                .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .map { String($0) }
+        })
     }
 
     func colorHarmonyScore(for items: [ClothingItem]) -> Int {

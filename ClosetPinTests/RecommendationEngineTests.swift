@@ -222,6 +222,39 @@ final class RecommendationEngineTests: XCTestCase {
         XCTAssertEqual(candidateTop?.warmthLevel, 5)
     }
 
+    func testWindyTomorrowCanUseOuterwearForDailyOffice() throws {
+        let itemSet = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000301")!, type: .top, color: "gray", seasons: [.summer], formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000302")!, type: .bottom, color: "navy", seasons: [.summer], formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000303")!, type: .shoes, color: "brown", seasons: [.summer], formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000000304")!, type: .outerwear, color: "navy", seasons: [.summer], formalityLevel: 4)
+        ]
+        let tomorrow = TomorrowRecommendationInput(
+            weatherContext: TomorrowWeatherContext(
+                condition: .wind,
+                minTemperatureCelsius: 15,
+                maxTemperatureCelsius: 22,
+                precipitationProbability: 10,
+                windSpeedKph: 32
+            )
+        )
+
+        let candidates = RecommendationEngine().recommend(
+            input: RecommendationInput(
+                scenario: .dailyOffice,
+                season: .summer,
+                tomorrow: tomorrow,
+                maximumResults: 3
+            ),
+            items: itemSet,
+            feedback: []
+        )
+
+        XCTAssertTrue(candidates.contains { candidate in
+            candidate.items.contains { $0.resolvedType == .outerwear }
+        })
+    }
+
     func testRainTomorrowPrefersRainSafeShoes() throws {
         let safeShoes = clothingItem(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000201")!,
@@ -450,6 +483,34 @@ final class RecommendationEngineTests: XCTestCase {
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002107")!, type: .shoes, color: "black", formalityLevel: 4),
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002108")!, type: .shoes, color: "brown", formalityLevel: 4),
             clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000002109")!, type: .shoes, color: "gray", formalityLevel: 4)
+        ]
+        let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
+        let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
+        let swapFeedback = OutfitFeedback(
+            feedbackType: .swapped,
+            itemIds: firstCandidate.items.map(\.id),
+            scenario: .dailyOffice
+        )
+
+        let nextCandidate = try XCTUnwrap(RecommendationEngine().recommend(
+            input: input,
+            items: items,
+            feedback: [swapFeedback]
+        ).first)
+
+        XCTAssertEqual(coreDifferenceCount(between: firstCandidate, and: nextCandidate), 3)
+    }
+
+    func testTodaySwapRefreshesPrimaryRecommendation() throws {
+        let items = [
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003101")!, type: .top, color: "white", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003102")!, type: .top, color: "blue", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003103")!, type: .bottom, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003104")!, type: .bottom, color: "olive", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003105")!, type: .shoes, color: "black", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003106")!, type: .shoes, color: "brown", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003107")!, type: .bag, color: "navy", formalityLevel: 4),
+            clothingItem(id: UUID(uuidString: "00000000-0000-0000-0000-000000003108")!, type: .accessory, color: "navy", formalityLevel: 4)
         ]
         let input = RecommendationInput(scenario: .dailyOffice, season: .spring, maximumResults: 1)
         let firstCandidate = try XCTUnwrap(RecommendationEngine().recommend(input: input, items: items, feedback: []).first)
