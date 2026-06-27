@@ -17,14 +17,18 @@ final class SubscriptionStoreTests: XCTestCase {
     }
 
     func testProEntitlementLegalURLsUseConfiguredConstants() {
+        let usesChineseLegalPages = Locale.current.language.languageCode?.identifier.hasPrefix("zh") == true
+        let expectedPrivacyPath = usesChineseLegalPages ? "/closetpin/zh/privacy/" : "/closetpin/en/privacy/"
+        let expectedSupportPath = usesChineseLegalPages ? "/closetpin/zh/support/" : "/closetpin/en/support/"
+
         XCTAssertEqual(
             ProEntitlement.privacyURL.absoluteString,
-            "https://xufanzhilian.com/closetpin/privacy"
+            "https://xufanzhilian.com\(expectedPrivacyPath)"
         )
 
         XCTAssertEqual(
             ProEntitlement.supportURL.absoluteString,
-            "https://xufanzhilian.com/closetpin/support"
+            "https://xufanzhilian.com\(expectedSupportPath)"
         )
 
         XCTAssertEqual(

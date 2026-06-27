@@ -62,9 +62,9 @@ final class ColorResolverTests: XCTestCase {
     func testLocalizedDisplayColorUsesCurrentLocaleForChineseOutput() {
         let chineseLocale = Locale(identifier: "zh-Hans")
 
-        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Ivory", locale: chineseLocale), "象牙白")
-        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Charcoal", locale: chineseLocale), "炭灰色")
-        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Navy", locale: chineseLocale), "海军蓝")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Ivory", locale: chineseLocale), "米白色")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Charcoal", locale: chineseLocale), "灰色")
+        XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "Navy", locale: chineseLocale), "藏青色")
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "black", locale: chineseLocale), "黑色")
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "white", locale: chineseLocale), "白色")
         XCTAssertEqual(ColorResolver.localizedDisplayColor(from: "black green plaid", locale: chineseLocale), "黑绿格纹")

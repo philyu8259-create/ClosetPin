@@ -508,8 +508,8 @@ final class ClosetPinTests: XCTestCase {
             feedback: []
         )
 
-        XCTAssertEqual(dailyOfficeCandidates.first?.items.count, 3)
-        XCTAssertEqual(importantMeetingCandidates.first?.items.count, 4)
+        XCTAssertEqual(dailyOfficeCandidates.first?.items.count, 4)
+        XCTAssertEqual(importantMeetingCandidates.first?.items.count, 5)
         XCTAssertTrue(importantMeetingCandidates.first?.items.contains { $0.type == .blazer } ?? false)
     }
 
