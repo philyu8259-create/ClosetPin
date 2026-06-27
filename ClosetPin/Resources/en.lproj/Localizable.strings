@@ -26,8 +26,8 @@
 "onboarding.checklist.2_shoes" = "2 shoes";
 "onboarding.checklist.1_bag" = "1 bag";
 "onboarding.start_adding" = "Add My Clothes";
-"onboarding.use_sample" = "Preview Recommendations";
-"onboarding.entry_coming" = "Clothing entry is coming next. Use Sample Capsule to explore recommendations now.";
+"onboarding.use_sample" = "Explore Demo Closet";
+"onboarding.entry_coming" = "Try the demo closet first to explore Today recommendations, the closet grid, and saving looks. This won't affect adding your own clothes later.";
 "onboarding.sample_error_title" = "Sample Capsule Was Not Added";
 
 "closet.title" = "Closet";

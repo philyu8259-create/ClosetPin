@@ -26,8 +26,8 @@
 "onboarding.checklist.2_shoes" = "2 双鞋";
 "onboarding.checklist.1_bag" = "1 个包";
 "onboarding.start_adding" = "添加自己的衣物";
-"onboarding.use_sample" = "先看示例推荐";
-"onboarding.entry_coming" = "衣物录入功能即将完善。现在可先使用示例胶囊探索推荐。";
+"onboarding.use_sample" = "体验示例衣橱";
+"onboarding.entry_coming" = "先用示例衣橱体验 Today 推荐、衣橱网格和穿搭保存，不会影响你之后添加自己的衣物。";
 "onboarding.sample_error_title" = "未能添加示例胶囊";
 
 "closet.title" = "衣橱";

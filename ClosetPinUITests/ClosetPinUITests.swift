@@ -61,7 +61,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Meetings"].exists)
         XCTAssertTrue(app.staticTexts["Banquets"].exists)
         XCTAssertTrue(app.staticTexts["Weekends"].exists)
-        XCTAssertTrue(app.buttons["Preview Recommendations"].exists)
+        XCTAssertTrue(app.buttons["Explore Demo Closet"].exists)
         XCTAssertTrue(app.buttons["Add My Clothes"].exists)
         XCTAssertTrue(app.buttons["useSampleCapsuleButton"].isHittable)
     }
@@ -181,7 +181,7 @@ final class ClosetPinUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["10 分钟入门衣橱"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["先看示例推荐"].exists)
+        XCTAssertTrue(app.buttons["体验示例衣橱"].exists)
         XCTAssertTrue(app.buttons["添加自己的衣物"].exists)
         app.buttons["useSampleCapsuleButton"].tap()
 

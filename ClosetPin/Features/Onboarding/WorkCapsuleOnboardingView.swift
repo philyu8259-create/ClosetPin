@@ -154,6 +154,11 @@ struct WorkCapsuleOnboardingView: View {
             .tint(DesignSystem.accent)
             .accessibilityIdentifier("useSampleCapsuleButton")
 
+            Text(L10n.text("onboarding.entry_coming"))
+                .font(.footnote)
+                .foregroundStyle(DesignSystem.secondaryInk)
+                .fixedSize(horizontal: false, vertical: true)
+
             Button {
                 if let onStartAdding {
                     onStartAdding()
