@@ -169,9 +169,8 @@ struct PaywallView: View {
 
     private func planButton(for productID: String) -> some View {
         let isPending = pendingProductID == productID
-        let product = store.product(for: productID)
         let title = planTitle(for: productID)
-        let price = store.product(for: productID)?.displayPrice ?? store.fallbackPrice(for: productID)
+        let price = store.product(for: productID)?.displayPrice ?? L10n.text("subscription.price.loading")
 
         return Button {
             pendingProductID = productID
@@ -187,7 +186,7 @@ struct PaywallView: View {
                     Text(title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                    Text(product?.description.isEmpty == false ? product?.description ?? "" : L10n.text("subscription.plan.description"))
+                    Text(L10n.text("subscription.plan.description"))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.88))
                         .lineLimit(2)

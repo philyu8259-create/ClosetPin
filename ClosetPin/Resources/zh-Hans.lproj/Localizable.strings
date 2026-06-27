@@ -414,6 +414,7 @@
 "subscription.plan.monthly.title" = "月度 Pro";
 "subscription.plan.yearly.title" = "年度 Pro";
 "subscription.plan.description" = "自动续订订阅";
+"subscription.price.loading" = "价格加载中";
 "subscription.purchase.success" = "购买成功，欢迎使用 ClosetPin Pro。";
 "subscription.purchase.cancelled" = "已取消购买。";
 "subscription.purchase.pending" = "购买待处理，请到 Apple ID 账单设置完成支付。";

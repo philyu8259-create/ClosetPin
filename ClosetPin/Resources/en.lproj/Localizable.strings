@@ -414,6 +414,7 @@
 "subscription.plan.monthly.title" = "Monthly Pro";
 "subscription.plan.yearly.title" = "Yearly Pro";
 "subscription.plan.description" = "Auto-renewing subscription";
+"subscription.price.loading" = "Price loading";
 "subscription.purchase.success" = "Purchase completed. Welcome to ClosetPin Pro.";
 "subscription.purchase.cancelled" = "Purchase was cancelled.";
 "subscription.purchase.pending" = "Purchase is pending. Finish it in your Apple ID billing settings.";
