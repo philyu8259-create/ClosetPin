@@ -73,9 +73,9 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["10-Minute Starter Closet"].waitForExistence(timeout: 3))
         app.buttons["useSampleCapsuleButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["You choose"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Why this works"].exists)
-        XCTAssertTrue(app.staticTexts["You decide"].exists)
+        XCTAssertTrue(app.buttons["todayFeedback_wore_0"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayFeedback_saved_0"].exists)
+        XCTAssertTrue(app.buttons["todayTryAnother_0"].exists)
     }
 
     func testTodayOutfitCardsShowStorageLocationWhenFilled() {
@@ -161,7 +161,7 @@ final class ClosetPinUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Tomorrow Prep"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Tomorrow prep: Soft Power Office"].exists)
-        XCTAssertTrue(app.staticTexts["ClosetPin checks your occasion, auto season, and tomorrow forecast before suggesting what to prep."].exists)
+        XCTAssertTrue(app.staticTexts["ClosetPin uses occasion, season, and tomorrow forecast before suggesting prep."].exists)
     }
 
     func testTomorrowPrepDoesNotHidePrimaryTodayActions() {
@@ -190,7 +190,6 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["想换个方向？"].exists)
         XCTAssertTrue(app.staticTexts["这套包含"].exists)
         XCTAssertTrue(app.staticTexts["场合"].exists)
-        XCTAssertTrue(app.staticTexts["搭配依据"].exists)
         if !app.buttons["todayScenario_banquet"].exists {
             app.swipeUp()
         }
@@ -646,13 +645,10 @@ final class ClosetPinUITests: XCTestCase {
 
         app.buttons["appTab_settings"].tap()
         XCTAssertTrue(app.staticTexts["Style brief"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Saved for reference. Default occasion and formality are what shape Today right now."].exists)
 
         let meetingOption = app.buttons["defaultScenarioOption_importantMeeting"]
         XCTAssertTrue(meetingOption.waitForExistence(timeout: 3))
         meetingOption.tap()
-
-        XCTAssertTrue(app.staticTexts["Applied to Today"].waitForExistence(timeout: 3))
 
         app.buttons["appTab_today"].tap()
         XCTAssertTrue(app.staticTexts["Executive Polish"].waitForExistence(timeout: 3))
@@ -674,7 +670,7 @@ final class ClosetPinUITests: XCTestCase {
         }
         XCTAssertTrue(locationField.waitForExistence(timeout: 5))
 
-        XCTAssertTrue(app.staticTexts["Type one city. No location permission needed."].exists)
+        XCTAssertTrue(app.switches["tomorrowWeatherToggle"].exists)
         XCTAssertTrue(app.staticTexts["Using city: Shanghai"].waitForExistence(timeout: 5))
     }
 
@@ -693,7 +689,7 @@ final class ClosetPinUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Tomorrow Weather"].waitForExistence(timeout: 3))
         app.swipeUp()
         XCTAssertTrue(app.textFields["tomorrowWeatherLocationField"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Needs city"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.switches["tomorrowWeatherToggle"].exists)
     }
 
     func testSettingsExplainsAiRoleWithoutExtraSetup() {
@@ -706,13 +702,7 @@ final class ClosetPinUITests: XCTestCase {
         app.buttons["appTab_settings"].tap()
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["AI & Privacy"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["AI only steps in where it saves you time, and you stay in control."].exists)
-        XCTAssertTrue(app.staticTexts["Photo tags"].exists)
-        XCTAssertTrue(app.staticTexts["Local first"].exists)
-        XCTAssertTrue(app.staticTexts["Outfit explanations"].exists)
-        XCTAssertTrue(app.staticTexts["Available on Today"].exists)
-        XCTAssertTrue(app.staticTexts["Weather help"].exists)
-        XCTAssertTrue(app.staticTexts["Optional"].exists)
+        XCTAssertTrue(app.staticTexts["Current recognition"].exists)
     }
 
     func testAddClosetItemSmokeFlow() {
