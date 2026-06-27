@@ -68,7 +68,7 @@ struct TodayView: View {
     }
 
     private var displayedCandidates: [OutfitCandidate] {
-        Array(orderedCandidates.prefix(3))
+        Array(orderedCandidates.prefix(2))
     }
 
     var body: some View {
@@ -76,18 +76,18 @@ struct TodayView: View {
             ScrollViewReader { scrollProxy in
                 ZStack(alignment: .bottom) {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                             dailyDashboard(using: scrollProxy)
                             editorialHero
                             contextStrip
                             tomorrowPrepSection
-                            decisionSupportSection
+                            TodaySeasonAutoCard(season: $season, isExpanded: $seasonOverrideExpanded)
 
                             if displayedCandidates.count > 1 {
                                 alternativesSection
                             }
                         }
-                        .padding(18)
+                        .padding(16)
                         .padding(.bottom, DesignSystem.Spacing.tabBarClearance)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -171,15 +171,10 @@ struct TodayView: View {
     }
 
     private var contextStrip: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
             Text(L10n.text("today.context.title"))
-                .font(.footnote.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignSystem.secondaryInk)
-
-            Text(L10n.text("today.ai_assist.body"))
-                .font(.caption)
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .fixedSize(horizontal: false, vertical: true)
 
             LazyVGrid(columns: scenarioChipColumns, alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 ForEach(OutfitScenario.allCases) { scenario in
@@ -192,23 +187,16 @@ struct TodayView: View {
     }
 
     private var scenarioChipColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 132), spacing: DesignSystem.Spacing.sm)]
-    }
-
-    private var decisionSupportSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            TodaySeasonAutoCard(season: $season, isExpanded: $seasonOverrideExpanded)
-            TodayDecisionGuideCard()
-        }
+        [GridItem(.adaptive(minimum: 118), spacing: DesignSystem.Spacing.sm)]
     }
 
     private var alternativesSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             let alternatives = Array(displayedCandidates.dropFirst().enumerated())
             if !alternatives.isEmpty {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                     Text(L10n.text("today.alternatives.title"))
-                        .font(.title3.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DesignSystem.ink)
 
                     ForEach(alternatives, id: \.element.id) { offset, candidate in

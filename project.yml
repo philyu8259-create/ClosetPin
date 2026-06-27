@@ -43,6 +43,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ClosetPin/ClosetPin.entitlements
         DEVELOPMENT_TEAM: 9SZ5257PF4
         PRODUCT_BUNDLE_IDENTIFIER: com.phil.closetpin
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: ClosetPin lets you choose clothing photos to build your local wardrobe.
         INFOPLIST_KEY_NSCameraUsageDescription: ClosetPin uses the camera so you can add clothes to your wardrobe.
@@ -58,6 +60,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: 9SZ5257PF4
     dependencies:
       - target: ClosetPin
   ClosetPinUITests:
@@ -68,5 +71,6 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: 9SZ5257PF4
     dependencies:
       - target: ClosetPin

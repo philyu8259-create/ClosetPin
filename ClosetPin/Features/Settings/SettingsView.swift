@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserPreference.createdAt) private var preferences: [UserPreference]
 
+    @StateObject private var subscriptionStore = SubscriptionStore()
     @State private var defaultScenario: OutfitScenario = .dailyOffice
     @State private var preferredFormality = 3
     @State private var workplaceDressCode = ""
@@ -14,18 +15,23 @@ struct SettingsView: View {
     @State private var hasLoadedPreference = false
     @State private var currentPreferenceID: UUID?
     @State private var saveError: String?
+    @State private var isShowingPaywall = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DesignSystem.Spacing.lg) {
+                VStack(spacing: DesignSystem.Spacing.md) {
                     SettingsSummaryCard(scenario: defaultScenario, formality: preferredFormality)
+
+                    ProSettingsCard(isPro: subscriptionStore.isPro) {
+                        isShowingPaywall = true
+                    }
 
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
                             SettingsSectionHeader(
                                 title: L10n.text("settings.style_preferences.section"),
-                                subtitle: L10n.text("settings.style_preferences.subtitle")
+                                subtitle: ""
                             )
 
                             ScenarioSelectionRow(selection: $defaultScenario)
@@ -41,27 +47,12 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                             .accessibilityIdentifier("workplaceDressCodeField")
 
-                            Text(L10n.text("settings.workplace_dress_code.helper"))
-                                .font(.caption)
-                                .foregroundStyle(DesignSystem.secondaryInk)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            SettingsNoteRow(
-                                systemImage: "checkmark.seal.fill",
-                                title: L10n.text("settings.preferences.applied.title"),
-                                bodyText: L10n.string(
-                                    "settings.preferences.applied.body.format",
-                                    arguments: defaultScenario.displayName, preferredFormalityLabel(preferredFormality)
-                                )
-                            )
-                            .accessibilityIdentifier("settingsAppliedPreferenceNote")
-
                             Divider()
                                 .padding(.vertical, 6)
 
                             SettingsSectionHeader(
                                 title: L10n.text("settings.weather.section"),
-                                subtitle: L10n.text("settings.weather.subtitle")
+                                subtitle: ""
                             )
 
                             TomorrowWeatherSettingsCard(
@@ -75,69 +66,17 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                             SettingsSectionHeader(
                                 title: L10n.text("settings.ai_privacy.section"),
-                                subtitle: L10n.text("settings.ai_privacy.subtitle")
-                            )
-
-                            AIUsageOverviewCard()
-
-                            SettingsNoteRow(
-                                systemImage: "camera.badge.ellipsis",
-                                title: L10n.text("settings.ai_privacy.photo_title"),
-                                bodyText: L10n.text("settings.ai_privacy.photo_body"),
-                                isCompact: true
+                                subtitle: ""
                             )
 
                             AIAssistStatusCard(
-                                cloudPhotoRecognitionEnabled: cloudPhotoRecognitionEnabled,
-                                tomorrowWeatherEnabled: tomorrowWeatherEnabled,
-                                tomorrowWeatherLocationName: tomorrowWeatherLocationName
+                                isCloudPhotoRecognitionEnabled: $cloudPhotoRecognitionEnabled
                             )
-
-                            Divider()
-
-                            SettingsSubsectionHeader(
-                                systemImage: "photo.badge.plus",
-                                title: L10n.text("settings.privacy.cloud_photo_recognition.title"),
-                                bodyText: ""
-                            )
-
-                            CloudPhotoRecognitionToggle(isOn: $cloudPhotoRecognitionEnabled)
-
-                            VStack(spacing: DesignSystem.Spacing.sm) {
-                                SettingsNoteRow(
-                                    systemImage: "person.crop.circle.badge.questionmark",
-                                    title: L10n.text("settings.privacy.ai.title"),
-                                    bodyText: L10n.text("settings.privacy.ai.body"),
-                                    isCompact: true
-                                )
-
-                                SettingsNoteRow(
-                                    systemImage: "lock.shield",
-                                    title: L10n.text("settings.privacy.local.title"),
-                                    bodyText: L10n.text("settings.privacy.local.body"),
-                                    isCompact: true
-                                )
-                            }
                         }
                     }
 
                     LuxurySurfaceCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                            SettingsSectionHeader(
-                                title: L10n.text("settings.language.section"),
-                                subtitle: ""
-                            )
-
-                            SettingsNoteRow(
-                                systemImage: "globe",
-                                title: L10n.text("settings.language.title"),
-                                bodyText: systemLanguageName(),
-                                isCompact: true
-                            )
-
-                            Divider()
-                                .padding(.vertical, 2)
-
                             SettingsSectionHeader(
                                 title: L10n.text("settings.about.section"),
                                 subtitle: ""
@@ -149,6 +88,7 @@ struct SettingsView: View {
                                 bodyText: L10n.string("settings.about.body.format", arguments: appVersionLabel()),
                                 isCompact: true
                             )
+
                         }
                     }
 
@@ -174,17 +114,18 @@ struct SettingsView: View {
             } message: {
                 Text(saveError ?? L10n.text("common.try_again"))
             }
+            .sheet(isPresented: $isShowingPaywall) {
+                PaywallView(store: subscriptionStore)
+            }
+            .task {
+                await subscriptionStore.syncEntitlement()
+            }
         }
     }
 
     private func appVersionLabel() -> String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? L10n.text("settings.about.version_unknown")
-    }
-
-    private func systemLanguageName() -> String {
-        let preferredIdentifier = Locale.preferredLanguages.first ?? Locale.current.identifier
-        return Locale.current.localizedString(forIdentifier: preferredIdentifier) ?? preferredIdentifier
     }
 
     private func loadPreferenceIfNeeded() {
@@ -243,6 +184,68 @@ struct SettingsView: View {
     }
 }
 
+private struct ProSettingsCard: View {
+    let isPro: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                    HStack(spacing: 8) {
+                        Image(systemName: isPro ? "checkmark.seal.fill" : "crown.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(isPro ? DesignSystem.accent : DesignSystem.premiumGold)
+
+                        Text(isPro ? L10n.text("settings.pro.active_badge") : L10n.text("settings.pro.badge"))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(isPro ? DesignSystem.accent : DesignSystem.wine)
+                    }
+
+                    Text(L10n.text("settings.pro.card_title"))
+                        .font(DesignSystem.editorialSectionFont(size: 24))
+                        .foregroundStyle(DesignSystem.ink)
+
+                    Text(isPro ? L10n.text("settings.pro.active_subtitle") : L10n.text("settings.pro.card_subtitle"))
+                        .font(.subheadline)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Image(systemName: "chevron.right")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .frame(width: 34, height: 34)
+                    .background(DesignSystem.accent.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .padding(DesignSystem.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                LinearGradient(
+                    colors: [
+                        DesignSystem.surface,
+                        DesignSystem.premiumGold.opacity(isPro ? 0.1 : 0.22)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.xl, style: .continuous)
+                    .stroke(DesignSystem.premiumGold.opacity(0.28), lineWidth: 1)
+            }
+            .shadow(color: DesignSystem.editorialShadow.opacity(0.28), radius: 18, x: 0, y: 10)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("settingsProCard")
+    }
+}
+
 private struct SettingsSummaryCard: View {
     let scenario: OutfitScenario
     let formality: Int
@@ -262,10 +265,6 @@ private struct SettingsSummaryCard: View {
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(L10n.text("settings.summary.body"))
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.82))
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(DesignSystem.Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -340,44 +339,56 @@ private struct SettingsSubsectionHeader: View {
 }
 
 private struct AIAssistStatusCard: View {
-    let cloudPhotoRecognitionEnabled: Bool
-    let tomorrowWeatherEnabled: Bool
-    let tomorrowWeatherLocationName: String
+    @Binding var isCloudPhotoRecognitionEnabled: Bool
 
-    private var tomorrowWeatherStatus: String {
-        guard tomorrowWeatherEnabled else {
-            return L10n.text("settings.ai_status.weather.status.optional")
-        }
-        let trimmedLocation = tomorrowWeatherLocationName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedLocation.isEmpty
-            ? L10n.text("settings.ai_status.weather.status.needs_city")
-            : L10n.text("settings.ai_status.weather.status.on")
+    private var recognitionStatus: String {
+        isCloudPhotoRecognitionEnabled
+            ? L10n.text("settings.ai_privacy.current_mode.cloud")
+            : L10n.text("settings.ai_privacy.current_mode.local")
     }
 
     var body: some View {
-        VStack(spacing: DesignSystem.Spacing.sm) {
-            AIAssistStatusRow(
-                systemImage: "camera.metering.center.weighted",
-                title: L10n.text("settings.ai_status.photo.title"),
-                status: cloudPhotoRecognitionEnabled
-                    ? L10n.text("settings.ai_status.photo.status.cloud")
-                    : L10n.text("settings.ai_status.photo.status.local"),
-                detail: L10n.text("settings.ai_status.photo.detail")
-            )
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "camera.fill")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .frame(width: 22, height: 22)
+                    .background(DesignSystem.accent.opacity(0.09))
+                    .clipShape(Circle())
 
-            AIAssistStatusRow(
-                systemImage: "sparkles",
-                title: L10n.text("settings.ai_status.ranking.title"),
-                status: L10n.text("settings.ai_status.ranking.status"),
-                detail: L10n.text("settings.ai_status.ranking.detail")
-            )
+                Text(L10n.text("settings.privacy.cloud_photo_recognition.title"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DesignSystem.ink)
 
-            AIAssistStatusRow(
-                systemImage: "cloud.sun",
-                title: L10n.text("settings.ai_status.weather.title"),
-                status: tomorrowWeatherStatus,
-                detail: L10n.text("settings.ai_status.weather.detail")
-            )
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Toggle(isOn: $isCloudPhotoRecognitionEnabled) {
+                    EmptyView()
+                }
+                .labelsHidden()
+                .tint(DesignSystem.accent)
+                .accessibilityIdentifier("cloudPhotoRecognitionToggle")
+            }
+            .padding(DesignSystem.Spacing.sm)
+            .background(DesignSystem.surface.opacity(0.72))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md, style: .continuous))
+
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text(L10n.text("settings.ai_privacy.current_mode.label"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+
+                Spacer(minLength: DesignSystem.Spacing.sm)
+
+                Text(recognitionStatus)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignSystem.accent)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.accent.opacity(0.09))
+                    .clipShape(Capsule(style: .continuous))
+            }
         }
         .accessibilityIdentifier("settingsAIStatusCard")
     }
@@ -461,10 +472,12 @@ private struct AIAssistStatusRow: View {
                         .clipShape(Capsule(style: .continuous))
                 }
 
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(DesignSystem.secondaryInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(DesignSystem.Spacing.sm)
@@ -608,10 +621,6 @@ private struct TomorrowWeatherSettingsCard: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DesignSystem.ink)
 
-                    Text(L10n.text("settings.weather.enabled.body"))
-                        .font(.footnote)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .tint(DesignSystem.accent)
@@ -637,24 +646,16 @@ private struct TomorrowWeatherSettingsCard: View {
                             .stroke(DesignSystem.accent.opacity(0.28), lineWidth: 1)
                     }
 
-                    Text(L10n.text("settings.weather.location.helper"))
-                        .font(.caption)
-                        .foregroundStyle(DesignSystem.secondaryInk)
-                        .fixedSize(horizontal: false, vertical: true)
-
                     if !trimmedLocationName.isEmpty {
-                        Label(L10n.string("settings.weather.ready.format", arguments: trimmedLocationName), systemImage: "checkmark.circle.fill")
+                        Label(
+                            L10n.string("settings.weather.ready.format", arguments: trimmedLocationName),
+                            systemImage: "checkmark.circle.fill"
+                        )
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(DesignSystem.accent)
                             .accessibilityIdentifier("tomorrowWeatherReadyNote")
                     }
                 }
-            } else {
-                SettingsNoteRow(
-                    systemImage: "location.slash",
-                    title: L10n.text("settings.weather.disabled.title"),
-                    bodyText: L10n.text("settings.weather.disabled.helper")
-                )
             }
 
         }
@@ -698,10 +699,6 @@ private struct CloudPhotoRecognitionToggle: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
 
-                Text(L10n.text("settings.privacy.cloud_photo_recognition.body"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .tint(DesignSystem.accent)
@@ -727,10 +724,12 @@ private struct SettingsNoteRow: View {
                     .font(isCompact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
                     .foregroundStyle(DesignSystem.ink)
 
-                Text(bodyText)
-                    .font(isCompact ? .caption : .footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(bodyText)
+                        .font(isCompact ? .caption : .footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.vertical, isCompact ? 2 : 4)

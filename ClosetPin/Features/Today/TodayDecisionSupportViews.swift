@@ -97,11 +97,6 @@ struct TodaySeasonAutoCard: View {
                 Spacer(minLength: DesignSystem.Spacing.sm)
             }
 
-            Text(L10n.text("today.season.auto_note"))
-                .font(.caption2)
-                .foregroundStyle(DesignSystem.secondaryInk)
-                .fixedSize(horizontal: false, vertical: true)
-
             Button {
                 withAnimation(.snappy(duration: 0.2)) {
                     isExpanded.toggle()
@@ -121,6 +116,11 @@ struct TodaySeasonAutoCard: View {
             .accessibilityIdentifier("todaySeasonOverrideButton")
 
             if isExpanded {
+                Text(L10n.text("today.season.auto_note"))
+                    .font(.caption2)
+                    .foregroundStyle(DesignSystem.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: DesignSystem.Spacing.sm) {
                         ForEach(SeasonTag.allCases) { season in

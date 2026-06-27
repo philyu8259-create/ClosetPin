@@ -30,12 +30,14 @@
 		4BDB406AAAFF08EC48BC36A8 /* ClothingItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5929B6A909117EC0CD6464 /* ClothingItem.swift */; };
 		50DFB63BB3F1879695C9E264 /* TodayDecisionSupportViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A042EFCA92233AF531A985A /* TodayDecisionSupportViews.swift */; };
 		558F59A6524BB54FF338E9B1 /* AddItemSemanticLevelControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FB3B02FAF5157691270898 /* AddItemSemanticLevelControls.swift */; };
+		56807DCE3EA970FCFD24C250 /* SubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74BE479D0A40B8E023678D0 /* SubscriptionStore.swift */; };
 		583A2779FD5EE3B724ECE4E0 /* UserPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1455F84F2C8116E6F6D228E2 /* UserPreference.swift */; };
 		590ED3BF4635F6FC7C22A43D /* AddEditItemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D373E1D22E4992594734E7 /* AddEditItemSnapshot.swift */; };
 		5963473D25A6DD11BA02DBE0 /* ColorResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA34D7124C32E8513FEBC82 /* ColorResolverTests.swift */; };
 		59F936BF9D10DD0BC453E3D3 /* ImageStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2D9874E30C341346C01C09 /* ImageStoreTests.swift */; };
 		5DC5706EAC2142FAB6BDC0C5 /* TomorrowRecommendationInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB43E072BA67FB7B4AE0099 /* TomorrowRecommendationInput.swift */; };
 		5E09159BF02842FF3E61E279 /* TomorrowWeatherContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */; };
+		68944154B9BEA2C472DD52A6 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97174DA4A25404430C00787 /* PaywallView.swift */; };
 		6E03B115ED96960ECEEB2295 /* editorial-charcoal-blazer.png in Resources */ = {isa = PBXBuildFile; fileRef = 2795F83AC148DE69BD259B50 /* editorial-charcoal-blazer.png */; };
 		76360778BAD13B0366ABF9C4 /* TodayWeatherPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DDF783B278AE4409D6F26AC /* TodayWeatherPreview.swift */; };
 		7682B9A97FDA6BB5381CB26E /* AIStylistClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48D80DA3A15B558323AD91C2 /* AIStylistClientTests.swift */; };
@@ -53,6 +55,7 @@
 		976AFE3CC1ABFCD220752F83 /* RecommendationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C22975C677DB5862CF5CBD2 /* RecommendationEngineTests.swift */; };
 		9D30CCF14F7364701FE4A552 /* editorial-black-bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 3116EA28A875687F20B9183A /* editorial-black-bottom.png */; };
 		A19EA32E3A40F2F9E8F3A045 /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94930D19525D7A6DB8DFE234 /* SeedData.swift */; };
+		A1F91A897DEAEE9FC32EF438 /* SubscriptionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC748C0254805E838BB9175C /* SubscriptionStoreTests.swift */; };
 		A521AD0B82DD8C1E387C05B6 /* ImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E8095EBD274CF5062F6FD7 /* ImageStore.swift */; };
 		ACCB10B79DE1C5F80AB82EEE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8166A173440743E1A3E9BBA /* TodayView.swift */; };
 		B088F72542BD08CDE279DDB4 /* ClosetGridComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE3BFEBA1EE4BA87BDD94C4 /* ClosetGridComponents.swift */; };
@@ -69,6 +72,7 @@
 		DB8D7FC7C21520079C764BE6 /* OutfitFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26C0A972DE29D35FB193C0BA /* OutfitFeedback.swift */; };
 		DC85507EA5555D582E7CCF7E /* ColorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2A5B9448682133E954D60FA /* ColorResolver.swift */; };
 		DE9FDA34FCDBA72C4CF3779B /* AddItemSupportComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD87B2B3B1A049B660561AE /* AddItemSupportComponents.swift */; };
+		EB52191F072C45E50152EE34 /* ProEntitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EE0120945527D7B74810B7 /* ProEntitlement.swift */; };
 		F05F50DD9561CA2678633C7D /* ClosetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC0B81F96A9D86DEE52FBDD /* ClosetView.swift */; };
 		F17029415040017FA151B4CD /* WorkCapsuleOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC74AA54C0434FFC1E558C9 /* WorkCapsuleOnboardingView.swift */; };
 		F1FB0C44987B66FC3F17D0F3 /* editorial-brown-loafers.png in Resources */ = {isa = PBXBuildFile; fileRef = 0E6E9610785DCE4B3B4A0FB3 /* editorial-brown-loafers.png */; };
@@ -101,6 +105,7 @@
 		133E07AB3D2F286CB6D9D290 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		13E8095EBD274CF5062F6FD7 /* ImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStore.swift; sourceTree = "<group>"; };
 		1455F84F2C8116E6F6D228E2 /* UserPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreference.swift; sourceTree = "<group>"; };
+		15EE0120945527D7B74810B7 /* ProEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProEntitlement.swift; sourceTree = "<group>"; };
 		1A6628CF51AD828C51B7775F /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		1B3C054A40FFB8CE8696ED95 /* ClosetPin.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ClosetPin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E7AA4A90AC010AC251E028D /* editorial-work-bag.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-work-bag.png"; sourceTree = "<group>"; };
@@ -155,10 +160,12 @@
 		B862F19226649FA809122C8C /* LooksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LooksView.swift; sourceTree = "<group>"; };
 		BB2D9874E30C341346C01C09 /* ImageStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStoreTests.swift; sourceTree = "<group>"; };
 		BB5467D2C59170A22A523932 /* TomorrowWeatherContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TomorrowWeatherContext.swift; sourceTree = "<group>"; };
+		BC748C0254805E838BB9175C /* SubscriptionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStoreTests.swift; sourceTree = "<group>"; };
 		C1F8CBBE28868F64C5F11956 /* TodayFeedbackViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayFeedbackViews.swift; sourceTree = "<group>"; };
 		C22D3C89603FDF9ACBA3FF92 /* TodayFeedbackRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayFeedbackRecorder.swift; sourceTree = "<group>"; };
 		CD536F12EE5B2CA515CB80A7 /* editorial-white-shirt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-white-shirt.png"; sourceTree = "<group>"; };
 		D1B7AA169818AAB97CABB7DB /* empty-closet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "empty-closet.png"; sourceTree = "<group>"; };
+		D97174DA4A25404430C00787 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		DA163B8A51D76F86E6C91BCC /* editorial-black-shoes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "editorial-black-shoes.png"; sourceTree = "<group>"; };
 		DCA34D7124C32E8513FEBC82 /* ColorResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorResolverTests.swift; sourceTree = "<group>"; };
 		DFC0B81F96A9D86DEE52FBDD /* ClosetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClosetView.swift; sourceTree = "<group>"; };
@@ -168,6 +175,7 @@
 		E59768AA5273726A64DDD37F /* ClosetPinTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ClosetPinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E59D2C477BE303C6088061F9 /* TodayLookCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayLookCards.swift; sourceTree = "<group>"; };
 		E6CBBA81179AA39EBC36BDF0 /* ClosetPinUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ClosetPinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E74BE479D0A40B8E023678D0 /* SubscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStore.swift; sourceTree = "<group>"; };
 		F3835AE21A74BC181029A710 /* SeasonResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonResolver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -186,6 +194,15 @@
 				0DDF783B278AE4409D6F26AC /* TodayWeatherPreview.swift */,
 			);
 			path = Today;
+			sourceTree = "<group>";
+		};
+		0F5ADC299E1422B80FEA3051 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				15EE0120945527D7B74810B7 /* ProEntitlement.swift */,
+				E74BE479D0A40B8E023678D0 /* SubscriptionStore.swift */,
+			);
+			path = Subscription;
 			sourceTree = "<group>";
 		};
 		15A5BBC4E51886DC383345C0 /* AI */ = {
@@ -234,6 +251,7 @@
 				696FEEA20F1EFAD2D7172F5D /* Looks */,
 				36A7E34AFA99ABFA16A7D45E /* Onboarding */,
 				B042D85BD5F4C0E4FF09E560 /* Settings */,
+				42BEEDBEB35B86F8EF83EA6D /* Subscription */,
 				035B92E4A45797D47B727728 /* Today */,
 			);
 			path = Features;
@@ -266,6 +284,14 @@
 				1455F84F2C8116E6F6D228E2 /* UserPreference.swift */,
 			);
 			path = Domain;
+			sourceTree = "<group>";
+		};
+		42BEEDBEB35B86F8EF83EA6D /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				D97174DA4A25404430C00787 /* PaywallView.swift */,
+			);
+			path = Subscription;
 			sourceTree = "<group>";
 		};
 		59B32AF198624C1067220C6C /* ClosetPinUITests */ = {
@@ -308,6 +334,7 @@
 				7B9AD99D8FF0F0791E81498B /* Recommendation */,
 				3F6363E18295616B2DE7C791 /* Resources */,
 				A151DCCC1D24CA7127EB6F2E /* Shared */,
+				0F5ADC299E1422B80FEA3051 /* Subscription */,
 			);
 			path = ClosetPin;
 			sourceTree = "<group>";
@@ -391,6 +418,7 @@
 				BB2D9874E30C341346C01C09 /* ImageStoreTests.swift */,
 				9341A2CD9130251CB0A2FE40 /* LocalizationTests.swift */,
 				4C22975C677DB5862CF5CBD2 /* RecommendationEngineTests.swift */,
+				BC748C0254805E838BB9175C /* SubscriptionStoreTests.swift */,
 				E4A19A61B1888FD1922F01FC /* TodayFeedbackRecorderTests.swift */,
 			);
 			path = ClosetPinTests;
@@ -465,7 +493,11 @@
 					22616170217B7A3A0B092028 = {
 						DevelopmentTeam = 9SZ5257PF4;
 					};
+					444064F1ACA33773D9806061 = {
+						DevelopmentTeam = 9SZ5257PF4;
+					};
 					94132A674AABA59A1B7BF9B5 = {
+						DevelopmentTeam = 9SZ5257PF4;
 						TestTargetID = 22616170217B7A3A0B092028;
 					};
 				};
@@ -535,6 +567,7 @@
 				59F936BF9D10DD0BC453E3D3 /* ImageStoreTests.swift in Sources */,
 				2772D4191F098F45E5BAD44D /* LocalizationTests.swift in Sources */,
 				976AFE3CC1ABFCD220752F83 /* RecommendationEngineTests.swift in Sources */,
+				A1F91A897DEAEE9FC32EF438 /* SubscriptionStoreTests.swift in Sources */,
 				D3F2AD7BF0AAD9F5DD90875C /* TodayFeedbackRecorderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -569,11 +602,14 @@
 				8C08826DB12653212B9D6AEF /* Outfit.swift in Sources */,
 				D0D01A0DDBF9A6CD80152D4B /* OutfitCandidate.swift in Sources */,
 				DB8D7FC7C21520079C764BE6 /* OutfitFeedback.swift in Sources */,
+				68944154B9BEA2C472DD52A6 /* PaywallView.swift in Sources */,
+				EB52191F072C45E50152EE34 /* ProEntitlement.swift in Sources */,
 				13223625EC9D2CC5BEEFB879 /* RecommendationEngine.swift in Sources */,
 				33F836112CA9FE571BB1E046 /* RecommendationInput.swift in Sources */,
 				913EEEB7F01C22325009C159 /* SeasonResolver.swift in Sources */,
 				A19EA32E3A40F2F9E8F3A045 /* SeedData.swift in Sources */,
 				0384691ECF7EEB2CDDB7A805 /* SettingsView.swift in Sources */,
+				56807DCE3EA970FCFD24C250 /* SubscriptionStore.swift in Sources */,
 				29C98A7B7B8877533246DE6A /* TodayDashboardCard.swift in Sources */,
 				50DFB63BB3F1879695C9E264 /* TodayDecisionSupportViews.swift in Sources */,
 				D03FD08A7348A5D667C0D204 /* TodayFeedbackRecorder.swift in Sources */,
@@ -632,6 +668,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -651,6 +688,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ClosetPin/ClosetPin.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "ClosetPin uses the camera so you can add clothes to your wardrobe.";
@@ -660,6 +698,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.closetpin;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -670,6 +709,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -687,6 +727,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -704,6 +745,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -842,6 +884,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ClosetPin/ClosetPin.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "ClosetPin uses the camera so you can add clothes to your wardrobe.";
@@ -851,6 +894,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.closetpin;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

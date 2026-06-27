@@ -40,14 +40,6 @@ struct DailyStylingDashboardCard: View {
                         .clipShape(Circle())
                 }
 
-                Text(L10n.text("today.dashboard.body"))
-                    .font(.caption2)
-                    .foregroundStyle(DesignSystem.secondaryInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.86)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.trailing, 2)
-
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     DashboardTag(title: scenarioName, icon: "calendar.badge.checkmark")
                     DashboardTag(title: seasonName, icon: "leaf.fill")

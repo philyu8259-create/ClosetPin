@@ -9,7 +9,7 @@ const photoModel = process.env.CLOSETPIN_PHOTO_MODEL || "qwen3-vl-plus";
 const explanationModel = process.env.CLOSETPIN_EXPLANATION_MODEL || "qwen-plus";
 const maxBodyBytes = Number(process.env.MAX_BODY_BYTES || 6 * 1024 * 1024);
 const requestTimeoutMs = Number(process.env.DASHSCOPE_TIMEOUT_MS || 14000);
-
+const supportEmail = "support@xufanzhilian.com";
 const clothingTypes = new Set([
   "top",
   "bottom",
@@ -26,6 +26,12 @@ const scenarioLabels = new Map([
   ["weekendCasual", "weekend casual"],
   ["banquet", "banquet or dressed-up event"],
 ]);
+function normalizePath(pathname) {
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    return pathname.replace(/\/+$/u, "");
+  }
+  return pathname;
+}
 
 const server = http.createServer(async (request, response) => {
   try {
@@ -34,8 +40,9 @@ const server = http.createServer(async (request, response) => {
     }
 
     const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
+    const path = normalizePath(url.pathname);
 
-    if (request.method === "GET" && url.pathname === "/health") {
+    if (request.method === "GET" && (path === "/health" || path === "/closetpin/health")) {
       return sendJSON(response, 200, {
         ok: true,
         provider: "aliyun-dashscope",
@@ -43,6 +50,28 @@ const server = http.createServer(async (request, response) => {
         explanationModel,
         configured: Boolean(dashscopeApiKey),
       });
+    }
+
+    if (
+      request.method === "GET" &&
+      (path === "/closetpin/privacy" || path === "/privacy" || path === "/closetpin/en/privacy")
+    ) {
+      return sendHTML(response, 200, buildPrivacyPageHTML("en"));
+    }
+
+    if (request.method === "GET" && (path === "/closetpin/zh/privacy" || path === "/zh/privacy")) {
+      return sendHTML(response, 200, buildPrivacyPageHTML("zh"));
+    }
+
+    if (
+      request.method === "GET" &&
+      (path === "/closetpin/support" || path === "/support" || path === "/closetpin/en/support")
+    ) {
+      return sendHTML(response, 200, buildSupportPageHTML("en"));
+    }
+
+    if (request.method === "GET" && (path === "/closetpin/zh/support" || path === "/zh/support")) {
+      return sendHTML(response, 200, buildSupportPageHTML("zh"));
     }
 
     if (!dashscopeApiKey) {
@@ -281,6 +310,213 @@ function safeString(value, fallback) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function legalPageShell({ lang, title, body }) {
+  return `<!DOCTYPE html>
+<html lang="${lang}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.7;
+        color: #222;
+        background: #fbf8f1;
+      }
+      main { max-width: 860px; margin: 0 auto; padding: 32px 20px 44px; }
+      h1 { margin: 0 0 4px; font-size: 32px; }
+      h2 { margin-top: 28px; font-size: 22px; }
+      p { margin: 10px 0; }
+      ul { padding-left: 22px; }
+      li { margin: 8px 0; }
+      .section { margin-top: 18px; }
+      .contact { font-weight: 600; }
+      .subtle { color: #555; }
+      footer { margin-top: 28px; font-size: 13px; color: #666; }
+      a { color: #1f6b60; }
+    </style>
+  </head>
+  <body>
+    <main>${body}</main>
+  </body>
+</html>`;
+}
+
+function buildPrivacyPageHTML(locale) {
+  if (locale === "zh") {
+    return legalPageShell({
+      lang: "zh-Hans",
+      title: "衣橱钉隐私政策",
+      body: `
+      <h1>衣橱钉隐私政策</h1>
+      <p class="subtle">最后更新：2026 年 6 月 27 日</p>
+      <div class="section">
+        <h2>1）默认本地保存照片</h2>
+        <p>衣橱钉会优先把你的衣物照片、穿搭记录和相关衣橱数据保存在你的设备本地。我们不会自动上传你的完整相册。</p>
+      </div>
+      <div class="section">
+        <h2>2）云端 AI 识别范围</h2>
+        <ul>
+          <li>当你开启或使用云端识别时，只会上传当前正在识别的那一张衣物照片。</li>
+          <li>衣橱钉不会上传完整相册，也不会上传与当前识别无关的文件。</li>
+          <li>为完成识别，可能会发送必要的最少上下文，例如当前界面语言或用户选择的场景。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>3）天气功能权限</h2>
+        <p>天气功能仅在你授权位置权限后使用定位信息，或在你手动输入城市后根据该城市提供穿搭参考。</p>
+      </div>
+      <div class="section">
+        <h2>4）订阅与支付</h2>
+        <p>订阅购买、账单、续订和退款由 Apple 通过 App Store 及你的 Apple 账户管理。</p>
+      </div>
+      <div class="section">
+        <h2>5）不会出售个人数据</h2>
+        <p>衣橱钉不会向第三方出售你的个人数据。</p>
+      </div>
+      <div class="section">
+        <h2>6）联系我们</h2>
+        <p>隐私、数据或账户相关问题，请联系：<span class="contact">${supportEmail}</span>。</p>
+      </div>
+      <footer>
+        <p>如果你不希望某张照片使用云端 AI 识别，可以跳过该功能，并继续使用本地流程。</p>
+      </footer>`,
+    });
+  }
+
+  return legalPageShell({
+    lang: "en",
+    title: "ClosetPin Privacy Policy",
+    body: `
+      <h1>ClosetPin Privacy Policy</h1>
+      <p class="subtle">Last updated: June 27, 2026</p>
+      <div class="section">
+        <h2>1) Local photo storage by default</h2>
+        <p>ClosetPin stores your wardrobe and avatar photos on your device first. We keep this by default and do not upload your photo albums automatically.</p>
+      </div>
+      <div class="section">
+        <h2>2) Cloud AI recognition scope</h2>
+        <ul>
+          <li>When cloud recognition is enabled, only the current photo being analyzed is uploaded.</li>
+          <li>ClosetPin does not upload full albums or unrelated files.</li>
+          <li>Only necessary app context is sent (for example, current interface language and minimal context needed for recognition).</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>3) Weather feature permissions</h2>
+        <p>Weather data is only used after you allow location permission, or when you manually enter a city.</p>
+      </div>
+      <div class="section">
+        <h2>4) Subscriptions and billing</h2>
+        <p>Subscription purchase, billing, and renewal are managed by Apple through App Store in-app purchase and your Apple account.</p>
+      </div>
+      <div class="section">
+        <h2>5) No data sale</h2>
+        <p>ClosetPin does not sell your personal data to third parties.</p>
+      </div>
+      <div class="section">
+        <h2>6) Contact support</h2>
+        <p>For privacy, data, or account requests: <span class="contact">${supportEmail}</span>.</p>
+      </div>
+      <footer>
+        <p>If you do not want cloud AI recognition for a photo, you can skip that feature and continue using local-only flows.</p>
+      </footer>`,
+  });
+}
+
+function buildSupportPageHTML(locale) {
+  if (locale === "zh") {
+    return legalPageShell({
+      lang: "zh-Hans",
+      title: "衣橱钉支持",
+      body: `
+      <h1>衣橱钉支持</h1>
+      <div class="section">
+        <h2>邮箱支持</h2>
+        <p>如需帮助，请联系：<span class="contact">${supportEmail}</span>。</p>
+      </div>
+      <div class="section">
+        <h2>订阅 / 恢复购买</h2>
+        <ul>
+          <li>订阅购买和恢复购买由 Apple App Store 管理。</li>
+          <li>请确认当前 App Store 登录的 Apple ID 与购买时使用的 Apple ID 一致。</li>
+          <li>如果恢复失败，请等待几分钟后重试；仍有问题可联系支持邮箱，并附上可用的 Apple 收据信息。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>AI 识别</h2>
+        <ul>
+          <li>拍摄衣物时，请尽量使用充足光线和简洁背景。</li>
+          <li>如果上传经常失败，可以尝试重新拍摄或裁成更清晰的竖图/方图。</li>
+          <li>请确认已允许衣橱钉访问相机和照片。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>天气</h2>
+        <ul>
+          <li>授权定位后可以使用自动城市；也可以手动输入城市。</li>
+          <li>如果天气不准确，请检查设备时间、定位权限和网络状态。</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>照片处理 / 排查</h2>
+        <ul>
+          <li>确认图片格式受支持，并且文件大小在 App 限制内。</li>
+          <li>重新打开 App 后再拍摄或上传一次。</li>
+          <li>确认本地存储空间充足，并使用当前版本的 App。</li>
+        </ul>
+      </div>`,
+    });
+  }
+
+  return legalPageShell({
+    lang: "en",
+    title: "ClosetPin Support",
+    body: `
+      <h1>ClosetPin Support</h1>
+      <div class="section">
+        <h2>Email</h2>
+        <p>Contact support at <span class="contact">${supportEmail}</span>.</p>
+      </div>
+      <div class="section">
+        <h2>Subscription / Restore Purchase</h2>
+        <ul>
+          <li>All subscription purchases and restorations are managed by Apple App Store.</li>
+          <li>To restore, open your device settings and ensure Apple ID used in App Store matches the one used at purchase.</li>
+          <li>If restore fails, wait a few minutes and try again; then contact support with the Apple receipt ID if available.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>AI Recognition</h2>
+        <ul>
+          <li>Keep clothes in good daylight and clear background when taking photos.</li>
+          <li>Use square or vertical crop if the upload is rejected frequently.</li>
+          <li>Check if “Allow ClosetPin to access photos / camera” is enabled.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>Weather</h2>
+        <ul>
+          <li>Grant location permission to use automatic city detection, or enter a city manually.</li>
+          <li>If weather is inaccurate, verify your device time and location permission.</li>
+          <li>Refresh on a stable network.</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>Photo Processing / Troubleshooting</h2>
+        <ul>
+          <li>Make sure image format is supported and file size is within app limits.</li>
+          <li>Reopen the app and retake the photo before retrying upload.</li>
+          <li>Ensure you are using a stable network and the current app version.</li>
+          <li>If photos are not saved, check app storage permissions and local storage space.</li>
+        </ul>
+      </div>`,
+  });
+}
+
 function clampInteger(value, min, max, fallback) {
   const number = Number.parseInt(value, 10);
   if (!Number.isFinite(number)) return fallback;
@@ -307,4 +543,14 @@ function sendJSON(response, statusCode, payload) {
   }
 
   response.end(JSON.stringify(payload));
+}
+
+function sendHTML(response, statusCode, html) {
+  response.writeHead(statusCode, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  });
+  response.end(html);
 }
